@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./Landing";
 import axios from "axios";
+import { url } from "../../export";
 const LandingPage = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -87,7 +88,7 @@ const LandingPage = () => {
   };
 
   const handleSignInWithGoogle = async() => {
-   let authUrl= await axios.get("https://api.adaptivelearnai.xyz/google/login");
+   let authUrl= await axios.get(`${url}/google/login`);
   };
 
   const handleSmoothScroll = (e, targetId) => {
