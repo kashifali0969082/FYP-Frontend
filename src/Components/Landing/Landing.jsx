@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./Landing";
-
+import axios from "axios";
 const LandingPage = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -86,12 +86,8 @@ const LandingPage = () => {
     }, 20);
   };
 
-  const handleSignInWithGoogle = () => {
-    // This would integrate with Google OAuth in a real application
-    alert(
-      "Google Sign In integration would be implemented here with OAuth 2.0"
-    );
-    // Example: window.location.href = '/auth/google';
+  const handleSignInWithGoogle = async() => {
+   let authUrl= await axios.get("https://api.adaptivelearnai.xyz/google/login");
   };
 
   const handleSmoothScroll = (e, targetId) => {
