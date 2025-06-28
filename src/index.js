@@ -7,6 +7,9 @@ import reportWebVitals from './reportWebVitals';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
+    {/* <GoogleOAuthProvider clientId="954049692437-6s7dbsun5hkdnugqutg7bpc65o4g908i.apps.googleusercontent.com">
+    <App />
+    </GoogleOAuthProvider> */}
     <App />
   </React.StrictMode>
 );
