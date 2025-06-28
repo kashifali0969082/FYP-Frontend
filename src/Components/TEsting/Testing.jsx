@@ -28,6 +28,7 @@ import { HomePage } from "../Comps/HomePage";
 import { MCQsPage } from "../Comps/McqPage";
 import { StudyModePage } from "../Comps/StudyMode";
 import { FilesPage } from "../Comps/FilePage";
+import { FileUpload, GetAllBooks, GetAllSlides } from "../../Api/Apifun";
 const Dashboard = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -74,6 +75,37 @@ const Dashboard = () => {
       icon: BookOpen,
     },
   ]);
+  const getSlidesFun=async()=>{
+   try {
+     let resp=await GetAllSlides()
+    console.log("slides",resp);
+   } catch (error) {
+    console.log("error",error);
+    
+   }
+    
+  }
+  const GetBooksFun =async () => {
+    try {
+      let resp = await GetAllBooks();
+      console.log("kash", resp);
+    } catch (error) {
+      console.log("Getting error while getting books", error);
+    }
+  };
+  const Filefun=async()=>{
+    try {
+      let resp=await FileUpload() 
+
+        } catch (error) {
+      console.log("error",error);
+      
+    }
+  }
+  useEffect(() => {
+    GetBooksFun();
+    getSlidesFun();
+  }, []);
 
   // Check for mobile screen size
   useEffect(() => {
@@ -130,8 +162,6 @@ const Dashboard = () => {
       setIsMobileSidebarOpen(false);
     }
   };
-
-
 
   // Mobile Header Component
 
@@ -347,11 +377,16 @@ const Dashboard = () => {
             isMobile={isMobile}
           />
           <div className="flex-1 p-4 md:p-8">
-            {currentPage === "home" && <HomePage
-            setUploadedFiles={setUploadedFiles}
-                        setCurrentPage={setCurrentPage}
-setIsMobileSidebarOpen={setIsMobileSidebarOpen}
-            setIsUploadModalOpen={setIsUploadModalOpen} isMobile={isMobile} uploadedFiles={uploadedFiles} />}
+            {currentPage === "home" && (
+              <HomePage
+                setUploadedFiles={setUploadedFiles}
+                setCurrentPage={setCurrentPage}
+                setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+                setIsUploadModalOpen={setIsUploadModalOpen}
+                isMobile={isMobile}
+                uploadedFiles={uploadedFiles}
+              />
+            )}
             {currentPage === "study" && <StudyModePage isMobile={isMobile} />}
             {currentPage === "mcqs" && <MCQsPage isMobile={isMobile} />}
             {currentPage === "files" && <FilesPage isMobile={isMobile} />}
