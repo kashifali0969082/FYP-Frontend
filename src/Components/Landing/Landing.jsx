@@ -87,8 +87,18 @@ const LandingPage = () => {
     }, 20);
   };
 
-  const handleSignInWithGoogle = async() => {
-   let authUrl= await axios.get(`${url}/google/login`);
+  // const handleSignInWithGoogle = async() => {
+  //  let authUrl= await axios.get(`${url}/google/login`);
+  // };
+
+  function SignInGoogle() {
+ //   const navigate = useNavigate()
+    window.location.href = "https://api.adaptivelearnai.xyz/google/login";
+//     navigate("/oauth/callback")
+ }
+
+  const handleSignInWithGoogle = () => {
+    SignInGoogle();
   };
 
   const handleSmoothScroll = (e, targetId) => {
