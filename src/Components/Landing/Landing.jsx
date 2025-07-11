@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import "./Landing";
-import { googleauth } from "../apiclient/Googleauthapi";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
-const LandingPage = () => {
+
+  const LandingPage = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -91,9 +89,8 @@ const LandingPage = () => {
  
 
   function SignInGoogle() {
- //   const navigate = useNavigate()
-    window.location.href = "https://api.adaptivelearnai.xyz/google/login";
-//     navigate("/oauth/callback")
+ window.location.href = "https://api.adaptivelearnai.xyz/google/login";
+ 
  }
 
   const handleSignInWithGoogle = () => {
