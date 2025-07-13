@@ -43,41 +43,6 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState("home");
   const [isUploading, setIsUploading] = useState(false); // Add loading state
   const [uploadedFiles, setUploadedFiles] = useState([
-    {
-      id: 1,
-      name: "Advanced Mathematics.pdf",
-      type: "Book",
-      uploadDate: "2025-06-20",
-      icon: BookOpen,
-    },
-    {
-      id: 2,
-      name: "Physics Presentation.pptx",
-      type: "Presentation",
-      uploadDate: "2025-06-19",
-      icon: Presentation,
-    },
-    {
-      id: 3,
-      name: "Chemistry Notes.pdf",
-      type: "Notes",
-      uploadDate: "2025-06-18",
-      icon: FileText,
-    },
-    {
-      id: 4,
-      name: "Biology Diagrams.jpg",
-      type: "Notes",
-      uploadDate: "2025-06-17",
-      icon: Image,
-    },
-    {
-      id: 5,
-      name: "History Timeline.pdf",
-      type: "Book",
-      uploadDate: "2025-06-16",
-      icon: BookOpen,
-    },
   ]);
 
   // Function to validate TOC page range
@@ -187,46 +152,50 @@ const Dashboard = () => {
     try {
       const response = await GetAllSlides();
       const bookResponse = await GetAllBooks();
-      console.log("Slides:", response.data.presentations, bookResponse.data.books);
-      const presentations = response.data.presentations;
-const books = bookResponse.data.books;
-      const transformedFiles = [...presentations, ...books].map(item => {
-  // Common properties
-  const baseFile = {
-    id: item.id,
-    name: item.original_filename || item.file_name,
-    uploadDate: item.created_at.split('T')[0], // Extract date part only
-  };
-
-  // Type-specific properties
-  if (item.type === 'presentation') {
-    return {
-      ...baseFile,
-      type: 'Presentation',
-      icon: Presentation, // Make sure to import your icon component
-      meta: {
-        totalSlides: item.total_slides,
-        hasSpeakerNotes: item.has_speaker_notes
-      }
-    };
-  } else if (item.type === 'book') {
-    return {
-      ...baseFile,
-      type: 'Book',
-      icon: BookOpen, // Make sure to import your icon component
-      meta: {
-        s3Key: item.s3_key
-      }
-    };
-  }
   
-  return baseFile;
-})
-// Sort by upload date (newest first)
-.sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
+      const presentations = response.data.presentations;
+      const books = bookResponse.data.books;
+      const transformedFiles = [...presentations, ...books]
+        .map((item) => {
+          // Common properties
+          const baseFile = {
+            id: item.id,
+            name: item.original_filename || item.file_name,
+            uploadDate: item.created_at.split("T")[0], // Extract date part only
+          };
 
-// Update state
-setUploadedFiles(transformedFiles);
+          // Type-specific properties
+          if (item.type === "presentation") {
+            return {
+              ...baseFile,
+              type: "Presentation",
+              icon: Presentation, // Make sure to import your icon component
+              meta: {
+                totalSlides: item.total_slides,
+                hasSpeakerNotes: item.has_speaker_notes,
+              },
+            };
+          } else if (item.type === "book") {
+            return {
+              ...baseFile,
+              type: "Book",
+              icon: BookOpen, // Make sure to import your icon component
+              meta: {
+                s3Key: item.s3_key,
+              },
+            };
+          }
+
+          return baseFile;
+        })
+        // Sort by upload date (newest first)
+        .sort(
+          (a, b) =>
+            new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
+        );
+
+      // Update state
+      setUploadedFiles(transformedFiles);
     } catch (error) {
       console.error("Error getting slides:", error);
     }
