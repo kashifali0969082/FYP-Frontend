@@ -566,7 +566,9 @@ const Dashboard = () => {
             )}
             {currentPage === "study" && <StudyModePage isMobile={isMobile} />}
             {currentPage === "mcqs" && <MCQsPage isMobile={isMobile} />}
-            {currentPage === "files" && <FilesPage isMobile={isMobile} />}
+            {currentPage === "files" && <FilesPage 
+                            setIsUploadModalOpen={setIsUploadModalOpen}
+            isMobile={isMobile} />}
           </div>
         </div>
       </div>
