@@ -1,6 +1,13 @@
 import { Menu } from "lucide-react";
-export const MobileHeader = () => {
-     const toggleMobileSidebar = ({isMobile,setIsMobileSidebarOpen,setIsSidebarCollapsed,isMobileSidebarOpen,isSidebarCollapsed}) => {
+
+export const MobileHeader = ({ 
+  isMobile, 
+  setIsMobileSidebarOpen, 
+  setIsSidebarCollapsed, 
+  isMobileSidebarOpen, 
+  isSidebarCollapsed 
+}) => {
+  const toggleMobileSidebar = () => {
     if (isMobile) {
       setIsMobileSidebarOpen(!isMobileSidebarOpen);
     } else {
