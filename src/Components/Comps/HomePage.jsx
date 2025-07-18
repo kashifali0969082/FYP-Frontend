@@ -9,12 +9,11 @@ import {
   Target,
   TrendingUp,
   Loader2,
-  BookOpen,
   X,
 } from "lucide-react";
 import { deleteDocument } from "../../Api/Apifun";
-import { useState,useEffect } from "react";
-import { GetAllSlides,GetAllBooks } from "../../Api/Apifun";
+import { useState } from "react";
+
 export const HomePage = ({
   setUploadedFiles,
   setIsUploadModalOpen,
@@ -28,61 +27,7 @@ export const HomePage = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  useEffect(() => {
-    getSlidesFun();
-  }, []);
-    const getSlidesFun = async () => {
-    try {
-      const response = await GetAllSlides();
-      const bookResponse = await GetAllBooks();
-  
-      const presentations = response.data.presentations;
-      const books = bookResponse.data.books;
-      const transformedFiles = [...presentations, ...books]
-        .map((item) => {
-          // Common properties
-          const baseFile = {
-            id: item.id,
-            name: item.original_filename || item.file_name,
-            uploadDate: item.created_at.split("T")[0], // Extract date part only
-          };
 
-          // Type-specific properties
-          if (item.type === "presentation") {
-            return {
-              ...baseFile,
-              type: "Presentation",
-              icon: Presentation, // Make sure to import your icon component
-              meta: {
-                totalSlides: item.total_slides,
-                hasSpeakerNotes: item.has_speaker_notes,
-              },
-            };
-          } else if (item.type === "book") {
-            return {
-              ...baseFile,
-              type: "Book",
-              icon: BookOpen, // Make sure to import your icon component
-              meta: {
-                s3Key: item.s3_key,
-              },
-            };
-          }
-
-          return baseFile;
-        })
-        // Sort by upload date (newest first)
-        .sort(
-          (a, b) =>
-            new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
-        );
-
-      // Update state
-      setUploadedFiles(transformedFiles);
-    } catch (error) {
-      console.error("Error getting slides:", error);
-    }
-  };
   const openInStudyMode = (file) => {
     setCurrentPage("study");
     if (isMobile) {

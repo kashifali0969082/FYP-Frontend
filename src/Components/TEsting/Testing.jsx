@@ -42,8 +42,7 @@ const Dashboard = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("home");
   const [isUploading, setIsUploading] = useState(false); // Add loading state
-  const [uploadedFiles, setUploadedFiles] = useState([
-  ]);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   // Function to validate TOC page range
   const validateTocPageRange = (range) => {
@@ -152,7 +151,7 @@ const Dashboard = () => {
     try {
       const response = await GetAllSlides();
       const bookResponse = await GetAllBooks();
-  
+
       const presentations = response.data.presentations;
       const books = bookResponse.data.books;
       const transformedFiles = [...presentations, ...books]
@@ -566,9 +565,9 @@ const Dashboard = () => {
             )}
             {currentPage === "study" && <StudyModePage isMobile={isMobile} />}
             {currentPage === "mcqs" && <MCQsPage isMobile={isMobile} />}
-            {currentPage === "files" && <FilesPage 
-                            setIsUploadModalOpen={setIsUploadModalOpen}
-            isMobile={isMobile} />}
+            {currentPage === "files" && (
+              <FilesPage setIsUploadModalOpen={setIsUploadModalOpen} />
+            )}
           </div>
         </div>
       </div>
