@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import "./Landing";
 
 
@@ -89,7 +89,10 @@ import "./Landing";
  
 
   function SignInGoogle() {
- window.location.href = "https://api.adaptivelearnai.xyz/google/login";
+
+    window.location.href = "https://api.adaptivelearnai.xyz/google/login?redirect_origin=http://localhost:3000 "
+
+
  
  }
 

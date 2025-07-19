@@ -5,17 +5,22 @@ import LandingPage from "./Components/Landing/Landing";
 import ErrorComponent from "./Components/Landing/ErrorComponent";
 import Testing from "./Components/TEsting/Testing";
 import Dashboard from "./Components/TEsting/Testing";
+import Streaks from "./Components/TEsting/Streaks";
+import { StreakComponent } from "./Components/TEsting/StreakComponent";
+import { AuthProvider } from "./Components/Security/Authcontext";
 
 function App() {
   return (
+    <AuthProvider>
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
          <Route path="/*" element={<ErrorComponent />} />
         <Route path="/dashboard" element={< Dashboard/>} />
-
+        
       </Routes>
     </Router>
+    </AuthProvider>
   );
 }
 

@@ -9,6 +9,15 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react";
+
+import { StreakComponent} from "../TEsting/StreakComponent";
+import { useContext, useEffect, useState } from "react";
+import { streakapi } from "../apiclient/Studystreakapi";
+import { useParams } from "react-router-dom";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
+import { AuthContext } from "../Security/Authcontext";
+
 export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploadedFiles,setCurrentPage,setIsMobileSidebarOpen}) => {
     const openInStudyMode = (file) => {
     setCurrentPage("study");
@@ -20,6 +29,95 @@ export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploade
     const deleteFile = (id) => {
     setUploadedFiles(uploadedFiles.filter((file) => file.id !== id));
   };
+  //   apis
+useEffect(() => {
+    try {
+       streakApiResponse();
+    } catch (error) {
+      console.error("Error fetching streak:", error);
+    }
+}, []);
+
+function streakApiResponse(values) {
+  console.log("called");
+
+
+  return streakapi()
+    .then((response) => {
+      console.log(response);
+        const { current_streak, longest_streak, last_active_date } = response.data;
+
+      const streakdata = {
+        current_streak,
+        longest_streak,
+        last_active_date,
+      };
+      console.log(streakdata)
+    })
+    .catch((error) => {
+      console.log("API error in streakApiResponse:", error);
+      throw error;  
+    });
+} // end api  ........
+// const [username,setusername] = useState('')   // this method is for testing purpose 
+//  useEffect(() => {
+//   const hardcodedToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZmE2YWQ4Zi0zNTgyLTQzZmItOWEwYy02YTI5NzJkNGMyYWIiLCJlbWFpbCI6ImYyMDIxMDY1MTEyQGdtYWlsLmNvbSIsIm5hbWUiOiJIYXJyaXMgaWpheiIsInByb2ZpbGVfcGljIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSVBQaWRoUERlLVR2bDAzakx2THplT1N6OGgwSWE2X2gzR0lCU2pFeTVscGFqSFpnPXM5Ni1jIiwiZXhwIjoxNzUzNDc2MTM0fQ.KbkiS5vQn2zaSTUP_3cxLtkrzVkCePEhmicgYSfjH9k";
+
+//     if (hardcodedToken) {
+//       // Save token to cookie
+//       Cookies.set("access_token", hardcodedToken, { expires: 7 });
+
+//       try {
+//         const decoded = jwtDecode(hardcodedToken);
+//         setusername(decoded.name); // Use decoded.email if you want email
+//       } catch (err) {
+//         console.error("Token decode error:", err);
+//       }
+//     } else {
+//       // Already stored token in cookie
+//       const savedToken = Cookies.get("access_token");
+//       if (savedToken) {
+//         try {
+//           const decoded = jwtDecode(savedToken);
+//           setusername(decoded.name);
+//         } catch (err) {
+//           console.error("Decode error from cookie:", err);
+//         }
+//       }
+//     }
+//   }, []);
+
+  // useEffect(() => {
+ 
+  //   const urlParams = new URLSearchParams(window.location.search);
+  //   const tokenFromURL = urlParams.get("token");
+
+  //   if (tokenFromURL) {
+  //     Cookies.set("access_token", tokenFromURL, { expires: 7 });
+
+  //     try {
+  //       const decoded = jwtDecode(tokenFromURL);
+  //       setusername(decoded.name); // or decoded.email
+  //     } catch (err) {
+  //       console.error("Token decode error:", err);
+  //     }
+
+    
+  //     window.history.replaceState({}, document.title, "/");  // optional
+  //   } else {
+     
+  //     const savedToken = Cookies.get("access_token");
+  //     if (savedToken) {
+  //       try {
+  //         const decoded = jwtDecode(savedToken);
+  //         setusername(decoded.name);
+  //       } catch (err) {
+  //         console.error("Decode error from cookie:", err);
+  //       }
+  //     }
+  //   }
+  // }, []);
+const {username} = useContext(AuthContext)
   return(
     <div className="flex flex-col xl:flex-row gap-8">
       {/* Dashboard Area */}
@@ -27,7 +125,7 @@ export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploade
         {/* Welcome Section with Gradient */}
         <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 p-6 md:p-8 text-white">
           <div className="relative z-10">
-            <h2 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4">Welcome back, John!</h2>
+            <h2 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4">Welcome back, {username}</h2>
             <p className="text-lg md:text-xl text-blue-100 mb-4 md:mb-6">
               Continue your learning journey with AI
             </p>
@@ -104,26 +202,10 @@ export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploade
       {/* Right Panel - Hidden on mobile, stacked on tablet */}
       <div className="w-full xl:w-80 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-6 xl:space-y-0">
         {/* Streak Tracker */}
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl md:rounded-2xl blur-lg opacity-20"></div>
-          <div className="relative bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl md:rounded-2xl p-4 md:p-6">
-            <div className="flex items-center space-x-3 mb-4 md:mb-6">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg md:rounded-xl flex items-center justify-center">
-                <Flame size={isMobile ? 20 : 24} className="text-white" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-white text-sm md:text-base">Study Streak</h3>
-                <p className="text-xs md:text-sm text-slate-400">Keep it up!</p>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent mb-2">7</div>
-              <p className="text-xs md:text-sm text-slate-400">
-                You've studied 7 days in a row!
-              </p>
-            </div>
-          </div>
-        </div>
+        <div>
+       <StreakComponent streakData={streakApiResponse} />
+       
+</div>
 
         {/* Analytics */}
         <div className="relative group">

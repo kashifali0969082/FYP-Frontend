@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useContext } from "react";
 import {
   BookOpen,
   FileQuestion,
@@ -23,12 +23,15 @@ import {
   Menu,
   ChevronLeft,
 } from "lucide-react";
+
 import { MobileHeader } from "../Comps/MobileHeader";
 import { HomePage } from "../Comps/HomePage";
 import { MCQsPage } from "../Comps/McqPage";
 import { StudyModePage } from "../Comps/StudyMode";
 import { FilesPage } from "../Comps/FilePage";
 import { FileUpload, GetAllBooks, GetAllSlides } from "../../Api/Apifun";
+import { useNavigate, useParams } from "react-router-dom";
+import { AuthContext } from "../Security/Authcontext";
 
 const Dashboard = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -300,6 +303,9 @@ setUploadedFiles(transformedFiles);
     }
   };
 
+
+
+
   const handleModalClose = () => {
     setIsUploadModalOpen(false);
     setSelectedFileType("");
@@ -380,7 +386,14 @@ setUploadedFiles(transformedFiles);
         setSelectedFile(null);
     }
   };
-
+ 
+  const {username} = useContext(AuthContext)
+ 
+const navigate = useNavigate()  
+  function logouthandler(){
+navigate("/")
+  }
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Background decorative elements */}
@@ -530,6 +543,7 @@ setUploadedFiles(transformedFiles);
                       ? "bg-gradient-to-r from-blue-500 to-purple-500"
                       : "bg-slate-600"
                   }`}
+                  
                 >
                   <span
                     className={`inline-block h-3 w-3 md:h-4 md:w-4 transform rounded-full bg-white transition-transform ${
@@ -554,7 +568,7 @@ setUploadedFiles(transformedFiles);
               {(!isSidebarCollapsed || isMobile) && (
                 <div>
                   <p className="font-medium text-white text-sm md:text-base">
-                    John Doe
+                    {username}
                   </p>
                   <p className="text-xs md:text-sm text-slate-400">Student</p>
                 </div>
@@ -566,7 +580,7 @@ setUploadedFiles(transformedFiles);
               className={`flex items-center ${
                 isSidebarCollapsed && !isMobile ? "justify-center" : "space-x-2"
               } w-full px-2 md:px-3 py-2 rounded-lg hover:bg-red-500/20 hover:text-red-400 text-slate-300 transition-colors`}
-            >
+            onClick={logouthandler}>
               <LogOut size={16} />
               {(!isSidebarCollapsed || isMobile) && (
                 <span className="text-sm md:text-base">Logout</span>
