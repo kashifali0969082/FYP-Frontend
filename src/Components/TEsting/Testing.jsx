@@ -239,6 +239,7 @@ setUploadedFiles(transformedFiles);
 
   useEffect(() => {
     getSlidesFun();
+              setShowForm(true);
   }, []);
 
   useEffect(() => {
@@ -406,7 +407,7 @@ navigate("/")
       try {
         const response = await learningProfilestatusapi();
         if (response?.data?.status === false) {
-          setShowForm(true);
+          // setShowForm(true);
         }
       } catch (err) {
         console.error("Profile status error:", err);
@@ -424,10 +425,10 @@ navigate("/")
   navigate("/dashboard")
   };
 
-  if (loading) return <div>loading..</div>
+  // if (loading) return <div>loading..</div>
 
 
-  if (showForm) return <LearningProfileForm onComplete={handleFormComplete}/>;
+  if (showForm) return <LearningProfileForm onComplete={handleFormComplete} setShowForm={setShowForm}/>;
 
 
   return (
