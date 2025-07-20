@@ -13,10 +13,12 @@ import {
 import { StreakComponent} from "../TEsting/StreakComponent";
 import { useContext, useEffect, useState } from "react";
 import { streakapi } from "../apiclient/Studystreakapi";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { AuthContext } from "../Security/Authcontext";
+import LearningProfileForm from "../TEsting/LearningProfileForm";
+import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
 
 export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploadedFiles,setCurrentPage,setIsMobileSidebarOpen}) => {
     const openInStudyMode = (file) => {
@@ -118,8 +120,11 @@ function streakApiResponse(values) {
   //   }
   // }, []);
 const {username} = useContext(AuthContext)
+
+
   return(
     <div className="flex flex-col xl:flex-row gap-8">
+
       {/* Dashboard Area */}
       <div className="flex-1 space-y-8">
         {/* Welcome Section with Gradient */}

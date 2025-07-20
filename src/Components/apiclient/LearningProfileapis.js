@@ -16,7 +16,7 @@ export const learningProfilestatusapi = () => apiclient.get(`/learning-profile/f
 //       },
 //     })
 
-export const createlearningprofileformapi = () => apiclient.post(`/learning-profile/form`,{
+export const createlearningprofileformapi = () => apiclient.post(`/learning-profile/form`,null,{
       headers: {
         Authorization: `Bearer ${token}`,
       },

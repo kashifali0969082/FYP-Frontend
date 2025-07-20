@@ -8,6 +8,7 @@ import Dashboard from "./Components/TEsting/Testing";
 import Streaks from "./Components/TEsting/Streaks";
 import { StreakComponent } from "./Components/TEsting/StreakComponent";
 import { AuthProvider } from "./Components/Security/Authcontext";
+import LearningProfileForm from "./Components/TEsting/LearningProfileForm";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
          <Route path="/*" element={<ErrorComponent />} />
         <Route path="/dashboard" element={< Dashboard/>} />
+        <Route path="/form" element={< LearningProfileForm/>} />
         
       </Routes>
     </Router>

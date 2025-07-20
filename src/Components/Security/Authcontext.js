@@ -6,10 +6,12 @@ export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
    const [username, setusername] = useState('');
+   const [tokenChecked, setTokenChecked] = useState(false);
   useEffect(() => {
  
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromURL = urlParams.get("token");
+    console.log(tokenFromURL)
 
     if (tokenFromURL) {
       Cookies.set("access_token", tokenFromURL, { expires: 7 });
@@ -37,9 +39,10 @@ export function AuthProvider({ children }) {
         }
       }
     }
+     setTokenChecked(true)
   }, []);
   return (
-    <AuthContext.Provider value={{ username }}>
+    <AuthContext.Provider value={{ username , tokenChecked}}>
       {children}
     </AuthContext.Provider>
   );

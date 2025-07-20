@@ -1,13 +1,32 @@
 import React, { useState } from 'react';
 import { ChevronRight, Brain, Clock, Music, Target, Eye, PenTool, Hand } from 'lucide-react';
+import { createlearningprofileformapi } from '../apiclient/LearningProfileapis';
+import { useNavigate } from 'react-router-dom';
 
-const LearningProfileForm = () => {
+const LearningProfileForm = ({onComplete}) => {
   const [currentSection, setCurrentSection] = useState(1);
   const [responses, setResponses] = useState({
     section_1: {},
     section_2: {}
   });
   const [submitted, setSubmitted] = useState(false);
+ const handleSubmit = async () => {
+   
+    if (isSection1Complete() && isSection2Complete()) {
+         try {
+      const response = await createlearningprofileformapi();
+      console.log("Profile form created:", response.data);
+      onComplete()
+    //   navigate("/dashboard")
+    } catch (error) {
+      console.error("Form creation failed:", error);
+    }
+         
+      setSubmitted(true);
+      // Here you would typically send the data to a server
+      console.log('Form submitted:', responses);
+    }
+  };
 
   const LEARNING_PROFILE_FORM = {
     "section_1": {
@@ -61,7 +80,7 @@ const LearningProfileForm = () => {
       ]
     }
   };
-
+ 
   const handleRatingChange = (questionIndex, rating) => {
     setResponses(prev => ({
       ...prev,
@@ -107,14 +126,9 @@ const LearningProfileForm = () => {
   const isSection2Complete = () => {
     return Object.keys(responses.section_2).length === LEARNING_PROFILE_FORM.section_2.questions.length;
   };
+//  const navigate = useNavigate();
 
-  const handleSubmit = () => {
-    if (isSection1Complete() && isSection2Complete()) {
-      setSubmitted(true);
-      // Here you would typically send the data to a server
-      console.log('Form submitted:', responses);
-    }
-  };
+  
 
   const calculateResults = () => {
     const styleScores = { Visual: 0, ReadingWriting: 0, Kinesthetic: 0 };

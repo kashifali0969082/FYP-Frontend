@@ -32,6 +32,8 @@ import { FilesPage } from "../Comps/FilePage";
 import { FileUpload, GetAllBooks, GetAllSlides } from "../../Api/Apifun";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../Security/Authcontext";
+import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
+import LearningProfileForm from "./LearningProfileForm";
 
 const Dashboard = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -389,12 +391,47 @@ setUploadedFiles(transformedFiles);
  
   const {username} = useContext(AuthContext)
  
-const navigate = useNavigate()  
+  const navigate = useNavigate()
   function logouthandler(){
 navigate("/")
   }
+  const { tokenChecked } = useContext(AuthContext);
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!tokenChecked) return;
+
+    const checkLearningProfile = async () => {
+      try {
+        const response = await learningProfilestatusapi();
+        if (response?.data?.status === false) {
+          setShowForm(true);
+        }
+      } catch (err) {
+        console.error("Profile status error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkLearningProfile();
+  }, [tokenChecked]);
   
+
+  const handleFormComplete = () => {
+    setShowForm(false); // show welcome screen after form is submitted
+  navigate("/dashboard")
+  };
+
+  if (loading) return <div>loading..</div>
+
+
+  if (showForm) return <LearningProfileForm onComplete={handleFormComplete}/>;
+
+
   return (
+    
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Background decorative elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -806,5 +843,6 @@ navigate("/")
     </div>
   );
 };
+
 
 export default Dashboard;
