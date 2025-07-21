@@ -34,6 +34,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../Security/Authcontext";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
 import LearningProfileForm from "./LearningProfileForm";
+import { getCookie, setCookie } from "../Security/cookie";
 
 const Dashboard = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -389,46 +390,49 @@ setUploadedFiles(transformedFiles);
         setSelectedFile(null);
     }
   };
- 
+ //     My work ///////////////////////////////////////////////////////////////////////////////////////////////////////
   const {username} = useContext(AuthContext)
  
   const navigate = useNavigate()
   function logouthandler(){
 navigate("/")
   }
-  const { tokenChecked } = useContext(AuthContext);
+  
   const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(true);
+  
 
   useEffect(() => {
-    if (!tokenChecked) return;
 
     const checkLearningProfile = async () => {
+       const isSubmitted = getCookie("learningProfileSubmitted"); // Check if cookie exists
+
+    // If cookie exists, don't even check API — skip showing form
+    if (isSubmitted) return;
       try {
         const response = await learningProfilestatusapi();
         if (response?.data?.status === false) {
-          // setShowForm(true);
+          console.log(response.data)
+           setShowForm(true);
         }
       } catch (err) {
         console.error("Profile status error:", err);
-      } finally {
-        setLoading(false);
       }
     };
 
-    checkLearningProfile();
-  }, [tokenChecked]);
+    if(username) checkLearningProfile();
+  }, [username]);
   
 
   const handleFormComplete = () => {
+    setCookie("learningProfileSubmitted", "true", 365);
     setShowForm(false); // show welcome screen after form is submitted
-  navigate("/dashboard")
+  // navigate("/dashboard")
   };
 
   // if (loading) return <div>loading..</div>
 
 
-  if (showForm) return <LearningProfileForm onComplete={handleFormComplete} setShowForm={setShowForm}/>;
+  if (showForm) return <LearningProfileForm onComplete={handleFormComplete}/>;
 
 
   return (

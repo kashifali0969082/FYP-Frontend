@@ -19,6 +19,7 @@ export function AuthProvider({ children }) {
       try {
         const decoded = jwtDecode(tokenFromURL);
         setusername(decoded.name); // or decoded.email
+        console.log(username)
         
       } catch (err) {
         console.error("Token decode error:", err);
@@ -40,6 +41,7 @@ export function AuthProvider({ children }) {
       }
     }
      setTokenChecked(true)
+     console.log(tokenChecked)
   }, []);
   return (
     <AuthContext.Provider value={{ username , tokenChecked}}>

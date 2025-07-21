@@ -11,25 +11,87 @@ import {
 } from "lucide-react";
 import { createlearningprofileformapi } from "../apiclient/LearningProfileapis";
 import { useNavigate } from "react-router-dom";
-
-const LearningProfileForm = ({ onComplete, setShowForm }) => {
+import Cookies from "js-cookie";
+import { setCookie } from "../Security/cookie";
+const LearningProfileForm = ({ onComplete}) => {
   const [currentSection, setCurrentSection] = useState(1);
   const [responses, setResponses] = useState({
     section_1: {},
     section_2: {},
   });
   const [submitted, setSubmitted] = useState(false);
+   const formData = {
+    ratings: [
+      {
+        question: "I understand better with diagrams or visual aids.",
+        style: "Visual",
+        score: 5,
+      },
+      {
+        question: "Watching videos or animations helps me learn faster.",
+        style: "Visual",
+        score: 4,
+      },
+      {
+        question: "I learn effectively by reading or writing about a topic.",
+        style: "ReadingWriting",
+        score: 3,
+      },
+      {
+        question: "I prefer written instructions over videos or explanations.",
+        style: "ReadingWriting",
+        score: 4,
+      },
+      {
+        question: "I understand best by doing hands-on activities.",
+        style: "Kinesthetic",
+        score: 2,
+      },
+      {
+        question: "I enjoy solving real-world problems or doing experiments.",
+        style: "Kinesthetic",
+        score: 3,
+      },
+    ],
+    mcqs: [
+      {
+        question: "What time of day do you feel most productive?",
+        answer: "Late morning",
+      },
+      {
+        question: "How do you usually study?",
+        answer: "In silence",
+      },
+      {
+        question: "What is your main learning goal?",
+        answer: "Deep understanding",
+      },
+      {
+        question: "What distracts you the most during study?",
+        answer: "Phone notifications",
+      },
+    ],
+  };
+  console.log(formData)
   const handleSubmit = async () => {
+ //  const token = Cookies.get("access_token")
     if (isSection1Complete() && isSection2Complete()) {
       try {
-        setShowForm(false);
-        const response = await createlearningprofileformapi();
-        console.log("Profile form created:", response.data);
-        onComplete();
+        //setShowForm(false)
+        const response = await createlearningprofileformapi(formData)
+            //console.log(response.data.formData)
+            setCookie("learningProfileSubmitted", "true", 365);
+              onComplete();  // hide form and then go to dashbord
+        //console.log("Profile form created:", response.data);
+       // onComplete();
         //   navigate("/dashboard")
-      } catch (error) {
-        console.error("Form creation failed:", error);
-      }
+      }catch (error) {
+    if (error.response) {
+      console.error("API Error:", error.response.data);
+    } else {
+      console.error("Unexpected Error:", error.message);
+    }
+  }
 
       setSubmitted(true);
       // Here you would typically send the data to a server

@@ -41,12 +41,12 @@ useEffect(() => {
 }, []);
 
 function streakApiResponse(values) {
-  console.log("called");
+  console.log("called streak data");
 
 
   return streakapi()
     .then((response) => {
-      console.log(response);
+     // console.log(response);
         const { current_streak, longest_streak, last_active_date } = response.data;
 
       const streakdata = {
@@ -120,7 +120,7 @@ function streakApiResponse(values) {
   //   }
   // }, []);
 const {username} = useContext(AuthContext)
-
+console.log(username)
 
   return(
     <div className="flex flex-col xl:flex-row gap-8">
