@@ -29,12 +29,13 @@ import { HomePage } from "../Comps/HomePage";
 import { MCQsPage } from "../Comps/McqPage";
 import { StudyModePage } from "../Comps/StudyMode";
 import { FilesPage } from "../Comps/FilePage";
-import { FileUpload, GetAllBooks, GetAllSlides } from "../../Api/Apifun";
+import { GetAllBooks, GetAllSlides } from "../../Api/Apifun";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../Security/Authcontext";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
 import LearningProfileForm from "./LearningProfileForm";
 import { getCookie, setCookie } from "../Security/cookie";
+import { FileUpload } from "../apiclient/Filesapi";
 
 const Dashboard = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -128,52 +129,49 @@ const Dashboard = () => {
   };
 
   // Fixed file upload function
-  const uploadFile = async (fileData) => {
-    try {
-      setIsUploading(true);
+ const uploadFile = async (fileData) => {
+  try {
+    setIsUploading(true);
 
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append("file", fileData.file);
-      formData.append("document_type", fileData.document_type);
+    const formData = new FormData();
+    formData.append("file", fileData.file);
+    formData.append("document_type", fileData.document_type);
 
-      // Only add toc_pages if it's a book and has valid TOC
-      if (fileData.document_type === "book" && fileData.toc_pages) {
-        formData.append("toc_pages", fileData.toc_pages);
-      }
-
-      // Log the FormData contents for debugging
-      console.log("FormData contents:");
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value);
-      }
-
-      const response = await FileUpload(formData);
-      alert("Upload successful:", response.message);
-
-      // Update UI with new file
-      const newFile = {
-        id: uploadedFiles.length + 1,
-        name: fileData.file.name,
-        type: fileData.document_type,
-        uploadDate: new Date().toISOString().split("T")[0],
-        icon: getFileIcon(fileData.document_type),
-      };
-
-      setUploadedFiles([newFile, ...uploadedFiles]);
-
-      // Reset form
-      handleModalClose();
-
-      return response;
-    } catch (error) {
-      console.error("Upload failed:", error);
-      alert("Upload failed. Please try again.");
-      throw error;
-    } finally {
-      setIsUploading(false);
+    if (fileData.document_type === "book" && fileData.toc_pages) {
+      formData.append("toc_pages", fileData.toc_pages);
     }
-  };
+
+    // Debug log
+    console.log("FormData contents:");
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+
+    // Upload to API
+    const response = await FileUpload(formData);
+    alert(`Upload successful: ${response.message}`);
+
+    // Add new file to UI list
+    const newFile = {
+      id: uploadedFiles.length + 1,
+      name: fileData.file.name,
+      type: fileData.document_type,
+      uploadDate: new Date().toISOString().split("T")[0],
+      icon: getFileIcon(fileData.document_type),
+    };
+
+    setUploadedFiles([newFile, ...uploadedFiles]);
+    handleModalClose();
+
+    return response;
+  } catch (error) {
+    console.error("Upload failed:", error);
+    alert(`Upload failed: ${error?.response?.data?.message || error.message}`);
+    throw error;
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   // Helper function to get file icon
   const getFileIcon = (type) => {
@@ -261,6 +259,8 @@ setUploadedFiles(transformedFiles);
   };
 
   const handleFileUpload = async () => {
+
+    
     // Validation
     if (!selectedFileType) {
       alert("Please select a file type");
@@ -374,17 +374,22 @@ setUploadedFiles(transformedFiles);
           setSelectedFile(file);
         }
         break;
-      case "Notes":
-        if (
-          validateFileType(
-            file.type,
-            ["image/png", "image/jpeg", "image/jpg", "application/pdf"],
-            "PNG, JPEG, JPG, or PDF files"
-          )
-        ) {
-          setSelectedFile(file);
-        }
-        break;
+     case "Notes":
+  if (
+    validateFileType(
+      file.type,
+      [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+        "text/plain", // .txt
+      ],
+      "PDF, DOCX, or TXT files"
+    )
+  ) {
+    setSelectedFile(file);
+  }
+  break;
+
       default:
         alert("Please select a file type before uploading");
         setSelectedFile(null);
@@ -738,7 +743,7 @@ navigate("/")
                       </span>
                     </div>
                     <p className="text-xs md:text-sm mt-1 text-slate-400">
-                      PDF (no TOC), JPG, JPEG, or PNG
+                      .pdf , docx , .txt
                     </p>
                   </button>
                 </div>

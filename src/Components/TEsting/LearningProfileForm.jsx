@@ -13,7 +13,7 @@ import { createlearningprofileformapi } from "../apiclient/LearningProfileapis";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { setCookie } from "../Security/cookie";
-const LearningProfileForm = ({ onComplete}) => {
+const LearningProfileForm = ({ onComplete }) => {
   const [currentSection, setCurrentSection] = useState(1);
   const [responses, setResponses] = useState({
     section_1: {},
