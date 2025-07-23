@@ -617,7 +617,7 @@ useEffect(() => {
           <div className="p-4 md:p-6 border-b border-slate-700/50 flex items-center justify-between">
             {(!isSidebarCollapsed || isMobile) && (
               <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                LearnAI
+                AdaptiveLearnAI
               </h1>
             )}
             {!isMobile && (
