@@ -1,8 +1,10 @@
-export default function Streaks(){
+import React from 'react';
+import LeaderboardPage from '../Comps/LeaderboardPage';
 
-    return(
-        <div>
-            <h3>Streaks Page</h3>
+export default function Streaks() {
+    return (
+        <div className="p-6">
+            <LeaderboardPage isMobile={false} />
         </div>
-    )
+    );
 }

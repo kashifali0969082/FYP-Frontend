@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Menu,
   ChevronLeft,
+  Trophy,
 } from "lucide-react";
 
 import { MobileHeader } from "../Comps/MobileHeader";
@@ -29,10 +30,12 @@ import { HomePage } from "../Comps/HomePage";
 import { MCQsPage } from "../Comps/McqPage";
 import { StudyModePage } from "../Comps/StudyMode";
 import { FilesPage } from "../Comps/FilePage";
+import LeaderboardPage from "../Comps/LeaderboardPage";
 import { GetAllBooks, GetAllSlides } from "../../Api/Apifun";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../Security/Authcontext";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
+import { userapi } from "../apiclient/Studystreakapi";
 import LearningProfileForm from "./LearningProfileForm";
 import { getCookie, setCookie } from "../Security/cookie";
 import { FileUpload } from "../apiclient/Filesapi";
@@ -49,6 +52,18 @@ const Dashboard = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("home");
   const [isUploading, setIsUploading] = useState(false); // Add loading state
+  
+  // User data state for sidebar
+  const [userData, setUserData] = useState({
+    name: "",
+    email: "",
+    profile_pic: "",
+    id: ""
+  });
+  
+  // Loading state for user data
+  const [isUserDataLoading, setIsUserDataLoading] = useState(true);
+  
   const [uploadedFiles, setUploadedFiles] = useState([
     {
       id: 1,
@@ -237,9 +252,49 @@ setUploadedFiles(transformedFiles);
   };
 
   useEffect(() => {
-    getSlidesFun();
-              setShowForm(true);
+    // Call user API first for better UX
+    fetchUserData().finally(() => {
+      // Then call slides API
+      getSlidesFun();
+    });
+    // setShowForm(true);
   }, []);
+
+  // User API function for sidebar
+  const fetchUserData = () => {
+    console.log("🔧 Testing.jsx - fetchUserData called - starting user data fetch for sidebar");
+    setIsUserDataLoading(true);
+
+    return userapi()
+      .then((response) => {
+        console.log("🔧 Testing.jsx - Sidebar User API Response:", response.data);
+        const { id, email, name, profile_pic } = response.data;
+        
+        console.log("🔧 Testing.jsx - Extracted values for sidebar:");
+        console.log("  - id:", id);
+        console.log("  - email:", email);
+        console.log("  - name:", name);
+        console.log("  - profile_pic:", profile_pic);
+        
+        const userInfo = {
+          id,
+          email,
+          name,
+          profile_pic
+        };
+        
+        console.log("🔧 Testing.jsx - Setting userData to:", userInfo);
+        setUserData(userInfo);
+        setIsUserDataLoading(false);
+        return userInfo;
+      })
+      .catch((error) => {
+        console.log("🔧 Testing.jsx - API error in sidebar fetchUserData:", error);
+        setIsUserDataLoading(false);
+        // Keep default user data on error
+        throw error;
+      });
+  };
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -397,6 +452,10 @@ setUploadedFiles(transformedFiles);
   };
  //     My work ///////////////////////////////////////////////////////////////////////////////////////////////////////
   const {username} = useContext(AuthContext)
+  
+  // Debug userData in sidebar
+  console.log("Testing.jsx - username from context:", username)
+  console.log("Testing.jsx - userData state:", userData)
  
   const navigate = useNavigate()
   function logouthandler(){
@@ -406,26 +465,39 @@ navigate("/")
   const [showForm, setShowForm] = useState(false);
   
 
-  useEffect(() => {
+useEffect(() => {
+  const checkLearningProfile = async () => {
+    const isSubmitted = getCookie("learningProfileSubmitted");
+    console.log("Cookie value for learningProfileSubmitted:", isSubmitted);
+    
+    if (isSubmitted === "true") {
+      console.log("Using cookie value - form already submitted");
+      setShowForm(false);
+      return;
+    }
 
-    const checkLearningProfile = async () => {
-       const isSubmitted = getCookie("learningProfileSubmitted"); // Check if cookie exists
-
-    // If cookie exists, don't even check API — skip showing form
-    if (isSubmitted) return;
-      try {
-        const response = await learningProfilestatusapi();
-        if (response?.data?.status === false) {
-          console.log(response.data)
-           setShowForm(true);
+    try {
+      console.log("Making API call to check learning profile status");
+      const response = await learningProfilestatusapi();
+      console.log("API Response for learning profile status:", response?.data);
+      
+      if (response?.data) {
+        setShowForm(!response.data.submitted);
+        if (response.data.submitted) {
+          console.log("Setting cookie based on API response");
+          setCookie("learningProfileSubmitted", "true", 365);
         }
-      } catch (err) {
-        console.error("Profile status error:", err);
       }
-    };
+    } catch (err) {
+      console.error("Profile status error:", err);
+      console.log("Showing form due to API error");
+      setShowForm(true);
+    }
+  };
 
-    if(username) checkLearningProfile();
-  }, [username]);
+  console.log("Checking learning profile status");
+  checkLearningProfile();
+}, []);
   
 
   const handleFormComplete = () => {
@@ -572,6 +644,25 @@ navigate("/")
                   )}
                 </button>
               </li>
+              <li>
+                <button
+                  onClick={() => navigateToPage("leaderboard")}
+                  className={`flex items-center ${
+                    isSidebarCollapsed && !isMobile
+                      ? "justify-center"
+                      : "space-x-3"
+                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                    currentPage === "leaderboard"
+                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                  }`}
+                >
+                  <Trophy size={20} />
+                  {(!isSidebarCollapsed || isMobile) && (
+                    <span className="text-sm md:text-base">Leaderboard</span>
+                  )}
+                </button>
+              </li>
             </ul>
           </nav>
 
@@ -609,15 +700,42 @@ navigate("/")
                 isSidebarCollapsed && !isMobile ? "justify-center" : "space-x-3"
               } mb-4`}
             >
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <User size={isMobile ? 16 : 20} className="text-white" />
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border-2 border-slate-600/50">
+                {isUserDataLoading ? (
+                  // Loading state
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : userData?.profile_pic ? (
+                  <img 
+                    src={userData.profile_pic} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white text-xs md:text-sm font-bold">
+                    {userData?.name ? userData.name.charAt(0).toUpperCase() : username?.charAt(0)?.toUpperCase() || 'U'}
+                  </span>
+                )}
               </div>
               {(!isSidebarCollapsed || isMobile) && (
-                <div>
-                  <p className="font-medium text-white text-sm md:text-base">
-                    {username}
-                  </p>
-                  <p className="text-xs md:text-sm text-slate-400">Student</p>
+                <div className="flex-1 min-w-0">
+                  {isUserDataLoading ? (
+                    // Loading text
+                    <div className="space-y-1">
+                      <div className="h-4 bg-slate-600 rounded animate-pulse w-24"></div>
+                      <div className="h-3 bg-slate-700 rounded animate-pulse w-32"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="font-medium text-white text-sm md:text-base truncate">
+                        {userData?.name || username}
+                      </p>
+                      {userData?.email ? (
+                        <p className="text-xs md:text-sm text-slate-400 truncate">{userData.email}</p>
+                      ) : (
+                        <p className="text-xs md:text-sm text-slate-400">Student</p>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -659,6 +777,7 @@ navigate("/")
             {currentPage === "study" && <StudyModePage isMobile={isMobile} />}
             {currentPage === "mcqs" && <MCQsPage isMobile={isMobile} />}
             {currentPage === "files" && <FilesPage isMobile={isMobile} />}
+            {currentPage === "leaderboard" && <LeaderboardPage isMobile={isMobile} />}
           </div>
         </div>
       </div>

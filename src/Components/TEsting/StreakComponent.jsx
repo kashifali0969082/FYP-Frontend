@@ -5,6 +5,20 @@ import { useParams } from 'react-router-dom';
 
 // Main Streak Component for Dashboard
 const StreakComponent = ({ streakData }) => {
+  // Handle loading state
+  if (!streakData) {
+    return (
+      <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-xl p-6 text-white relative overflow-hidden">
+        <div className="flex items-center justify-center h-32">
+          <div className="text-center">
+            <Flame className="w-8 h-8 mx-auto mb-2 animate-pulse" />
+            <p className="text-sm">Loading streak...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const { current_streak, longest_streak, last_active_date } = streakData;
   
   // Generate days for the streak visualization
