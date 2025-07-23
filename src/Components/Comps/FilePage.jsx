@@ -21,131 +21,39 @@ import {
   X,
   Loader2,
 } from "lucide-react";
-import { GetAllFiles, DeleteFile } from "../apiclient/FileRetrievalapis";
+// Removed GetAllFiles import - data now comes from parent to eliminate duplicate API calls
+import { DeleteFile } from "../apiclient/FileRetrievalapis";
 
-export const FilesPage = ({ setIsUploadModalOpen, isMobile, uploadedFiles: propFiles, isLoading: propLoading, refreshFiles }) => {
+export const FilesPage = ({ 
+  setIsUploadModalOpen, 
+  isMobile, 
+  isLoading: propLoading, 
+  refreshFiles,
+  // New props to receive data from parent to eliminate duplicate API calls
+  filesData,
+  isFilesLoading,
+  filesError,
+  handleDeleteClick,
+  deletingFileId
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState("All");
   const [sortBy, setSortBy] = useState("Recently Uploaded");
-  const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [viewMode, setViewMode] = useState("list"); // 'list' or 'grid'
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [fileToDelete, setFileToDelete] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  // Removed individual delete modal states - now handled by parent
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
-  const getSlidesFun = async () => {
-    try {
-      setIsLoading(true);
-      console.log("🔄 Fetching all files...");
-      const response = await GetAllFiles();
-      console.log("📁 Files API response:", response);
-      
-      const { books, presentations, notes } = response;
-      
-      // Transform all files into a unified format
-      const transformedFiles = [];
-      
-      // Transform books
-      if (books && Array.isArray(books) && books.length > 0) {
-        console.log("📚 Processing books:", books);
-        books.forEach((book, index) => {
-          console.log(`📚 Book ${index}:`, book);
-          const fileName = book.title || book.original_filename || book.file_name || book.filename || book.name || `Book_${book.id || index}`;
-          transformedFiles.push({
-            id: book.id || `book_${index}`,
-            title: fileName,
-            uploadDate: book.created_at ? book.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
-            type: 'Book',
-            color: "bg-blue-500",
-            icon: BookOpen,
-            size: book.size || "10 MB",
-            pages: book.pages || 1,
-            tags: book.tags || [],
-            lastOpened: book.last_opened || book.created_at,
-            isFavorite: book.is_favorite || false,
-          });
-        });
-      }
-      
-      // Transform presentations
-      if (presentations && Array.isArray(presentations) && presentations.length > 0) {
-        console.log("🎯 Processing presentations:", presentations);
-        presentations.forEach((presentation, index) => {
-          console.log(`🎯 Presentation ${index}:`, presentation);
-          const fileName = presentation.title || presentation.original_filename || presentation.file_name || presentation.filename || presentation.name || `Presentation_${presentation.id || index}`;
-          transformedFiles.push({
-            id: presentation.id || `presentation_${index}`,
-            title: fileName,
-            uploadDate: presentation.created_at ? presentation.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
-            type: 'Presentation',
-            color: "bg-green-500",
-            icon: Presentation,
-            size: presentation.size || "10 MB",
-            pages: presentation.total_slides || 1,
-            tags: presentation.tags || [],
-            lastOpened: presentation.last_opened || presentation.created_at,
-            isFavorite: presentation.is_favorite || false,
-          });
-        });
-      }
-      
-      // Transform notes
-      if (notes && Array.isArray(notes) && notes.length > 0) {
-        console.log("📝 Processing notes:", notes);
-        notes.forEach((note, index) => {
-          console.log(`📝 Note ${index}:`, note);
-          const fileName = note.title || note.original_filename || note.file_name || note.filename || note.name || `Note_${note.id || index}`;
-          transformedFiles.push({
-            id: note.id || `note_${index}`,
-            title: fileName,
-            uploadDate: note.created_at ? note.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
-            type: 'Notes',
-            color: "bg-purple-500",
-            icon: StickyNote,
-            size: note.size || "10 MB",
-            pages: note.pages || 1,
-            tags: note.tags || [],
-            lastOpened: note.last_opened || note.created_at,
-            isFavorite: note.is_favorite || false,
-          });
-        });
-      }
-      
-      // Sort by upload date
-      transformedFiles.sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
-      
-      console.log("📄 Final transformed files:", transformedFiles);
-      console.log(`📊 Total files loaded: ${transformedFiles.length}`);
-      setUploadedFiles(transformedFiles);
-    } catch (error) {
-      console.error("❌ Error getting files:", error);
-      console.error("❌ Error details:", error.response?.data);
-      // Set empty array on error
-      setUploadedFiles([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Use files data from parent to eliminate duplicate API calls
+  const isLoading = isFilesLoading || propLoading || false;
 
-  useEffect(() => {
-    // Use files from props if available (already loaded), otherwise fetch them
-    if (propFiles && propFiles.length > 0) {
-      console.log("📄 Using files from props:", propFiles);
-      setUploadedFiles(propFiles);
-      setIsLoading(false);
-    } else if (propLoading !== undefined) {
-      setIsLoading(propLoading);
-    } else {
-      // Only fetch if we don't have files from props
-      getSlidesFun();
-    }
-  }, [propFiles, propLoading]);
+  // No local file fetching function needed - all data comes from parent component
+  // This eliminates the duplicate GetAllFiles() API call
+
+  // No useEffect needed - all data comes from parent to eliminate duplicate API calls
 
   const getTypeIcon = (type) => {
     switch (type) {
@@ -173,52 +81,8 @@ export const FilesPage = ({ setIsUploadModalOpen, isMobile, uploadedFiles: propF
     }
   };
 
-  const handleDeleteClick = (file) => {
-    setFileToDelete(file);
-    setIsDeleteModalOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!fileToDelete) return;
-    
-    setIsDeleting(true);
-    
-    try {
-      // Log the complete file object to see its structure
-      console.log("🔍 FILE TO DELETE - Complete object:", fileToDelete);
-      console.log("🔍 File ID:", fileToDelete.id);
-      console.log("🔍 File meta:", fileToDelete.meta);
-      console.log("🔍 File type:", fileToDelete.type);
-      
-      // Convert file type to match API expectations
-      const docType = fileToDelete.meta?.fileType || fileToDelete.type.toLowerCase();
-      
-      console.log(`🗑️ FINAL VALUES FOR DELETE:`);
-      console.log(`   File ID: "${fileToDelete.id}"`);
-      console.log(`   Doc Type: "${docType}"`);
-      
-      await DeleteFile(fileToDelete.id, docType);
-      
-      // Remove from UI manually
-      setUploadedFiles(uploadedFiles.filter((file) => file.id !== fileToDelete.id));
-      if (refreshFiles) {
-        refreshFiles(); // Refresh files in parent component as well
-      }
-      
-      console.log("✅ File deleted successfully");
-    } catch (error) {
-      console.error("❌ Delete failed:", error);
-    } finally {
-      setIsDeleting(false);
-      setIsDeleteModalOpen(false);
-      setFileToDelete(null);
-    }
-  };
-
-  const cancelDelete = () => {
-    setIsDeleteModalOpen(false);
-    setFileToDelete(null);
-  };
+  // Delete functionality now handled by parent component via handleDeleteClick prop
+  // Individual delete modal and functions removed - only bulk delete remains
 
   const handleBulkDelete = async () => {
     setIsBulkDeleteModalOpen(true);
@@ -228,7 +92,7 @@ export const FilesPage = ({ setIsUploadModalOpen, isMobile, uploadedFiles: propF
     setIsBulkDeleting(true);
     
     try {
-      const filesToDelete = uploadedFiles.filter(file => selectedFiles.includes(file.id));
+      const filesToDelete = filesData.filter(file => selectedFiles.includes(file.id));
       
       // Delete files sequentially to avoid overwhelming the server
       for (const file of filesToDelete) {
@@ -238,12 +102,10 @@ export const FilesPage = ({ setIsUploadModalOpen, isMobile, uploadedFiles: propF
         await DeleteFile(file.id, docType);
       }
       
-      // Update the file list by removing deleted files
-      setUploadedFiles(uploadedFiles.filter(file => !selectedFiles.includes(file.id)));
       setSelectedFiles([]);
       
       if (refreshFiles) {
-        refreshFiles(); // Refresh files in parent component as well
+        refreshFiles(); // Refresh files in parent component
       }
       
       console.log(`✅ Successfully deleted ${filesToDelete.length} file${filesToDelete.length !== 1 ? 's' : ''}`);
@@ -259,7 +121,7 @@ export const FilesPage = ({ setIsUploadModalOpen, isMobile, uploadedFiles: propF
     setIsBulkDeleteModalOpen(false);
   };
 
-  const filteredFiles = uploadedFiles.filter((file) => {
+  const filteredFiles = filesData.filter((file) => {
     const fileName = file.title || file.name || '';
     const fileTags = file.tags || [];
     const matchesSearch =
@@ -668,47 +530,7 @@ export const FilesPage = ({ setIsUploadModalOpen, isMobile, uploadedFiles: propF
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && fileToDelete && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-xl md:rounded-2xl p-6 md:p-8 w-full max-w-md mx-4">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-xl flex items-center justify-center">
-                <Trash2 size={32} className="text-red-400" />
-              </div>
-              
-              <h3 className="text-lg md:text-xl font-semibold text-white mb-2">
-                Delete File?
-              </h3>
-              
-              <p className="text-slate-300 mb-2">
-                Are you sure you want to delete <span className="font-medium text-white">"{fileToDelete.title || fileToDelete.name}"</span>?
-              </p>
-              
-              <p className="text-sm text-red-400 mb-6">
-                This will permanently delete the file and all associated data including study progress, MCQs, and notes. This action cannot be undone.
-              </p>
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={cancelDelete}
-                  disabled={isDeleting}
-                  className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  disabled={isDeleting}
-                  className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Individual delete modal removed - now handled by parent component */}
 
       {/* Bulk Delete Confirmation Modal */}
       {isBulkDeleteModalOpen && (

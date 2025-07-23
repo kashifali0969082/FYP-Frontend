@@ -9,7 +9,7 @@ import {
 import { StreakComponent} from "../TEsting/StreakComponent";
 import LeaderboardPreview from "./LeaderboardPreview";
 import { useContext, useEffect, useState } from "react";
-import { streakapi, userapi } from "../apiclient/Studystreakapi";
+// Removed streakapi import - data now comes from parent to eliminate duplicate API calls
 import { useNavigate, useParams } from "react-router-dom";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -17,25 +17,27 @@ import { AuthContext } from "../Security/Authcontext";
 import LearningProfileForm from "../TEsting/LearningProfileForm";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
 
-export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploadedFiles,setCurrentPage,setIsMobileSidebarOpen,isFilesLoading,filesError,refreshFiles,handleDeleteClick,deletingFileId}) => {
-    // Initialize with optimistic data to show component immediately
-    const [streakData, setStreakData] = useState({
-        current_streak: 0,
-        longest_streak: 0,
-        last_active_date: new Date().toISOString().split('T')[0],
-    });
-    const [isStreakLoading, setIsStreakLoading] = useState(false); // Don't show loading initially
-
-    // User data state
-    const [userData, setUserData] = useState({
-        name: "",
-        email: "",
-        profile_pic: "",
-        id: ""
-    });
-
-    // Loading state for user data
-    const [isUserDataLoading, setIsUserDataLoading] = useState(true);
+export const HomePage = ({
+  setUploadedFiles, 
+  setIsUploadModalOpen, 
+  isMobile, 
+  uploadedFiles, 
+  setCurrentPage, 
+  setIsMobileSidebarOpen, 
+  isFilesLoading, 
+  filesError, 
+  refreshFiles, 
+  handleDeleteClick, 
+  deletingFileId,
+  // New props to receive data from parent to eliminate duplicate API calls
+  userData, 
+  isUserDataLoading = false,
+  streakData,
+  isStreakLoading = false,
+  leaderboardData,
+  isLeaderboardLoading = false
+}) => {
+    // No local state needed - use props from parent to eliminate duplicate API calls
     
     const openInStudyMode = (file) => {
     setCurrentPage("study");
@@ -44,83 +46,15 @@ export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploade
     }
     console.log("Opening file in study mode:", file);
   };
-  //   apis
-useEffect(() => {
-    try {
-       // Call user API first for better UX
-       fetchUserData().finally(() => {
-         // Then call streak API
-         streakApiResponse();
-       });
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-}, []);
+  
+  //   APIs - ALL DATA NOW COMES FROM PARENT TO ELIMINATE DUPLICATE CALLS
+  // No useEffect needed - all data is passed as props from Testing.jsx
+  // This eliminates duplicate streakapi() and leaderboard API calls
 
-function streakApiResponse(values) {
-  console.log("🔥 Fetching streak data...");
+// User API function - REMOVED to eliminate duplicate API calls
+// User data is now passed from parent component (Testing.jsx) as props
+// This eliminates the duplicate userapi() call that was happening in both parent and child
 
-  return streakapi()
-    .then((response) => {
-      console.log("🔥 Streak API Response:", response.data);
-      const { current_streak, longest_streak, last_active_date } = response.data;
-
-      const streakdata = {
-        current_streak,
-        longest_streak,
-        last_active_date,
-      };
-      console.log("🔥 Processed streak data:", streakdata);
-      setStreakData(streakdata);
-      return streakdata;
-    })
-    .catch((error) => {
-      console.log("❌ API error in streakApiResponse:", error);
-      // Keep default data in case of error - don't change state
-      console.log("Using default streak data due to API error");
-      throw error;  
-    });
-}
-
-// User API function
-function fetchUserData() {
-  console.log("fetchUserData called - starting user data fetch");
-  setIsUserDataLoading(true);
-
-  return userapi()
-    .then((response) => {
-      console.log("🚀 User API Response received:", response.data);
-      console.log("🔍 API Response type:", typeof response.data);
-      console.log("🔍 API Response keys:", Object.keys(response.data));
-      
-      const { id, email, name, profile_pic } = response.data;
-      
-      console.log("📝 Extracted values:");
-      console.log("  - id:", id);
-      console.log("  - email:", email);
-      console.log("  - name:", name);
-      console.log("  - profile_pic:", profile_pic);
-      
-      const userInfo = {
-        id,
-        email,
-        name,
-        profile_pic
-      };
-      
-      console.log("✅ Setting userData to:", userInfo);
-      setUserData(userInfo);
-      setIsUserDataLoading(false);
-      return userInfo;
-    })
-    .catch((error) => {
-      console.log("API error in fetchUserData:", error);
-      console.log("Error details:", error.response?.data || error.message);
-      setIsUserDataLoading(false);
-      // Keep default user data on error
-      throw error;
-    });
-} // end api  ........
 // const [username,setusername] = useState('')   // this method is for testing purpose 
 //  useEffect(() => {
 //   const hardcodedToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZmE2YWQ4Zi0zNTgyLTQzZmItOWEwYy02YTI5NzJkNGMyYWIiLCJlbWFpbCI6ImYyMDIxMDY1MTEyQGdtYWlsLmNvbSIsIm5hbWUiOiJIYXJyaXMgaWpheiIsInByb2ZpbGVfcGljIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSVBQaWRoUERlLVR2bDAzakx2THplT1N6OGgwSWE2X2gzR0lCU2pFeTVscGFqSFpnPXM5Ni1jIiwiZXhwIjoxNzUzNDc2MTM0fQ.KbkiS5vQn2zaSTUP_3cxLtkrzVkCePEhmicgYSfjH9k";
@@ -359,6 +293,9 @@ console.log("Display name will be:", userData?.name || username)
               isMobile={isMobile} 
               setCurrentPage={setCurrentPage}
               setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+              // Pass leaderboard data from parent to eliminate duplicate API calls
+              leaderboardData={leaderboardData}
+              isLeaderboardLoading={isLeaderboardLoading}
             />
           </div>
         </div>

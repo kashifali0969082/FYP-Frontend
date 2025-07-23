@@ -1,26 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Crown, Award, Flame, ChevronRight } from 'lucide-react';
-import { streakLeaderboardapi } from '../apiclient/Studystreakapi';
+// Removed streakLeaderboardapi import - data now comes from parent to eliminate duplicate API calls
 
-const LeaderboardPreview = ({ isMobile, setCurrentPage, setIsMobileSidebarOpen }) => {
-  const [leaderboardData, setLeaderboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
+const LeaderboardPreview = ({ 
+  isMobile, 
+  setCurrentPage, 
+  setIsMobileSidebarOpen,
+  // New props to receive data from parent to eliminate duplicate API calls
+  leaderboardData,
+  isLeaderboardLoading = false
+}) => {
+  // No local state needed - use props from parent
+  const loading = isLeaderboardLoading;
 
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        console.log("Fetching leaderboard preview...");
-        const response = await streakLeaderboardapi();
-        setLeaderboardData(response.data);
-      } catch (err) {
-        console.error("Error fetching leaderboard preview:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLeaderboard();
-  }, []);
+  // No useEffect needed - data comes from parent to eliminate duplicate API calls
+  // This eliminates the duplicate streakLeaderboardapi() call
 
   const handleViewFull = () => {
     setCurrentPage("leaderboard");

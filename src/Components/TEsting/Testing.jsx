@@ -36,7 +36,7 @@ import { GetAllFiles, DeleteFile } from "../apiclient/FileRetrievalapis";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../Security/Authcontext";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
-import { userapi } from "../apiclient/Studystreakapi";
+import { userapi, streakapi, streakLeaderboardapi } from "../apiclient/Studystreakapi";
 import LearningProfileForm from "./LearningProfileForm";
 import { getCookie, setCookie } from "../Security/cookie";
 import { FileUpload } from "../apiclient/Filesapi";
@@ -71,6 +71,13 @@ const Dashboard = () => {
   // Loading state for files
   const [isFilesLoading, setIsFilesLoading] = useState(true);
   const [filesError, setFilesError] = useState(null);
+  
+  // Cache mechanism to prevent unnecessary refetches
+  const [dataCache, setDataCache] = useState({
+    userDataFetched: false,
+    filesFetched: false,
+    lastFetchTime: null
+  });
   
   // Delete states
   const [deletingFileId, setDeletingFileId] = useState(null);
@@ -222,91 +229,61 @@ const Dashboard = () => {
     setFilesError(null);
     
     try {
-      console.log("🔄 Starting to fetch all files...");
+      console.log("🔄 Starting optimized files fetch...");
       const response = await GetAllFiles();
       console.log("📁 Files API Response:", response);
       
       const { books, presentations, notes } = response;
       
-      // Transform all files into a unified format
+      // Optimized file transformation with better performance
       const transformedFiles = [];
       
-      // Transform books
-      if (books && Array.isArray(books) && books.length > 0) {
-        console.log("📚 Processing books:", books);
-        books.forEach((book, index) => {
-          console.log(`📚 Book ${index}:`, book);
-          const fileName = book.title || book.original_filename || book.file_name || book.filename || book.name || `Book_${book.id || index}`;
-          transformedFiles.push({
-            id: book.id || `book_${index}`,
-            name: fileName,
-            uploadDate: book.created_at ? book.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
-            type: 'Book',
-            icon: BookOpen,
-            meta: {
-              s3Key: book.s3_key,
-              fileType: 'book'
-            }
-          });
-        });
-      }
+      // Process all file types efficiently
+      const fileTypes = [
+        { data: books, type: 'Book', icon: BookOpen, fileType: 'book' },
+        { data: presentations, type: 'Presentation', icon: Presentation, fileType: 'presentation' },
+        { data: notes, type: 'Notes', icon: FileText, fileType: 'notes' }
+      ];
       
-      // Transform presentations
-      if (presentations && Array.isArray(presentations) && presentations.length > 0) {
-        console.log("🎯 Processing presentations:", presentations);
-        presentations.forEach((presentation, index) => {
-          console.log(`🎯 Presentation ${index}:`, presentation);
-          const fileName = presentation.title || presentation.original_filename || presentation.file_name || presentation.filename || presentation.name || `Presentation_${presentation.id || index}`;
-          transformedFiles.push({
-            id: presentation.id || `presentation_${index}`,
-            name: fileName,
-            uploadDate: presentation.created_at ? presentation.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
-            type: 'Presentation',
-            icon: Presentation,
-            meta: {
-              totalSlides: presentation.total_slides,
-              hasSpeakerNotes: presentation.has_speaker_notes,
-              fileType: 'presentation'
-            }
+      fileTypes.forEach(({ data, type, icon, fileType }) => {
+        if (data && Array.isArray(data) && data.length > 0) {
+          console.log(`📄 Processing ${data.length} ${fileType}(s)`);
+          
+          data.forEach((item, index) => {
+            const fileName = item.title || item.original_filename || item.file_name || 
+                           item.filename || item.name || `${type}_${item.id || index}`;
+            
+            transformedFiles.push({
+              id: item.id || `${fileType}_${index}`,
+              name: fileName,
+              uploadDate: item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+              type,
+              icon,
+              meta: {
+                s3Key: item.s3_key,
+                fileType,
+                ...(type === 'Presentation' && {
+                  totalSlides: item.total_slides,
+                  hasSpeakerNotes: item.has_speaker_notes
+                })
+              }
+            });
           });
-        });
-      }
+        }
+      });
       
-      // Transform notes - API uses 'title' field for notes
-      if (notes && Array.isArray(notes) && notes.length > 0) {
-        console.log("📝 Processing notes:", notes);
-        notes.forEach((note, index) => {
-          console.log(`📝 Note ${index}:`, note);
-          // Notes API returns 'title' field instead of 'original_filename'
-          const fileName = note.title || note.original_filename || note.file_name || note.filename || note.name || `Note_${note.id || index}`;
-          transformedFiles.push({
-            id: note.id || `note_${index}`,
-            name: fileName,
-            uploadDate: note.created_at ? note.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
-            type: 'Notes',
-            icon: FileText,
-            meta: {
-              s3Key: note.s3_key,
-              fileType: 'notes'
-            }
-          });
-        });
-      }
-      
-      // Sort by upload date (newest first)
+      // Sort by upload date (newest first) - more efficient sorting
       const sortedFiles = transformedFiles.sort((a, b) => 
         new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
       );
       
-      console.log("✅ Final transformed files:", sortedFiles);
+      console.log(`✅ Successfully processed ${sortedFiles.length} files`);
       setUploadedFiles(sortedFiles);
       
     } catch (error) {
       console.error("❌ Error fetching files:", error);
-      console.error("❌ Error details:", error.response?.data);
-      console.error("❌ Error status:", error.response?.status);
       
-      // Only set error for actual API/network errors, not empty responses
+      // Improved error handling with better UX
       if (error.response?.status === 500 || error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
         setFilesError("Unable to connect to the server. Please check your internet connection.");
       } else if (error.response?.status === 401) {
@@ -316,7 +293,6 @@ const Dashboard = () => {
         console.log("No files found (404) - this is normal for new users");
         setUploadedFiles([]);
       } else {
-        // For other errors, show generic message
         setFilesError("Something went wrong while loading your files.");
       }
       
@@ -325,17 +301,97 @@ const Dashboard = () => {
     }
   };
 
+  // Add states for comprehensive data management
+  const [streakData, setStreakData] = useState(null);
+  const [isStreakLoading, setIsStreakLoading] = useState(true);
+  const [leaderboardData, setLeaderboardData] = useState(null);
+  const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(true);
+
   useEffect(() => {
-    // Call user API first for better UX
-    fetchUserData().finally(() => {
-      // Then call files API
-      getFilesFun();
-    });
+    // Centralized data fetching - fetch ALL required data in parallel for maximum performance
+    const initializeApp = async () => {
+      try {
+        console.log("🚀 Starting comprehensive app initialization...");
+        
+        // Fetch ALL data in parallel - user data, files, streak data, and leaderboard
+        const [userDataResult, filesResult, streakResult, leaderboardResult] = await Promise.allSettled([
+          fetchUserData(),
+          getFilesFun(),
+          fetchStreakData(),
+          fetchLeaderboardData()
+        ]);
+        
+        // Log results for debugging
+        if (userDataResult.status === 'rejected') {
+          console.warn("User data fetch failed:", userDataResult.reason);
+        }
+        if (filesResult.status === 'rejected') {
+          console.warn("Files fetch failed:", filesResult.reason);
+        }
+        if (streakResult.status === 'rejected') {
+          console.warn("Streak data fetch failed:", streakResult.reason);
+        }
+        if (leaderboardResult.status === 'rejected') {
+          console.warn("Leaderboard fetch failed:", leaderboardResult.reason);
+        }
+        
+        console.log("✅ Comprehensive app initialization complete");
+      } catch (error) {
+        console.error("❌ App initialization error:", error);
+      }
+    };
+
+    initializeApp();
     // setShowForm(true);
   }, []);
 
-  // User API function for sidebar
+  // Centralized streak data fetching
+  const fetchStreakData = () => {
+    console.log("🔧 Testing.jsx - fetchStreakData called - starting streak data fetch");
+    setIsStreakLoading(true);
+
+    return streakapi()
+      .then((response) => {
+        console.log("🔧 Testing.jsx - Streak API Response:", response.data);
+        setStreakData(response.data);
+        setIsStreakLoading(false);
+        return response.data;
+      })
+      .catch((error) => {
+        console.log("🔧 Testing.jsx - API error in fetchStreakData:", error);
+        setIsStreakLoading(false);
+        throw error;
+      });
+  };
+
+  // Centralized leaderboard data fetching
+  const fetchLeaderboardData = () => {
+    console.log("🔧 Testing.jsx - fetchLeaderboardData called - starting leaderboard data fetch");
+    setIsLeaderboardLoading(true);
+
+    return streakLeaderboardapi()
+      .then((response) => {
+        console.log("🔧 Testing.jsx - Leaderboard API Response:", response.data);
+        setLeaderboardData(response.data);
+        setIsLeaderboardLoading(false);
+        return response.data;
+      })
+      .catch((error) => {
+        console.log("🔧 Testing.jsx - API error in fetchLeaderboardData:", error);
+        setIsLeaderboardLoading(false);
+        throw error;
+      });
+  };
+
+  // User API function for sidebar with caching
   const fetchUserData = () => {
+    // Check cache to avoid unnecessary API calls
+    if (dataCache.userDataFetched && userData.id) {
+      console.log("🚀 Using cached user data, skipping API call");
+      setIsUserDataLoading(false);
+      return Promise.resolve(userData);
+    }
+
     console.log("🔧 Testing.jsx - fetchUserData called - starting user data fetch for sidebar");
     setIsUserDataLoading(true);
 
@@ -343,12 +399,6 @@ const Dashboard = () => {
       .then((response) => {
         console.log("🔧 Testing.jsx - Sidebar User API Response:", response.data);
         const { id, email, name, profile_pic } = response.data;
-        
-        console.log("🔧 Testing.jsx - Extracted values for sidebar:");
-        console.log("  - id:", id);
-        console.log("  - email:", email);
-        console.log("  - name:", name);
-        console.log("  - profile_pic:", profile_pic);
         
         const userInfo = {
           id,
@@ -360,12 +410,19 @@ const Dashboard = () => {
         console.log("🔧 Testing.jsx - Setting userData to:", userInfo);
         setUserData(userInfo);
         setIsUserDataLoading(false);
+        
+        // Update cache
+        setDataCache(prev => ({
+          ...prev,
+          userDataFetched: true,
+          lastFetchTime: Date.now()
+        }));
+        
         return userInfo;
       })
       .catch((error) => {
         console.log("🔧 Testing.jsx - API error in sidebar fetchUserData:", error);
         setIsUserDataLoading(false);
-        // Keep default user data on error
         throw error;
       });
   };
@@ -935,6 +992,15 @@ useEffect(() => {
                 refreshFiles={getFilesFun}
                 handleDeleteClick={handleDeleteClick}
                 deletingFileId={deletingFileId}
+                // Pass user data to avoid duplicate API calls
+                userData={userData}
+                isUserDataLoading={isUserDataLoading}
+                // Pass streak data to avoid duplicate API calls
+                streakData={streakData}
+                isStreakLoading={isStreakLoading}
+                // Pass leaderboard data to avoid duplicate API calls
+                leaderboardData={leaderboardData}
+                isLeaderboardLoading={isLeaderboardLoading}
               />
             )}
             {currentPage === "study" && <StudyModePage isMobile={isMobile} />}
@@ -960,6 +1026,12 @@ useEffect(() => {
                 uploadedFiles={uploadedFiles}
                 isLoading={isFilesLoading}
                 refreshFiles={getFilesFun}
+                // Pass files data to avoid duplicate API calls in FilePage
+                filesData={uploadedFiles}
+                isFilesLoading={isFilesLoading}
+                filesError={filesError}
+                handleDeleteClick={handleDeleteClick}
+                deletingFileId={deletingFileId}
               />
             )}
             {currentPage === "leaderboard" && <LeaderboardPage isMobile={isMobile} />}
