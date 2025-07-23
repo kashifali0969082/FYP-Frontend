@@ -20,6 +20,11 @@ import {
   MoreHorizontal,
   X,
   Loader2,
+  Brain,
+  Mic,
+  Send,
+  Square,
+  ExternalLink,
 } from "lucide-react";
 // Removed GetAllFiles import - data now comes from parent to eliminate duplicate API calls
 import { DeleteFile } from "../apiclient/FileRetrievalapis";
@@ -46,6 +51,17 @@ export const FilesPage = ({
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  // Ask My Library AI feature states
+  const [showAIQuery, setShowAIQuery] = useState(false);
+  const [aiQuery, setAIQuery] = useState("");
+  const [aiAnswer, setAIAnswer] = useState("");
+  const [aiSources, setAISources] = useState([]);
+  const [aiReferences, setAIReferences] = useState([]);
+  const [isAILoading, setIsAILoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [loadingStage, setLoadingStage] = useState("");
+  const [mediaRecorder, setMediaRecorder] = useState(null);
 
   // Use files data from parent to eliminate duplicate API calls
   const isLoading = isFilesLoading || propLoading || false;
@@ -83,6 +99,206 @@ export const FilesPage = ({
 
   // Delete functionality now handled by parent component via handleDeleteClick prop
   // Individual delete modal and functions removed - only bulk delete remains
+
+  // Ask My Library AI functionality
+  const handleAISubmit = async () => {
+    if (!aiQuery.trim()) return;
+    setIsAILoading(true);
+    setAIAnswer("");
+    setAISources([]);
+    setAIReferences([]);
+    
+    // Simulate realistic loading stages
+    const loadingStages = [
+      "Analyzing your query...",
+      "Searching through your library...",
+      "Processing documents...",
+      "Gathering relevant information...",
+      "Generating response..."
+    ];
+    
+    try {
+      // Simulate progressive loading
+      for (let i = 0; i < loadingStages.length; i++) {
+        setLoadingStage(loadingStages[i]);
+        await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400));
+      }
+      
+      // TODO: Replace with actual API endpoint
+      const useDummyResponse = true; // Set to false when backend is ready
+      
+      if (useDummyResponse) {
+        // Dummy response for demo
+        const dummyResponses = {
+          "machine learning": {
+            answer: "Machine Learning is a subset of artificial intelligence that enables computers to learn and make decisions from data without being explicitly programmed. It involves algorithms that can identify patterns, make predictions, and improve their performance over time through experience. The main types include supervised learning (learning from labeled data), unsupervised learning (finding patterns in unlabeled data), and reinforcement learning (learning through trial and error).",
+            sources: ["Introduction to ML", "AI Fundamentals", "Data Science Handbook"],
+            references: [
+              { id: "doc_001", title: "Introduction to ML", topic: "Supervised Learning", type: "Book" },
+              { id: "doc_002", title: "AI Fundamentals", topic: "Neural Networks", type: "Notes" },
+              { id: "doc_003", title: "Data Science Handbook", topic: "Algorithm Types", type: "Presentation" }
+            ]
+          },
+          "algorithms": {
+            answer: "Algorithms are step-by-step procedures or formulas for solving problems. In computer science, they're fundamental building blocks that define how to process data efficiently. Common algorithm types include sorting (like quicksort, mergesort), searching (binary search, linear search), and graph algorithms (Dijkstra's, BFS, DFS). The efficiency of algorithms is measured using Big O notation, which describes how runtime or space requirements grow with input size.",
+            sources: ["Algorithm Design Manual", "Computer Science Fundamentals", "Data Structures Guide"],
+            references: [
+              { id: "doc_004", title: "Algorithm Design Manual", topic: "Sorting Algorithms", type: "Book" },
+              { id: "doc_005", title: "Computer Science Fundamentals", topic: "Big O Notation", type: "Notes" },
+              { id: "doc_006", title: "Data Structures Guide", topic: "Graph Algorithms", type: "Presentation" }
+            ]
+          }
+        };
+        
+        // Find matching dummy response
+        const queryLower = aiQuery.toLowerCase();
+        const matchedResponse = Object.keys(dummyResponses).find(key => 
+          queryLower.includes(key)
+        );
+        
+        const response = matchedResponse 
+          ? dummyResponses[matchedResponse]
+          : {
+              answer: `I found some relevant information about "${aiQuery}" in your library. Based on your documents, this topic appears across multiple sources with various perspectives and detailed explanations. The content suggests comprehensive coverage of the subject matter with practical examples and theoretical foundations.`,
+              sources: ["Study Notes Collection", "Research Papers", "Course Materials"],
+              references: [
+                { id: "doc_007", title: "Study Notes Collection", topic: "General Overview", type: "Notes" },
+                { id: "doc_008", title: "Research Papers", topic: "Advanced Topics", type: "Book" },
+                { id: "doc_009", title: "Course Materials", topic: "Practical Examples", type: "Presentation" }
+              ]
+            };
+        
+        setAIAnswer(response.answer);
+        setAISources(response.sources);
+        setAIReferences(response.references);
+      } else {
+        // Real API call
+        const res = await fetch("/api/global-qa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: aiQuery }),
+        });
+        const data = await res.json();
+        setAIAnswer(data.answer);
+        setAISources(data.sources || []);
+        setAIReferences(data.references || []);
+      }
+      
+    } catch (err) {
+      console.error("Failed to fetch AI response:", err);
+      setAIAnswer("Sorry, I couldn't process your query at the moment. Please check your connection and try again.");
+      setAISources([]);
+      setAIReferences([]);
+    }
+    setIsAILoading(false);
+    setLoadingStage("");
+  };
+
+  const handleMicClick = async () => {
+    if (isRecording) {
+      // Stop recording
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+      setIsRecording(false);
+      return;
+    }
+
+    // Start recording
+    setIsRecording(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      setMediaRecorder(recorder);
+      const chunks = [];
+
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: "audio/webm" });
+        const formData = new FormData();
+        formData.append("file", audioBlob, "query.webm");
+
+        console.log("🎤 Sending audio to transcribe endpoint:");
+        console.log("- Blob size:", audioBlob.size, "bytes");
+        console.log("- Blob type:", audioBlob.type);
+        console.log("- FormData:", formData);
+
+        try {
+          // Use the same domain as other API calls
+          const res = await fetch("https://api.adaptivelearnai.xyz/transcribe", {
+            method: "POST",
+            body: formData,
+          });
+          
+          console.log("📡 Transcribe response status:", res.status);
+          console.log("📡 Transcribe response headers:", res.headers);
+          
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          
+          const data = await res.json();
+          console.log("📝 Transcription response:", data);
+          setAIQuery(data.transcript || data.transcription || data.text || "");
+        } catch (err) {
+          console.error("❌ Transcription failed:", err);
+          console.error("❌ Error details:", {
+            message: err.message,
+            stack: err.stack
+          });
+          
+          // Fallback: Try with relative path
+          try {
+            console.log("🔄 Trying fallback endpoint...");
+            const fallbackRes = await fetch("/transcribe", {
+              method: "POST",
+              body: formData,
+            });
+            
+            if (fallbackRes.ok) {
+              const fallbackData = await fallbackRes.json();
+              console.log("✅ Fallback transcription success:", fallbackData);
+              setAIQuery(fallbackData.transcript || fallbackData.transcription || fallbackData.text || "");
+            } else {
+              throw new Error(`Fallback failed with status: ${fallbackRes.status}`);
+            }
+          } catch (fallbackErr) {
+            console.error("❌ Fallback also failed:", fallbackErr);
+            setAIQuery(prev => prev + " [Voice input failed - please type your query]");
+            alert("Voice transcription failed. Please check your backend connection and try again, or type your query manually.");
+          }
+        }
+        
+        // Clean up
+        stream.getTracks().forEach(track => track.stop());
+        setMediaRecorder(null);
+      };
+
+      recorder.start();
+    } catch (err) {
+      console.error("Microphone access denied:", err);
+      setIsRecording(false);
+      alert("Microphone access is required for voice input. Please enable microphone permissions and try again.");
+    }
+  };
+
+  const handleDocumentReference = (docRef) => {
+    // TODO: Navigate to specific document or highlight it in the file list
+    console.log("Navigate to document:", docRef);
+    
+    // For now, scroll to and highlight the document if it's visible
+    const docElement = document.getElementById(`file-${docRef.id}`);
+    if (docElement) {
+      docElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      docElement.classList.add('ring-2', 'ring-blue-500', 'ring-opacity-50');
+      setTimeout(() => {
+        docElement.classList.remove('ring-2', 'ring-blue-500', 'ring-opacity-50');
+      }, 3000);
+    } else {
+      // If document not visible, you could filter the file list or show a message
+      alert(`Document "${docRef.title}" found! It may be in a different view or filter.`);
+    }
+  };
 
   const handleBulkDelete = async () => {
     setIsBulkDeleteModalOpen(true);
@@ -342,6 +558,20 @@ export const FilesPage = ({
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {/* AI Query toggle */}
+            <button
+              onClick={() => setShowAIQuery(!showAIQuery)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                showAIQuery 
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white" 
+                  : "bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/50"
+              }`}
+              title="Ask My Library"
+            >
+              <Brain className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm font-medium">Ask My Library</span>
+            </button>
+            
             {/* View toggle */}
             <div className="hidden sm:flex bg-slate-800/50 rounded-lg p-1">
               <button
@@ -359,6 +589,139 @@ export const FilesPage = ({
             </div>
           </div>
         </div>
+
+        {/* Ask My Library AI Query Section */}
+        {showAIQuery && (
+          <div className="mb-6 bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-xl p-4 border border-blue-500/30 backdrop-blur-sm">
+            <h3 className="text-white font-medium mb-3 flex items-center gap-2">
+              <Brain className="w-5 h-5 text-blue-400" />
+              Ask My Library
+              <span className="text-xs text-slate-400 ml-2">Query across all your documents</span>
+            </h3>
+            
+            <div className="flex gap-2 mb-4">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={aiQuery}
+                  onChange={(e) => setAIQuery(e.target.value)}
+                  placeholder="Ask anything across all your documents..."
+                  className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                  onKeyPress={(e) => e.key === 'Enter' && !isAILoading && handleAISubmit()}
+                  disabled={isAILoading}
+                />
+                {isRecording && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="flex items-center gap-2 text-red-400 text-xs">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                      Recording...
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={handleMicClick}
+                disabled={isAILoading}
+                className={`p-3 rounded-lg transition-all duration-200 ${
+                  isRecording 
+                    ? "bg-red-600 text-white shadow-lg shadow-red-600/25 scale-105" 
+                    : "bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-white hover:border-slate-600 hover:bg-slate-700/50"
+                }`}
+                title={isRecording ? "Stop recording" : "Voice input"}
+              >
+                {isRecording ? (
+                  <Square className="w-4 h-4" />
+                ) : (
+                  <Mic className="w-4 h-4" />
+                )}
+              </button>
+              <button
+                onClick={handleAISubmit}
+                disabled={!aiQuery.trim() || isAILoading}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-slate-600 disabled:to-slate-600 disabled:opacity-50 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+              >
+                {isAILoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Ask
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    Ask
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* AI Response */}
+            {(aiAnswer || isAILoading) && (
+              <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/30">
+                {isAILoading ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-slate-400">
+                      <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+                      <span className="font-medium">{loadingStage || "Processing..."}</span>
+                    </div>
+                    <div className="w-full bg-slate-700/30 rounded-full h-1">
+                      <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-1 rounded-full animate-pulse" style={{width: '60%'}}></div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="text-white text-sm leading-relaxed">
+                      {aiAnswer}
+                    </div>
+                    
+                    {/* Document References with clickable links */}
+                    {aiReferences.length > 0 && (
+                      <div className="space-y-2">
+                        <span className="font-medium text-slate-300 text-sm">Referenced Documents:</span>
+                        <div className="flex flex-wrap gap-2">
+                          {aiReferences.map((ref, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => handleDocumentReference(ref)}
+                              className="group inline-flex items-center gap-2 px-3 py-2 bg-blue-900/30 hover:bg-blue-900/50 border border-blue-500/30 hover:border-blue-400/50 rounded-lg text-blue-300 hover:text-blue-200 transition-all text-xs cursor-pointer"
+                            >
+                              <div className="flex items-center gap-1">
+                                {ref.type === 'Book' && <BookOpen className="w-3 h-3" />}
+                                {ref.type === 'Notes' && <StickyNote className="w-3 h-3" />}
+                                {ref.type === 'Presentation' && <Presentation className="w-3 h-3" />}
+                                <span className="font-medium">{ref.title}</span>
+                              </div>
+                              <div className="text-blue-400/70">
+                                • {ref.topic}
+                              </div>
+                              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Legacy sources (if no references) */}
+                    {aiSources.length > 0 && aiReferences.length === 0 && (
+                      <div className="text-xs text-slate-400">
+                        <span className="font-medium text-slate-300">Sources: </span>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {aiSources.map((source, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-900/30 border border-blue-500/30 rounded-full text-blue-300"
+                            >
+                              📄 {source}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Search and filters */}
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
