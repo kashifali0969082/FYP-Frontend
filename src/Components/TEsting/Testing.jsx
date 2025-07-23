@@ -841,16 +841,33 @@ useEffect(() => {
                 isSidebarCollapsed && !isMobile ? "justify-center" : "space-x-3"
               } mb-4`}
             >
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border-2 border-slate-600/50">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border-2 border-slate-600/50 relative">
                 {isUserDataLoading ? (
                   // Loading state
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 ) : userData?.profile_pic ? (
-                  <img 
-                    src={userData.profile_pic} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover"
-                  />
+                  <>
+                    <img 
+                      src={userData.profile_pic} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.log("Profile image failed to load:", userData.profile_pic);
+                        e.target.style.display = 'none';
+                        e.target.nextElementSibling.style.display = 'flex';
+                      }}
+                      onLoad={(e) => {
+                        console.log("Profile image loaded successfully:", userData.profile_pic);
+                        e.target.nextElementSibling.style.display = 'none';
+                      }}
+                    />
+                    <span 
+                      className="absolute inset-0 flex items-center justify-center text-white text-xs md:text-sm font-bold"
+                      style={{ display: 'none' }}
+                    >
+                      {userData?.name ? userData.name.charAt(0).toUpperCase() : username?.charAt(0)?.toUpperCase() || 'U'}
+                    </span>
+                  </>
                 ) : (
                   <span className="text-white text-xs md:text-sm font-bold">
                     {userData?.name ? userData.name.charAt(0).toUpperCase() : username?.charAt(0)?.toUpperCase() || 'U'}
