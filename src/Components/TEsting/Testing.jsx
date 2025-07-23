@@ -140,8 +140,22 @@ const Dashboard = () => {
     const response = await FileUpload(formData);
     alert(`Upload successful: ${response.message}`);
 
-    // Refresh files list from server instead of manually updating UI
-    await getFilesFun();
+    // Manually add the uploaded file to the state instead of API call
+    const newFile = {
+      id: response.file_id || Date.now().toString(), // Use response ID or timestamp as fallback
+      name: fileData.file.name,
+      uploadDate: new Date().toISOString().split('T')[0],
+      type: fileData.document_type === 'book' ? 'Book' : 
+            fileData.document_type === 'presentation' ? 'Presentation' : 'Notes',
+      icon: fileData.document_type === 'book' ? BookOpen : 
+            fileData.document_type === 'presentation' ? Presentation : FileText,
+      meta: {
+        fileType: fileData.document_type
+      }
+    };
+
+    // Add to the beginning of the files array (newest first)
+    setUploadedFiles(prev => [newFile, ...prev]);
     handleModalClose();
 
     return response;
