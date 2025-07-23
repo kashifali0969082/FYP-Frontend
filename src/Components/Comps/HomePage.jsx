@@ -17,7 +17,7 @@ import { AuthContext } from "../Security/Authcontext";
 import LearningProfileForm from "../TEsting/LearningProfileForm";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
 
-export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploadedFiles,setCurrentPage,setIsMobileSidebarOpen}) => {
+export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploadedFiles,setCurrentPage,setIsMobileSidebarOpen,isFilesLoading,filesError,refreshFiles}) => {
     // Initialize with sample data to show component immediately
     const [streakData, setStreakData] = useState({
         current_streak: 7,
@@ -239,45 +239,110 @@ console.log("Display name will be:", userData?.name || username)
 
         {/* Recently Uploaded Files */}
         <div className="flex-1">
-          <h3 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6 text-white">Recently Uploaded Files</h3>
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <h3 className="text-xl md:text-2xl font-semibold text-white">Recently Uploaded Files</h3>
+            {uploadedFiles.length > 5 && (
+              <span className="text-sm text-slate-400">Showing 5 most recent</span>
+            )}
+          </div>
           <div className="space-y-3 md:space-y-4 min-h-[400px]">
-            {uploadedFiles.slice(0, 5).map((file) => {
-              const IconComponent = file.icon;
-              return (
-                <div key={file.id} className="group">
-                  <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg md:rounded-xl p-4 md:p-6 hover:border-slate-600/50 transition-all duration-300">
+            {isFilesLoading ? (
+              // Loading skeleton
+              Array.from({ length: 5 }).map((_, index) => (
+                <div key={`skeleton-${index}`} className="group">
+                  <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg md:rounded-xl p-4 md:p-6 animate-pulse">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center space-x-3 md:space-x-4 min-w-0 flex-1">
-                        <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
-                          <IconComponent size={isMobile ? 20 : 24} className="text-white" />
-                        </div>
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-600/50 rounded-lg md:rounded-xl flex-shrink-0"></div>
                         <div className="min-w-0 flex-1">
-                          <h4 className="font-medium text-white truncate text-sm md:text-base">{file.name}</h4>
-                          <p className="text-xs md:text-sm text-slate-400">
-                            {file.type} • {file.uploadDate}
-                          </p>
+                          <div className="h-4 md:h-5 bg-slate-600/50 rounded w-3/4 mb-2"></div>
+                          <div className="h-3 md:h-4 bg-slate-600/50 rounded w-1/2"></div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2 md:space-x-3 flex-shrink-0">
-                        <button 
-                          onClick={() => openInStudyMode(file)}
-                          className="flex items-center space-x-1 md:space-x-2 px-3 md:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/25"
-                        >
-                          <Play size={14} />
-                          <span className="text-sm md:text-base">Study</span>
-                        </button>
-                        <button 
-                          onClick={() => deleteFile(file.id)}
-                          className="p-2 rounded-lg hover:bg-red-500/20 hover:text-red-400 text-slate-400 transition-colors"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <div className="h-8 bg-slate-600/50 rounded-lg w-20 md:w-24"></div>
+                        <div className="h-8 w-8 bg-slate-600/50 rounded-lg"></div>
                       </div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              ))
+            ) : filesError ? (
+              // Error state - only show if there's actually an API error
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 mb-4 bg-red-500/20 rounded-xl flex items-center justify-center">
+                  <Files size={32} className="text-red-400" />
+                </div>
+                <h4 className="text-lg font-semibold text-white mb-2">Failed to Load Files</h4>
+                <p className="text-slate-400 mb-4 max-w-md">
+                  There was an issue connecting to the server. Please check your connection and try again.
+                </p>
+                <button 
+                  onClick={refreshFiles}
+                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : uploadedFiles.length === 0 ? (
+              // Empty state - user has no files yet
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <Upload size={32} className="text-white" />
+                </div>
+                <h4 className="text-lg font-semibold text-white mb-2">Ready to Start Learning?</h4>
+                <p className="text-slate-400 mb-6 max-w-md">
+                  Upload your first document to begin your personalized learning journey with AdaptiveLearn AI. 
+                  We support books, presentations, and notes.
+                </p>
+                <button 
+                  onClick={() => setIsUploadModalOpen(true)}
+                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/25"
+                >
+                  <Upload size={18} />
+                  <span>Upload Your First File</span>
+                </button>
+              </div>
+            ) : (
+              // Files list
+              uploadedFiles.slice(0, 5).map((file) => {
+                const IconComponent = file.icon;
+                return (
+                  <div key={file.id} className="group">
+                    <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg md:rounded-xl p-4 md:p-6 hover:border-slate-600/50 transition-all duration-300">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center space-x-3 md:space-x-4 min-w-0 flex-1">
+                          <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
+                            <IconComponent size={isMobile ? 20 : 24} className="text-white" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-medium text-white truncate text-sm md:text-base">{file.name}</h4>
+                            <p className="text-xs md:text-sm text-slate-400">
+                              {file.type} • {file.uploadDate}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2 md:space-x-3 flex-shrink-0">
+                          <button 
+                            onClick={() => openInStudyMode(file)}
+                            className="flex items-center space-x-1 md:space-x-2 px-3 md:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/25"
+                          >
+                            <Play size={14} />
+                            <span className="text-sm md:text-base">Study</span>
+                          </button>
+                          <button 
+                            onClick={() => deleteFile(file.id)}
+                            className="p-2 rounded-lg hover:bg-red-500/20 hover:text-red-400 text-slate-400 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>

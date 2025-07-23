@@ -31,7 +31,7 @@ import { MCQsPage } from "../Comps/McqPage";
 import { StudyModePage } from "../Comps/StudyMode";
 import { FilesPage } from "../Comps/FilePage";
 import LeaderboardPage from "../Comps/LeaderboardPage";
-import { GetAllBooks, GetAllSlides } from "../../Api/Apifun";
+import { GetAllFiles } from "../apiclient/FileRetrievalapis";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../Security/Authcontext";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
@@ -64,43 +64,11 @@ const Dashboard = () => {
   // Loading state for user data
   const [isUserDataLoading, setIsUserDataLoading] = useState(true);
   
-  const [uploadedFiles, setUploadedFiles] = useState([
-    {
-      id: 1,
-      name: "Advanced Mathematics.pdf",
-      type: "Book",
-      uploadDate: "2025-06-20",
-      icon: BookOpen,
-    },
-    {
-      id: 2,
-      name: "Physics Presentation.pptx",
-      type: "Presentation",
-      uploadDate: "2025-06-19",
-      icon: Presentation,
-    },
-    {
-      id: 3,
-      name: "Chemistry Notes.pdf",
-      type: "Notes",
-      uploadDate: "2025-06-18",
-      icon: FileText,
-    },
-    {
-      id: 4,
-      name: "Biology Diagrams.jpg",
-      type: "Notes",
-      uploadDate: "2025-06-17",
-      icon: Image,
-    },
-    {
-      id: 5,
-      name: "History Timeline.pdf",
-      type: "Book",
-      uploadDate: "2025-06-16",
-      icon: BookOpen,
-    },
-  ]);
+  // Loading state for files
+  const [isFilesLoading, setIsFilesLoading] = useState(true);
+  const [filesError, setFilesError] = useState(null);
+  
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   // Function to validate TOC page range
   const validateTocPageRange = (range) => {
@@ -166,16 +134,8 @@ const Dashboard = () => {
     const response = await FileUpload(formData);
     alert(`Upload successful: ${response.message}`);
 
-    // Add new file to UI list
-    const newFile = {
-      id: uploadedFiles.length + 1,
-      name: fileData.file.name,
-      type: fileData.document_type,
-      uploadDate: new Date().toISOString().split("T")[0],
-      icon: getFileIcon(fileData.document_type),
-    };
-
-    setUploadedFiles([newFile, ...uploadedFiles]);
+    // Refresh files list from server instead of manually updating UI
+    await getFilesFun();
     handleModalClose();
 
     return response;
@@ -202,60 +162,119 @@ const Dashboard = () => {
     }
   };
 
-  const getSlidesFun = async () => {
+  const getFilesFun = async () => {
+    setIsFilesLoading(true);
+    setFilesError(null);
+    
     try {
-      const response = await GetAllSlides();
-      const bookResponse = await GetAllBooks();
-      console.log("Slides:", response.data.presentations, bookResponse.data.books);
-      const presentations = response.data.presentations;
-const books = bookResponse.data.books;
-      const transformedFiles = [...presentations, ...books].map(item => {
-  // Common properties
-  const baseFile = {
-    id: item.id,
-    name: item.original_filename || item.file_name,
-    uploadDate: item.created_at.split('T')[0], // Extract date part only
-  };
-
-  // Type-specific properties
-  if (item.type === 'presentation') {
-    return {
-      ...baseFile,
-      type: 'Presentation',
-      icon: Presentation, // Make sure to import your icon component
-      meta: {
-        totalSlides: item.total_slides,
-        hasSpeakerNotes: item.has_speaker_notes
+      console.log("🔄 Starting to fetch all files...");
+      const response = await GetAllFiles();
+      console.log("📁 Files API Response:", response);
+      
+      const { books, presentations, notes } = response;
+      
+      // Transform all files into a unified format
+      const transformedFiles = [];
+      
+      // Transform books
+      if (books && Array.isArray(books) && books.length > 0) {
+        console.log("📚 Processing books:", books);
+        books.forEach((book, index) => {
+          console.log(`📚 Book ${index}:`, book);
+          const fileName = book.title || book.original_filename || book.file_name || book.filename || book.name || `Book_${book.id || index}`;
+          transformedFiles.push({
+            id: book.id || `book_${index}`,
+            name: fileName,
+            uploadDate: book.created_at ? book.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+            type: 'Book',
+            icon: BookOpen,
+            meta: {
+              s3Key: book.s3_key,
+              fileType: 'book'
+            }
+          });
+        });
       }
-    };
-  } else if (item.type === 'book') {
-    return {
-      ...baseFile,
-      type: 'Book',
-      icon: BookOpen, // Make sure to import your icon component
-      meta: {
-        s3Key: item.s3_key
+      
+      // Transform presentations
+      if (presentations && Array.isArray(presentations) && presentations.length > 0) {
+        console.log("🎯 Processing presentations:", presentations);
+        presentations.forEach((presentation, index) => {
+          console.log(`🎯 Presentation ${index}:`, presentation);
+          const fileName = presentation.title || presentation.original_filename || presentation.file_name || presentation.filename || presentation.name || `Presentation_${presentation.id || index}`;
+          transformedFiles.push({
+            id: presentation.id || `presentation_${index}`,
+            name: fileName,
+            uploadDate: presentation.created_at ? presentation.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+            type: 'Presentation',
+            icon: Presentation,
+            meta: {
+              totalSlides: presentation.total_slides,
+              hasSpeakerNotes: presentation.has_speaker_notes,
+              fileType: 'presentation'
+            }
+          });
+        });
       }
-    };
-  }
-  
-  return baseFile;
-})
-// Sort by upload date (newest first)
-.sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
-
-// Update state
-setUploadedFiles(transformedFiles);
+      
+      // Transform notes - API uses 'title' field for notes
+      if (notes && Array.isArray(notes) && notes.length > 0) {
+        console.log("📝 Processing notes:", notes);
+        notes.forEach((note, index) => {
+          console.log(`📝 Note ${index}:`, note);
+          // Notes API returns 'title' field instead of 'original_filename'
+          const fileName = note.title || note.original_filename || note.file_name || note.filename || note.name || `Note_${note.id || index}`;
+          transformedFiles.push({
+            id: note.id || `note_${index}`,
+            name: fileName,
+            uploadDate: note.created_at ? note.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+            type: 'Notes',
+            icon: FileText,
+            meta: {
+              s3Key: note.s3_key,
+              fileType: 'notes'
+            }
+          });
+        });
+      }
+      
+      // Sort by upload date (newest first)
+      const sortedFiles = transformedFiles.sort((a, b) => 
+        new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
+      );
+      
+      console.log("✅ Final transformed files:", sortedFiles);
+      setUploadedFiles(sortedFiles);
+      
     } catch (error) {
-      console.error("Error getting slides:", error);
+      console.error("❌ Error fetching files:", error);
+      console.error("❌ Error details:", error.response?.data);
+      console.error("❌ Error status:", error.response?.status);
+      
+      // Only set error for actual API/network errors, not empty responses
+      if (error.response?.status === 500 || error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+        setFilesError("Unable to connect to the server. Please check your internet connection.");
+      } else if (error.response?.status === 401) {
+        setFilesError("Authentication failed. Please log in again.");
+      } else if (error.response?.status === 404) {
+        // 404 might just mean no files exist, don't show as error
+        console.log("No files found (404) - this is normal for new users");
+        setUploadedFiles([]);
+      } else {
+        // For other errors, show generic message
+        setFilesError("Something went wrong while loading your files.");
+      }
+      
+    } finally {
+      setIsFilesLoading(false);
     }
   };
 
   useEffect(() => {
     // Call user API first for better UX
     fetchUserData().finally(() => {
-      // Then call slides API
-      getSlidesFun();
+      // Then call files API
+      getFilesFun();
     });
     // setShowForm(true);
   }, []);
@@ -772,6 +791,9 @@ useEffect(() => {
                 setIsUploadModalOpen={setIsUploadModalOpen}
                 isMobile={isMobile}
                 uploadedFiles={uploadedFiles}
+                isFilesLoading={isFilesLoading}
+                filesError={filesError}
+                refreshFiles={getFilesFun}
               />
             )}
             {currentPage === "study" && <StudyModePage isMobile={isMobile} />}
