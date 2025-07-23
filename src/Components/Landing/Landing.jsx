@@ -127,7 +127,7 @@ import "./Landing";
     
     // Add a small delay to show the loading state
     setTimeout(() => {
-      window.location.href = "https://api.adaptivelearnai.xyz/google/login?redirect_origin=http://localhost:3000 ";
+      window.location.href = "https://api.adaptivelearnai.xyz/google/login";
     }, 500);
   }
 
