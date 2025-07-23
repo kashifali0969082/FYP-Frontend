@@ -92,10 +92,7 @@ const StreakComponent = ({ streakData, isLoading }) => {
 
       {/* Streak Days Visualization */}
       <div className="mb-4">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm text-white/80">Your streak</span>
-          <span className="text-sm text-white/80">This week</span>
-        </div>
+
         <div className="flex justify-between gap-1">
           {streakDays.map((day, index) => (
             <div key={index} className="flex flex-col items-center">
@@ -124,7 +121,7 @@ const StreakComponent = ({ streakData, isLoading }) => {
         </div>
         <div className="flex items-center gap-2">
           <Target className="w-4 h-4 text-green-300" />
-          <span className="text-sm">Goal: 30 days</span>
+          <span className="text-sm">Goal: {current_streak + 2} days</span>
         </div>
       </div>
     </div>
