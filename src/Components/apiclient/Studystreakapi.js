@@ -1,32 +1,25 @@
 import { apiclient } from "./Apis";
-import Cookies from "js-cookie";
+import { getAuthToken } from "../../utils/auth";
 
-// Helper function to get token
-const getToken = () => {
-  return Cookies.get("access_token");
+// Dynamic token getter for API calls
+const getHeaders = () => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error('Authentication token not available');
+  }
+  return {
+    Authorization: `Bearer ${token}`,
+  };
 };
-;
 
-export const streakapi = () => apiclient.get(`/streak`,{
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-      },
-    })
+export const streakapi = () => apiclient.get(`/streak`, {
+  headers: getHeaders(),
+});
 
-export const streakLeaderboardapi = () => apiclient.get(`/streak/leaderboard`,{
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-      },
-    })
-
-export const userapi = () => apiclient.get(`/user`,{
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-      },
-    })
+export const streakLeaderboardapi = () => apiclient.get(`/streak/leaderboard`, {
+  headers: getHeaders(),
+});
 
 export const updatestreakapi = () => apiclient.post(`/streak/update`, {}, {
-  headers: {
-    Authorization: `Bearer ${getToken()}`,
-  },
+  headers: getHeaders(),
 });

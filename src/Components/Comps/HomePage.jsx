@@ -16,6 +16,8 @@ import { jwtDecode } from "jwt-decode";
 import { AuthContext } from "../Security/Authcontext";
 import LearningProfileForm from "../TEsting/LearningProfileForm";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
+import { useStreakUpdate } from "../../hooks/useStreakUpdate";
+import StreakUpdateModal from "./StreakUpdateModal";
 
 export const HomePage = ({
   setUploadedFiles, 
@@ -39,12 +41,19 @@ export const HomePage = ({
 }) => {
     // No local state needed - use props from parent to eliminate duplicate API calls
     
-    const openInStudyMode = (file) => {
+    // Streak update hook
+    const { triggerStreakUpdate, isModalOpen, streakData: streakUpdateData, closeModal } = useStreakUpdate();
+    
+    const openInStudyMode = async (file) => {
+    console.log("📚 Opening file in study mode:", file);
+    
     setCurrentPage("study");
     if (isMobile) {
       setIsMobileSidebarOpen(false);
     }
-    console.log("Opening file in study mode:", file);
+    
+    // Trigger streak update when opening file in study mode
+    await triggerStreakUpdate();
   };
   
   //   APIs - ALL DATA NOW COMES FROM PARENT TO ELIMINATE DUPLICATE CALLS
@@ -52,8 +61,8 @@ export const HomePage = ({
   // This eliminates duplicate streakapi() and leaderboard API calls
 
 // User API function - REMOVED to eliminate duplicate API calls
-// User data is now passed from parent component (Testing.jsx) as props
-// This eliminates the duplicate userapi() call that was happening in both parent and child
+// User data is now extracted from JWT token instead of API calls for better performance
+// This eliminates any need for userapi() calls as all user info is in the token
 
 // const [username,setusername] = useState('')   // this method is for testing purpose 
 //  useEffect(() => {
@@ -300,5 +309,13 @@ console.log("Display name will be:", userData?.name || username)
           </div>
         </div>
       </div>
+      
+      {/* Streak Update Modal */}
+      <StreakUpdateModal 
+        isOpen={isModalOpen} 
+        onClose={closeModal} 
+        streakData={streakUpdateData} 
+      />
     </div>
-  )};
+  );
+};
