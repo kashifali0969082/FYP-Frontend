@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect, useContext } from "react";
 import {
   BookOpen,
-  FileQuestion,
   Upload,
   Files,
   User,
@@ -23,14 +22,16 @@ import {
   Menu,
   ChevronLeft,
   Trophy,
+  History,
 } from "lucide-react";
 
 import { MobileHeader } from "../Comps/MobileHeader";
 import { HomePage } from "../Comps/HomePage";
-import { MCQsPage } from "../Comps/McqPage";
 import { StudyModePage } from "../Comps/StudyMode";
 import { FilesPage } from "../Comps/FilePage";
 import LeaderboardPage from "../Comps/LeaderboardPage";
+import { QuizBuilderMain } from "../Comps/QuizBuilder/QuizBuilderMain";
+import { QuizManager } from "../Comps/QuizBuilder/QuizManager";
 import { GetAllFiles, DeleteFile } from "../apiclient/FileRetrievalapis";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../Security/Authcontext";
@@ -677,20 +678,39 @@ useEffect(() => {
               </li>
               <li>
                 <button
-                  onClick={() => navigateToPage("mcqs")}
+                  onClick={() => navigateToPage("quiz-builder")}
                   className={`flex items-center ${
                     isSidebarCollapsed && !isMobile
                       ? "justify-center"
                       : "space-x-3"
                   } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                    currentPage === "mcqs"
+                    currentPage === "quiz-builder"
                       ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
                       : "text-slate-300 hover:text-white hover:bg-slate-700/50"
                   }`}
                 >
-                  <FileQuestion size={20} />
+                  <Target size={20} />
                   {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">MCQs</span>
+                    <span className="text-sm md:text-base">Quiz Builder</span>
+                  )}
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => navigateToPage("quiz-history")}
+                  className={`flex items-center ${
+                    isSidebarCollapsed && !isMobile
+                      ? "justify-center"
+                      : "space-x-3"
+                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                    currentPage === "quiz-history"
+                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                  }`}
+                >
+                  <History size={20} />
+                  {(!isSidebarCollapsed || isMobile) && (
+                    <span className="text-sm md:text-base">Quiz History</span>
                   )}
                 </button>
               </li>
@@ -709,7 +729,7 @@ useEffect(() => {
                 >
                   <Files size={20} />
                   {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">Files</span>
+                    <span className="text-sm md:text-base">Library</span>
                   )}
                 </button>
               </li>
@@ -849,7 +869,21 @@ useEffect(() => {
               />
             )}
             {currentPage === "study" && <StudyModePage isMobile={isMobile} />}
-            {currentPage === "mcqs" && <MCQsPage isMobile={isMobile} />}
+            {currentPage === "quiz-builder" && (
+              <QuizBuilderMain
+                uploadedFiles={uploadedFiles}
+                isFilesLoading={isFilesLoading}
+                setCurrentPage={setCurrentPage}
+                setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+                isMobile={isMobile}
+              />
+            )}
+            {currentPage === "quiz-history" && (
+              <QuizManager 
+                isMobile={isMobile} 
+                setCurrentPage={setCurrentPage}
+              />
+            )}
             {currentPage === "files" && <FilesPage isMobile={isMobile} />}
             {currentPage === "leaderboard" && <LeaderboardPage isMobile={isMobile} />}
           </div>
