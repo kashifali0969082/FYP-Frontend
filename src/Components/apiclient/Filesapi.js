@@ -13,7 +13,7 @@ const getToken = () => {
   return token || LOCALHOST_TOKEN;
 };
 
-export const FileUpload = async (uploadedfile) => {
+export const FileUpload = async (uploadedfile, onProgress = () => {}) => {
   const token = getToken();
   try {
     const response = await apiclient.post(
@@ -23,6 +23,12 @@ export const FileUpload = async (uploadedfile) => {
         headers: {
           Authorization: `Bearer ${token}`,
         //   "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(percentCompleted);
         },
       }
     );

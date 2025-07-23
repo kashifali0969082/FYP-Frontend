@@ -53,6 +53,9 @@ const Dashboard = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("home");
   const [isUploading, setIsUploading] = useState(false); // Add loading state
+  const [uploadProgress, setUploadProgress] = useState(0); // Upload progress percentage
+  const [uploadStatus, setUploadStatus] = useState(""); // Upload status message
+  const [uploadSuccess, setUploadSuccess] = useState(false); // Upload success state
   
   // User data state for sidebar
   const [userData, setUserData] = useState({
@@ -117,10 +120,12 @@ const Dashboard = () => {
     }
   };
 
-  // Fixed file upload function
+  // Enhanced file upload function with progress tracking
  const uploadFile = async (fileData) => {
   try {
     setIsUploading(true);
+    setUploadProgress(0);
+    setUploadStatus("Preparing upload...");
 
     const formData = new FormData();
     formData.append("file", fileData.file);
@@ -136,9 +141,26 @@ const Dashboard = () => {
       console.log(key, value);
     }
 
-    // Upload to API
-    const response = await FileUpload(formData);
-    alert(`Upload successful: ${response.message}`);
+    setUploadStatus("Uploading file...");
+
+    // Upload to API with progress tracking
+    const response = await FileUpload(formData, (progress) => {
+      setUploadProgress(progress);
+      if (progress < 100) {
+        setUploadStatus(`Uploading... ${progress}%`);
+      } else {
+        setUploadStatus("Processing file...");
+      }
+    });
+
+    setUploadStatus("Upload successful!");
+    setUploadProgress(100);
+    setUploadSuccess(true);
+    
+    // Brief delay to show success message
+    setTimeout(() => {
+      alert(`Upload successful: ${response.message}`);
+    }, 500);
 
     // Manually add the uploaded file to the state instead of API call
     const newFile = {
@@ -156,15 +178,28 @@ const Dashboard = () => {
 
     // Add to the beginning of the files array (newest first)
     setUploadedFiles(prev => [newFile, ...prev]);
-    handleModalClose();
+    
+    // Delay closing modal to show success state
+    setTimeout(() => {
+      handleModalClose();
+    }, 1000);
 
     return response;
   } catch (error) {
     console.error("Upload failed:", error);
+    setUploadStatus("Upload failed!");
+    setUploadProgress(0);
+    setUploadSuccess(false);
     alert(`Upload failed: ${error?.response?.data?.message || error.message}`);
     throw error;
   } finally {
-    setIsUploading(false);
+    // Reset states after a delay if not successful
+    setTimeout(() => {
+      setIsUploading(false);
+      setUploadProgress(0);
+      setUploadStatus("");
+      setUploadSuccess(false);
+    }, 2000);
   }
 };
 
@@ -455,6 +490,9 @@ const Dashboard = () => {
     setSelectedFile(null);
     setTocPageRange("");
     setTocError("");
+    setUploadProgress(0);
+    setUploadStatus("");
+    setUploadSuccess(false);
   };
 
   const isUploadButtonEnabled = () => {
@@ -1072,6 +1110,93 @@ useEffect(() => {
                 />
               </div>
 
+              {/* Upload Progress Indicator */}
+              {isUploading && (
+                <div className={`border-2 border-dashed rounded-lg md:rounded-xl p-6 md:p-8 text-center transition-all duration-500 ${
+                  uploadSuccess 
+                    ? "border-green-500 bg-green-500/10" 
+                    : "border-blue-500 bg-blue-500/10"
+                }`}>
+                  <div className="mb-4">
+                    <div className="w-16 h-16 mx-auto mb-3 relative">
+                      {/* Circular Progress */}
+                      <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 64 64">
+                        <circle
+                          cx="32"
+                          cy="32"
+                          r="28"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                          className="text-slate-600"
+                        />
+                        <circle
+                          cx="32"
+                          cy="32"
+                          r="28"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                          strokeDasharray={`${2 * Math.PI * 28}`}
+                          strokeDashoffset={`${2 * Math.PI * 28 * (1 - uploadProgress / 100)}`}
+                          className={`transition-all duration-300 ${
+                            uploadSuccess ? "text-green-400" : "text-blue-400"
+                          }`}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        {uploadSuccess ? (
+                          <div className="text-green-400 animate-bounce">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        ) : (
+                          <span className="text-lg font-bold text-blue-400">{uploadProgress}%</span>
+                        )}
+                      </div>
+                    </div>
+                    {uploadSuccess ? (
+                      <div className="text-green-400 animate-bounce">
+                        <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    ) : (
+                      <Upload size={24} className="mx-auto text-blue-400 animate-bounce" />
+                    )}
+                  </div>
+                  
+                  <div className={`font-medium mb-2 ${
+                    uploadSuccess ? "text-green-400" : "text-white"
+                  }`}>
+                    {uploadStatus || "Uploading..."}
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="w-full bg-slate-700 rounded-full h-2 mb-3">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ease-out ${
+                        uploadSuccess 
+                          ? "bg-gradient-to-r from-green-500 to-green-400" 
+                          : "bg-gradient-to-r from-blue-500 to-purple-600"
+                      }`}
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                  
+                  <p className="text-xs text-slate-400">
+                    {uploadSuccess 
+                      ? "File uploaded successfully!" 
+                      : selectedFile 
+                      ? `Uploading ${selectedFile.name}` 
+                      : "Processing file..."
+                    }
+                  </p>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
                 <button
@@ -1086,13 +1211,25 @@ useEffect(() => {
                 <button
                   onClick={handleFileUpload}
                   disabled={!isUploadButtonEnabled()}
-                  className={`flex-1 px-4 py-3 rounded-lg md:rounded-xl transition-all duration-300 shadow-lg text-sm md:text-base ${
-                    isUploadButtonEnabled()
+                  className={`flex-1 px-4 py-3 rounded-lg md:rounded-xl transition-all duration-300 shadow-lg text-sm md:text-base flex items-center justify-center gap-2 ${
+                    isUploadButtonEnabled() && !isUploading
                       ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 hover:shadow-blue-500/25"
+                      : isUploading
+                      ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white cursor-not-allowed"
                       : "bg-slate-600 text-slate-400 cursor-not-allowed"
                   }`}
                 >
-                  {isUploading ? "Uploading..." : "Upload"}
+                  {isUploading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>{uploadProgress > 0 ? `${uploadProgress}%` : "Starting..."}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={16} />
+                      <span>Upload</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
