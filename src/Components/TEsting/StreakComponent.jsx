@@ -4,28 +4,26 @@ import { useParams } from 'react-router-dom';
 
 
 // Main Streak Component for Dashboard
-const StreakComponent = ({ streakData }) => {
-  // Handle loading state
-  if (!streakData) {
-    return (
-      <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-xl p-6 text-white relative overflow-hidden">
-        <div className="flex items-center justify-center h-32">
-          <div className="text-center">
-            <Flame className="w-8 h-8 mx-auto mb-2 animate-pulse" />
-            <p className="text-sm">Loading streak...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+const StreakComponent = ({ streakData, isLoading }) => {
+  // Always render component with available data or defaults
+  const displayData = streakData || {
+    current_streak: 0,
+    longest_streak: 0,
+    last_active_date: new Date().toISOString().split('T')[0],
+  };
 
-  const { current_streak, longest_streak, last_active_date } = streakData;
+  const { current_streak, longest_streak, last_active_date } = displayData;
   
   // Generate days for the streak visualization
   const generateStreakDays = () => {
     const days = [];
     const today = new Date();
     const lastActiveDate = new Date(last_active_date);
+    
+    console.log("🔥 Streak Debug Info:");
+    console.log("  - Current streak:", current_streak);
+    console.log("  - Last active date:", last_active_date);
+    console.log("  - Today:", today.toISOString().split('T')[0]);
     
     // Generate 7 days (3 past, today, 3 future)
     for (let i = -3; i <= 3; i++) {
@@ -36,13 +34,22 @@ const StreakComponent = ({ streakData }) => {
       const dayOfMonth = date.getDate();
       
       let status = 'future';
-      if (date <= lastActiveDate) {
-        // Check if this day is within the current streak
+      
+      // Improved logic for determining streak status
+      if (date.toDateString() === today.toDateString()) {
+        // Today should be 'active' if current streak > 0, otherwise 'today'
+        status = current_streak > 0 ? 'active' : 'today';
+      } else if (date < today) {
+        // Past dates: check if they're within the current streak from last active date
         const daysDiff = Math.floor((lastActiveDate - date) / (1000 * 60 * 60 * 24));
-        status = daysDiff < current_streak ? 'active' : 'inactive';
-      } else if (date.toDateString() === today.toDateString()) {
-        status = 'today';
+        const isWithinStreak = daysDiff >= 0 && daysDiff < current_streak;
+        status = isWithinStreak ? 'active' : 'inactive';
+      } else {
+        // Future dates
+        status = 'future';
       }
+      
+      console.log(`  - ${date.toISOString().split('T')[0]}: ${status}`);
       
       days.push({
         date: date,

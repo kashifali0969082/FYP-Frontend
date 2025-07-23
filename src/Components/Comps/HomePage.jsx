@@ -18,12 +18,13 @@ import LearningProfileForm from "../TEsting/LearningProfileForm";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
 
 export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploadedFiles,setCurrentPage,setIsMobileSidebarOpen,isFilesLoading,filesError,refreshFiles,handleDeleteClick,deletingFileId}) => {
-    // Initialize with sample data to show component immediately
+    // Initialize with optimistic data to show component immediately
     const [streakData, setStreakData] = useState({
-        current_streak: 7,
-        longest_streak: 15,
+        current_streak: 0,
+        longest_streak: 0,
         last_active_date: new Date().toISOString().split('T')[0],
     });
+    const [isStreakLoading, setIsStreakLoading] = useState(false); // Don't show loading initially
 
     // User data state
     const [userData, setUserData] = useState({
@@ -57,31 +58,26 @@ useEffect(() => {
 }, []);
 
 function streakApiResponse(values) {
-  console.log("called streak data");
+  console.log("🔥 Fetching streak data...");
 
   return streakapi()
     .then((response) => {
-     // console.log(response);
-        const { current_streak, longest_streak, last_active_date } = response.data;
+      console.log("🔥 Streak API Response:", response.data);
+      const { current_streak, longest_streak, last_active_date } = response.data;
 
       const streakdata = {
         current_streak,
         longest_streak,
         last_active_date,
       };
-      console.log(streakdata);
+      console.log("🔥 Processed streak data:", streakdata);
       setStreakData(streakdata);
       return streakdata;
     })
     .catch((error) => {
-      console.log("API error in streakApiResponse:", error);
-      // Set default data in case of error
-      const defaultStreakData = {
-        current_streak: 0,
-        longest_streak: 0,
-        last_active_date: new Date().toISOString().split('T')[0],
-      };
-      setStreakData(defaultStreakData);
+      console.log("❌ API error in streakApiResponse:", error);
+      // Keep default data in case of error - don't change state
+      console.log("Using default streak data due to API error");
       throw error;  
     });
 }
@@ -354,7 +350,7 @@ console.log("Display name will be:", userData?.name || username)
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-6">
           {/* Streak Tracker */}
           <div>
-            <StreakComponent streakData={streakData} />
+            <StreakComponent streakData={streakData} isLoading={isStreakLoading} />
           </div>
 
           {/* Leaderboard Preview */}
