@@ -21,8 +21,16 @@ import "./Landing";
         if (savedToken) {
           try {
             const decoded = jwtDecode(savedToken);
+            const currentTime = Date.now() / 1000; // Convert to seconds
+
+            if (decoded.exp && decoded.exp < currentTime) {
+              console.log("Token expired, removing from cookies");
+              Cookies.remove("access_token");
+              setIsCheckingAuth(false);
+              return;
+            }
+
             console.log("User is already authenticated, redirecting to dashboard...");
-            // User is already logged in, redirect to dashboard
             navigate("/");
             return;
           } catch (err) {
