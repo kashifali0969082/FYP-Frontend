@@ -884,7 +884,15 @@ useEffect(() => {
                 setCurrentPage={setCurrentPage}
               />
             )}
-            {currentPage === "files" && <FilesPage isMobile={isMobile} />}
+            {currentPage === "files" && (
+              <FilesPage 
+                setIsUploadModalOpen={setIsUploadModalOpen} 
+                isMobile={isMobile}
+                uploadedFiles={uploadedFiles}
+                isLoading={isFilesLoading}
+                refreshFiles={getFilesFun}
+              />
+            )}
             {currentPage === "leaderboard" && <LeaderboardPage isMobile={isMobile} />}
           </div>
         </div>
