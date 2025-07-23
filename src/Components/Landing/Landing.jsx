@@ -1,10 +1,44 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
 import "./Landing";
 
 
   const LandingPage = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const navigate = useNavigate();
+
+  // Check if user is already authenticated
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      try {
+        const savedToken = Cookies.get("access_token");
+        
+        if (savedToken) {
+          try {
+            const decoded = jwtDecode(savedToken);
+            console.log("User is already authenticated, redirecting to dashboard...");
+            // User is already logged in, redirect to dashboard
+            navigate("/");
+            return;
+          } catch (err) {
+            console.error("Invalid token, removing from cookies:", err);
+            Cookies.remove("access_token");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking auth status:", error);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, [navigate]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -89,15 +123,18 @@ import "./Landing";
  
 
   function SignInGoogle() {
-
-    window.location.href = "https://api.adaptivelearnai.xyz/google/login?redirect_origin=http://localhost:3000 "
-
-
- 
- }
+    setIsSigningIn(true);
+    
+    // Add a small delay to show the loading state
+    setTimeout(() => {
+      window.location.href = "https://api.adaptivelearnai.xyz/google/login?redirect_origin=http://localhost:3000 ";
+    }, 500);
+  }
 
   const handleSignInWithGoogle = () => {
-    SignInGoogle();
+    if (!isSigningIn) {
+      SignInGoogle();
+    }
   };
 
   const handleSmoothScroll = (e, targetId) => {
@@ -220,10 +257,19 @@ import "./Landing";
 
   return (
     <div className="landing-page">
-      <div className="bg-animation"></div>
+      {isCheckingAuth ? (
+        <div className="auth-loading-overlay">
+          <div className="auth-loading-content">
+            <div className="auth-loading-spinner"></div>
+            <p>Checking authentication...</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="bg-animation"></div>
 
-      {/* Header */}
-      <header className={`header ${isScrolled ? "scrolled" : ""}`}>
+          {/* Header */}
+          <header className={`header ${isScrolled ? "scrolled" : ""}`}>
         <nav className="nav-container">
           <div className="nav-logo">
             <i className="fas fa-brain"></i>
@@ -281,12 +327,22 @@ import "./Landing";
                 development.
               </p>
               <button
-                className="google-signin-btn"
+                className={`google-signin-btn ${isSigningIn ? 'signing-in' : ''}`}
                 onClick={handleSignInWithGoogle}
+                disabled={isSigningIn}
               >
-                <GoogleIcon />
-                <i className="fab fa-google"></i>
-                Continue with Google
+                {isSigningIn ? (
+                  <>
+                    <div className="loading-spinner"></div>
+                    <span>Connecting to Google...</span>
+                  </>
+                ) : (
+                  <>
+                    <GoogleIcon />
+                    <i className="fab fa-google"></i>
+                    Continue with Google
+                  </>
+                )}
               </button>
             </div>
             <div className="hero-visual">
@@ -372,6 +428,8 @@ import "./Landing";
           </p>
         </div>
       </footer>
+        </>
+      )}
     </div>
   );
 };

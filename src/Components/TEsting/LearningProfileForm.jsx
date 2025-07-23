@@ -436,13 +436,6 @@ const LearningProfileForm = ({ onComplete }) => {
                           </button>
                         ))}
                       </div>
-                      <div className="flex items-center justify-between text-xs text-gray-500 px-2">
-                        <span>1</span>
-                        <span>2</span>
-                        <span>3</span>
-                        <span>4</span>
-                        <span>5</span>
-                      </div>
                     </div>
                   </div>
                 ))}

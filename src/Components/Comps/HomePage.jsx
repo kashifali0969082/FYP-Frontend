@@ -4,15 +4,12 @@ import {
   Trash2,
   Play,
   Flame,
-  BarChart3,
-  Clock,
-  Target,
-  TrendingUp,
 } from "lucide-react";
 
 import { StreakComponent} from "../TEsting/StreakComponent";
+import LeaderboardPreview from "./LeaderboardPreview";
 import { useContext, useEffect, useState } from "react";
-import { streakapi } from "../apiclient/Studystreakapi";
+import { streakapi, userapi } from "../apiclient/Studystreakapi";
 import { useNavigate, useParams } from "react-router-dom";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -21,6 +18,24 @@ import LearningProfileForm from "../TEsting/LearningProfileForm";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
 
 export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploadedFiles,setCurrentPage,setIsMobileSidebarOpen}) => {
+    // Initialize with sample data to show component immediately
+    const [streakData, setStreakData] = useState({
+        current_streak: 7,
+        longest_streak: 15,
+        last_active_date: new Date().toISOString().split('T')[0],
+    });
+
+    // User data state
+    const [userData, setUserData] = useState({
+        name: "",
+        email: "",
+        profile_pic: "",
+        id: ""
+    });
+
+    // Loading state for user data
+    const [isUserDataLoading, setIsUserDataLoading] = useState(true);
+    
     const openInStudyMode = (file) => {
     setCurrentPage("study");
     if (isMobile) {
@@ -34,15 +49,18 @@ export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploade
   //   apis
 useEffect(() => {
     try {
-       streakApiResponse();
+       // Call user API first for better UX
+       fetchUserData().finally(() => {
+         // Then call streak API
+         streakApiResponse();
+       });
     } catch (error) {
-      console.error("Error fetching streak:", error);
+      console.error("Error fetching data:", error);
     }
 }, []);
 
 function streakApiResponse(values) {
   console.log("called streak data");
-
 
   return streakapi()
     .then((response) => {
@@ -54,11 +72,60 @@ function streakApiResponse(values) {
         longest_streak,
         last_active_date,
       };
-      console.log(streakdata)
+      console.log(streakdata);
+      setStreakData(streakdata);
+      return streakdata;
     })
     .catch((error) => {
       console.log("API error in streakApiResponse:", error);
+      // Set default data in case of error
+      const defaultStreakData = {
+        current_streak: 0,
+        longest_streak: 0,
+        last_active_date: new Date().toISOString().split('T')[0],
+      };
+      setStreakData(defaultStreakData);
       throw error;  
+    });
+}
+
+// User API function
+function fetchUserData() {
+  console.log("fetchUserData called - starting user data fetch");
+  setIsUserDataLoading(true);
+
+  return userapi()
+    .then((response) => {
+      console.log("🚀 User API Response received:", response.data);
+      console.log("🔍 API Response type:", typeof response.data);
+      console.log("🔍 API Response keys:", Object.keys(response.data));
+      
+      const { id, email, name, profile_pic } = response.data;
+      
+      console.log("📝 Extracted values:");
+      console.log("  - id:", id);
+      console.log("  - email:", email);
+      console.log("  - name:", name);
+      console.log("  - profile_pic:", profile_pic);
+      
+      const userInfo = {
+        id,
+        email,
+        name,
+        profile_pic
+      };
+      
+      console.log("✅ Setting userData to:", userInfo);
+      setUserData(userInfo);
+      setIsUserDataLoading(false);
+      return userInfo;
+    })
+    .catch((error) => {
+      console.log("API error in fetchUserData:", error);
+      console.log("Error details:", error.response?.data || error.message);
+      setIsUserDataLoading(false);
+      // Keep default user data on error
+      throw error;
     });
 } // end api  ........
 // const [username,setusername] = useState('')   // this method is for testing purpose 
@@ -120,19 +187,30 @@ function streakApiResponse(values) {
   //   }
   // }, []);
 const {username} = useContext(AuthContext)
-console.log(username)
+console.log("username from context:", username)
+console.log("Current userData:", userData)
+console.log("Display name will be:", userData?.name || username)
 
   return(
-    <div className="flex flex-col xl:flex-row gap-8">
+    <div className="flex flex-col xl:flex-row gap-8 min-h-screen">
 
       {/* Dashboard Area */}
       <div className="flex-1 space-y-8">
         {/* Welcome Section with Gradient */}
         <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 p-6 md:p-8 text-white">
           <div className="relative z-10">
-            <h2 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4">Welcome back, {username}</h2>
+            <h2 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4">
+              {isUserDataLoading ? (
+                <div className="flex items-center gap-3">
+                  <span>Welcome back,</span>
+                  <div className="h-8 md:h-10 bg-white/20 rounded animate-pulse w-32 md:w-48"></div>
+                </div>
+              ) : (
+                `Welcome back, ${userData?.name || username}!`
+              )}
+            </h2>
             <p className="text-lg md:text-xl text-blue-100 mb-4 md:mb-6">
-              Continue your learning journey with AI
+              Continue your learning journey with Adaptive AI
             </p>
           </div>
           {/* Decorative gradient orbs */}
@@ -160,9 +238,9 @@ console.log(username)
         </div>
 
         {/* Recently Uploaded Files */}
-        <div>
+        <div className="flex-1">
           <h3 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6 text-white">Recently Uploaded Files</h3>
-          <div className="space-y-3 md:space-y-4">
+          <div className="space-y-3 md:space-y-4 min-h-[400px]">
             {uploadedFiles.slice(0, 5).map((file) => {
               const IconComponent = file.icon;
               return (
@@ -204,54 +282,21 @@ console.log(username)
         </div>
       </div>
 
-      {/* Right Panel - Hidden on mobile, stacked on tablet */}
-      <div className="w-full xl:w-80 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-6 xl:space-y-0">
-        {/* Streak Tracker */}
-        <div>
-       <StreakComponent streakData={streakApiResponse} />
-       
-</div>
+      {/* Right Panel - Fixed position and height */}
+      <div className="w-full xl:w-80 xl:sticky xl:top-8 xl:h-fit xl:max-h-screen xl:overflow-y-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-6">
+          {/* Streak Tracker */}
+          <div>
+            <StreakComponent streakData={streakData} />
+          </div>
 
-        {/* Analytics */}
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl md:rounded-2xl blur-lg opacity-20"></div>
-          <div className="relative bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl md:rounded-2xl p-4 md:p-6">
-            <div className="flex items-center space-x-3 mb-4 md:mb-6">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg md:rounded-xl flex items-center justify-center">
-                <BarChart3 size={isMobile ? 20 : 24} className="text-white" />
-              </div>
-              <h3 className="font-semibold text-white text-sm md:text-base">Your Progress</h3>
-            </div>
-            <div className="space-y-3 md:space-y-4">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Clock size={14} className="text-blue-400" />
-                  <span className="text-xs md:text-sm text-slate-300">Study Time</span>
-                </div>
-                <span className="font-semibold text-white text-xs md:text-sm">24h 30m</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Files size={14} className="text-purple-400" />
-                  <span className="text-xs md:text-sm text-slate-300">Files Studied</span>
-                </div>
-                <span className="font-semibold text-white text-xs md:text-sm">12</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Target size={14} className="text-green-400" />
-                  <span className="text-xs md:text-sm text-slate-300">MCQs Completed</span>
-                </div>
-                <span className="font-semibold text-white text-xs md:text-sm">247</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <TrendingUp size={14} className="text-orange-400" />
-                  <span className="text-xs md:text-sm text-slate-300">Accuracy Rate</span>
-                </div>
-                <span className="font-semibold text-white text-xs md:text-sm">87%</span>
-              </div>
-            </div>
+          {/* Leaderboard Preview */}
+          <div>
+            <LeaderboardPreview 
+              isMobile={isMobile} 
+              setCurrentPage={setCurrentPage}
+              setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+            />
           </div>
         </div>
       </div>
