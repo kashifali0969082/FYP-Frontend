@@ -6,8 +6,7 @@ import Cookies from "js-cookie";
 
 // Helper function to get token
 const getToken = () => {
-  const token = Cookies.get("access_token");
-  return token;
+  return Cookies.get("access_token");
 };
 
 export const FileUpload = async (uploadedfile, onProgress = () => {}) => {

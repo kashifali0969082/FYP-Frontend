@@ -66,9 +66,7 @@ export const GetAllFiles = async () => {
     throw new Error("No authentication token found");
   }
 
-  try {
-    console.log("🔄 Fetching files with token:", token.substring(0, 20) + "...");
-    
+  try {    
     // Fetch all file types in parallel
     const [booksResponse, slidesResponse, notesResponse] = await Promise.allSettled([
       GetAllBooks(),

@@ -4,22 +4,20 @@ import Cookies from "js-cookie";
 
 // Helper function to get token
 const getToken = () => {
-  const token = Cookies.get("access_token");
-  return token;
+  return Cookies.get("access_token");
 };
 
-const token = getToken(); 
 
 export const learningProfilestatusapi = () => apiclient.get(`/learning-profile/form/status`,{
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${getToken()}`,
       },
     })
 
 
 export const createlearningprofileformapi = (formData) => apiclient.post(`/learning-profile/form`,formData,{
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${getToken()}`,
         "Content-Type": "application/json",
       },
     })
