@@ -4,15 +4,12 @@ import {
   Trash2,
   Play,
   Flame,
-  BarChart3,
-  Clock,
-  Target,
-  TrendingUp,
 } from "lucide-react";
 
 import { StreakComponent} from "../TEsting/StreakComponent";
+import LeaderboardPreview from "./LeaderboardPreview";
 import { useContext, useEffect, useState } from "react";
-import { streakapi } from "../apiclient/Studystreakapi";
+// Removed streakapi import - data now comes from parent to eliminate duplicate API calls
 import { useNavigate, useParams } from "react-router-dom";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -20,7 +17,28 @@ import { AuthContext } from "../Security/Authcontext";
 import LearningProfileForm from "../TEsting/LearningProfileForm";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
 
-export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploadedFiles,setCurrentPage,setIsMobileSidebarOpen}) => {
+export const HomePage = ({
+  setUploadedFiles, 
+  setIsUploadModalOpen, 
+  isMobile, 
+  uploadedFiles, 
+  setCurrentPage, 
+  setIsMobileSidebarOpen, 
+  isFilesLoading, 
+  filesError, 
+  refreshFiles, 
+  handleDeleteClick, 
+  deletingFileId,
+  // New props to receive data from parent to eliminate duplicate API calls
+  userData, 
+  isUserDataLoading = false,
+  streakData,
+  isStreakLoading = false,
+  leaderboardData,
+  isLeaderboardLoading = false
+}) => {
+    // No local state needed - use props from parent to eliminate duplicate API calls
+    
     const openInStudyMode = (file) => {
     setCurrentPage("study");
     if (isMobile) {
@@ -28,39 +46,15 @@ export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploade
     }
     console.log("Opening file in study mode:", file);
   };
-    const deleteFile = (id) => {
-    setUploadedFiles(uploadedFiles.filter((file) => file.id !== id));
-  };
-  //   apis
-useEffect(() => {
-    try {
-       streakApiResponse();
-    } catch (error) {
-      console.error("Error fetching streak:", error);
-    }
-}, []);
+  
+  //   APIs - ALL DATA NOW COMES FROM PARENT TO ELIMINATE DUPLICATE CALLS
+  // No useEffect needed - all data is passed as props from Testing.jsx
+  // This eliminates duplicate streakapi() and leaderboard API calls
 
-function streakApiResponse(values) {
-  console.log("called streak data");
+// User API function - REMOVED to eliminate duplicate API calls
+// User data is now passed from parent component (Testing.jsx) as props
+// This eliminates the duplicate userapi() call that was happening in both parent and child
 
-
-  return streakapi()
-    .then((response) => {
-     // console.log(response);
-        const { current_streak, longest_streak, last_active_date } = response.data;
-
-      const streakdata = {
-        current_streak,
-        longest_streak,
-        last_active_date,
-      };
-      console.log(streakdata)
-    })
-    .catch((error) => {
-      console.log("API error in streakApiResponse:", error);
-      throw error;  
-    });
-} // end api  ........
 // const [username,setusername] = useState('')   // this method is for testing purpose 
 //  useEffect(() => {
 //   const hardcodedToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZmE2YWQ4Zi0zNTgyLTQzZmItOWEwYy02YTI5NzJkNGMyYWIiLCJlbWFpbCI6ImYyMDIxMDY1MTEyQGdtYWlsLmNvbSIsIm5hbWUiOiJIYXJyaXMgaWpheiIsInByb2ZpbGVfcGljIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSVBQaWRoUERlLVR2bDAzakx2THplT1N6OGgwSWE2X2gzR0lCU2pFeTVscGFqSFpnPXM5Ni1jIiwiZXhwIjoxNzUzNDc2MTM0fQ.KbkiS5vQn2zaSTUP_3cxLtkrzVkCePEhmicgYSfjH9k";
@@ -120,19 +114,30 @@ function streakApiResponse(values) {
   //   }
   // }, []);
 const {username} = useContext(AuthContext)
-console.log(username)
+console.log("username from context:", username)
+console.log("Current userData:", userData)
+console.log("Display name will be:", userData?.name || username)
 
   return(
-    <div className="flex flex-col xl:flex-row gap-8">
+    <div className="flex flex-col xl:flex-row gap-8 min-h-screen">
 
       {/* Dashboard Area */}
       <div className="flex-1 space-y-8">
         {/* Welcome Section with Gradient */}
         <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 p-6 md:p-8 text-white">
           <div className="relative z-10">
-            <h2 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4">Welcome back, {username}</h2>
+            <h2 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4">
+              {isUserDataLoading ? (
+                <div className="flex items-center gap-3">
+                  <span>Welcome back,</span>
+                  <div className="h-8 md:h-10 bg-white/20 rounded animate-pulse w-32 md:w-48"></div>
+                </div>
+              ) : (
+                `Welcome back, ${userData?.name || username}!`
+              )}
+            </h2>
             <p className="text-lg md:text-xl text-blue-100 mb-4 md:mb-6">
-              Continue your learning journey with AI
+              Continue your learning journey with Adaptive AI
             </p>
           </div>
           {/* Decorative gradient orbs */}
@@ -160,98 +165,138 @@ console.log(username)
         </div>
 
         {/* Recently Uploaded Files */}
-        <div>
-          <h3 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6 text-white">Recently Uploaded Files</h3>
-          <div className="space-y-3 md:space-y-4">
-            {uploadedFiles.slice(0, 5).map((file) => {
-              const IconComponent = file.icon;
-              return (
-                <div key={file.id} className="group">
-                  <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg md:rounded-xl p-4 md:p-6 hover:border-slate-600/50 transition-all duration-300">
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <h3 className="text-xl md:text-2xl font-semibold text-white">Recently Uploaded Files</h3>
+            {uploadedFiles.length > 5 && (
+              <span className="text-sm text-slate-400">Showing 5 most recent</span>
+            )}
+          </div>
+          <div className="space-y-3 md:space-y-4 min-h-[400px]">
+            {isFilesLoading ? (
+              // Loading skeleton
+              Array.from({ length: 5 }).map((_, index) => (
+                <div key={`skeleton-${index}`} className="group">
+                  <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg md:rounded-xl p-4 md:p-6 animate-pulse">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center space-x-3 md:space-x-4 min-w-0 flex-1">
-                        <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
-                          <IconComponent size={isMobile ? 20 : 24} className="text-white" />
-                        </div>
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-600/50 rounded-lg md:rounded-xl flex-shrink-0"></div>
                         <div className="min-w-0 flex-1">
-                          <h4 className="font-medium text-white truncate text-sm md:text-base">{file.name}</h4>
-                          <p className="text-xs md:text-sm text-slate-400">
-                            {file.type} • {file.uploadDate}
-                          </p>
+                          <div className="h-4 md:h-5 bg-slate-600/50 rounded w-3/4 mb-2"></div>
+                          <div className="h-3 md:h-4 bg-slate-600/50 rounded w-1/2"></div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2 md:space-x-3 flex-shrink-0">
-                        <button 
-                          onClick={() => openInStudyMode(file)}
-                          className="flex items-center space-x-1 md:space-x-2 px-3 md:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/25"
-                        >
-                          <Play size={14} />
-                          <span className="text-sm md:text-base">Study</span>
-                        </button>
-                        <button 
-                          onClick={() => deleteFile(file.id)}
-                          className="p-2 rounded-lg hover:bg-red-500/20 hover:text-red-400 text-slate-400 transition-colors"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <div className="h-8 bg-slate-600/50 rounded-lg w-20 md:w-24"></div>
+                        <div className="h-8 w-8 bg-slate-600/50 rounded-lg"></div>
                       </div>
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              ))
+            ) : filesError ? (
+              // Error state - only show if there's actually an API error
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 mb-4 bg-red-500/20 rounded-xl flex items-center justify-center">
+                  <Files size={32} className="text-red-400" />
+                </div>
+                <h4 className="text-lg font-semibold text-white mb-2">Failed to Load Files</h4>
+                <p className="text-slate-400 mb-4 max-w-md">
+                  There was an issue connecting to the server. Please check your connection and try again.
+                </p>
+                <button 
+                  onClick={refreshFiles}
+                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : uploadedFiles.length === 0 ? (
+              // Empty state - user has no files yet
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <Upload size={32} className="text-white" />
+                </div>
+                <h4 className="text-lg font-semibold text-white mb-2">Ready to Start Learning?</h4>
+                <p className="text-slate-400 mb-6 max-w-md">
+                  Upload your first document to begin your personalized learning journey with AdaptiveLearn AI. 
+                  We support books, presentations, and notes.
+                </p>
+                <button 
+                  onClick={() => setIsUploadModalOpen(true)}
+                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/25"
+                >
+                  <Upload size={18} />
+                  <span>Upload Your First File</span>
+                </button>
+              </div>
+            ) : (
+              // Files list
+              uploadedFiles.slice(0, 5).map((file) => {
+                const IconComponent = file.icon;
+                return (
+                  <div key={file.id} className="group">
+                    <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg md:rounded-xl p-4 md:p-6 hover:border-slate-600/50 transition-all duration-300">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center space-x-3 md:space-x-4 min-w-0 flex-1">
+                          <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
+                            <IconComponent size={isMobile ? 20 : 24} className="text-white" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-medium text-white truncate text-sm md:text-base">{file.name}</h4>
+                            <p className="text-xs md:text-sm text-slate-400">
+                              {file.type} • {file.uploadDate}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2 md:space-x-3 flex-shrink-0">
+                          <button 
+                            onClick={() => openInStudyMode(file)}
+                            className="flex items-center space-x-1 md:space-x-2 px-3 md:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/25"
+                          >
+                            <Play size={14} />
+                            <span className="text-sm md:text-base">Study</span>
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteClick(file)}
+                            disabled={deletingFileId === file.id}
+                            className="p-2 rounded-lg hover:bg-red-500/20 hover:text-red-400 text-slate-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {deletingFileId === file.id ? (
+                              <div className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <Trash2 size={14} />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>
 
-      {/* Right Panel - Hidden on mobile, stacked on tablet */}
-      <div className="w-full xl:w-80 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-6 xl:space-y-0">
-        {/* Streak Tracker */}
-        <div>
-       <StreakComponent streakData={streakApiResponse} />
-       
-</div>
+      {/* Right Panel - Fixed position and height */}
+      <div className="w-full xl:w-80 xl:sticky xl:top-8 xl:h-fit xl:max-h-screen xl:overflow-y-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-6">
+          {/* Streak Tracker */}
+          <div>
+            <StreakComponent streakData={streakData} isLoading={isStreakLoading} />
+          </div>
 
-        {/* Analytics */}
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl md:rounded-2xl blur-lg opacity-20"></div>
-          <div className="relative bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl md:rounded-2xl p-4 md:p-6">
-            <div className="flex items-center space-x-3 mb-4 md:mb-6">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg md:rounded-xl flex items-center justify-center">
-                <BarChart3 size={isMobile ? 20 : 24} className="text-white" />
-              </div>
-              <h3 className="font-semibold text-white text-sm md:text-base">Your Progress</h3>
-            </div>
-            <div className="space-y-3 md:space-y-4">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Clock size={14} className="text-blue-400" />
-                  <span className="text-xs md:text-sm text-slate-300">Study Time</span>
-                </div>
-                <span className="font-semibold text-white text-xs md:text-sm">24h 30m</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Files size={14} className="text-purple-400" />
-                  <span className="text-xs md:text-sm text-slate-300">Files Studied</span>
-                </div>
-                <span className="font-semibold text-white text-xs md:text-sm">12</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Target size={14} className="text-green-400" />
-                  <span className="text-xs md:text-sm text-slate-300">MCQs Completed</span>
-                </div>
-                <span className="font-semibold text-white text-xs md:text-sm">247</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <TrendingUp size={14} className="text-orange-400" />
-                  <span className="text-xs md:text-sm text-slate-300">Accuracy Rate</span>
-                </div>
-                <span className="font-semibold text-white text-xs md:text-sm">87%</span>
-              </div>
-            </div>
+          {/* Leaderboard Preview */}
+          <div>
+            <LeaderboardPreview 
+              isMobile={isMobile} 
+              setCurrentPage={setCurrentPage}
+              setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+              // Pass leaderboard data from parent to eliminate duplicate API calls
+              leaderboardData={leaderboardData}
+              isLeaderboardLoading={isLeaderboardLoading}
+            />
           </div>
         </div>
       </div>

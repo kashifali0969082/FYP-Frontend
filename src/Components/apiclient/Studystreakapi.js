@@ -2,7 +2,8 @@ import { apiclient } from "./Apis";
 
 // const token = localStorage.getItem("access_token");
 
-const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMGRjMjAyYS1jNDg3LTQyOTItOTJkYi05ZTU0MGUzOTdlN2IiLCJlbWFpbCI6Imthc2hpZmFsaTA5NjkwODJAZ21haWwuY29tIiwibmFtZSI6Ikthc2hpZiBBbGkiLCJwcm9maWxlX3BpYyI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0tZQWRWNUZZYnNKZnFWZkNnd0dwN3ZUVTlKdENOTUtxaHQ3YnFEbVM4ZGF6enc2SkdaPXM5Ni1jIiwiZXhwIjoxNzUzNDc2MzIyfQ.ZS_cIgODnzSq2u3we7LMDhp5mMAxZnk1YndzSYNDhO4";
+// For testing - hardcoded token (after dev we will make it dynamic)
+const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkYjM5MWJmZS1kNTgwLTQ4NTUtYjRiZS0xOWVjNmQ0NWU3Y2MiLCJlbWFpbCI6ImFiZHVsbGFobmFzZWVtMjdAZ21haWwuY29tIiwibmFtZSI6IkFiZHVsbGFoIE5hc2VlbSIsInByb2ZpbGVfcGljIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS0RkY0lKRm5GaElPUEhYd0prdXA5NWw1aTFVM3dubTBzSUhIclJpVm9qaHI5WDB3PXM5Ni1jIiwiZXhwIjoxNzUzMzAyMTEyfQ.XHJwKfspbm2UqB5G_SBs7F1CBzXqDiPMh66SVfiuO0E";
 
 
 export const streakapi = () => apiclient.get(`/streak`,{
@@ -11,5 +12,16 @@ export const streakapi = () => apiclient.get(`/streak`,{
       },
     })
 
+export const streakLeaderboardapi = () => apiclient.get(`/streak/leaderboard`,{
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
 
-    export const updatestreakapi = () => apiclient.post(`/streak/update`)
+export const userapi = () => apiclient.get(`/user`,{
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+export const updatestreakapi = () => apiclient.post(`/streak/update`)
