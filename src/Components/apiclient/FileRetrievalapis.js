@@ -116,3 +116,49 @@ export const GetAllFiles = async () => {
     throw error;
   }
 };
+
+// Delete a file by ID and type
+export const DeleteFile = async (fileId, fileType) => {
+  const token = getToken();
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  try {
+    console.log(`🗑️ DELETE REQUEST DETAILS:`);
+    console.log(`   File ID: "${fileId}" (type: ${typeof fileId})`);
+    console.log(`   File Type: "${fileType}" (type: ${typeof fileType})`);
+    
+    // Map file types to match backend expectations
+    const typeMapping = {
+      'book': 'book',
+      'books': 'book', 
+      'slide': 'presentation',
+      'slides': 'presentation',
+      'presentation': 'presentation',
+      'presentations': 'presentation',
+      'note': 'notes',
+      'notes': 'notes'
+    };
+    
+    const mappedType = typeMapping[fileType.toLowerCase()] || fileType.toLowerCase();
+    
+    // Use the correct API format: /file/delete/{document_type}/{document_id}
+    const endpoint = `/file/delete/${mappedType}/${fileId}`;
+    
+    console.log(`   Endpoint: ${endpoint}`);
+    console.log(`   Method: DELETE`);
+    
+    const response = await apiclient.delete(endpoint, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    console.log("✅ Delete response:", response);
+    return response;
+  } catch (error) {
+    console.error("❌ Delete API error:", error);
+    console.error("❌ Delete error details:", error.response?.data);
+    console.error("❌ Delete request config:", error.config);
+    throw error;
+  }
+};

@@ -31,7 +31,7 @@ import { MCQsPage } from "../Comps/McqPage";
 import { StudyModePage } from "../Comps/StudyMode";
 import { FilesPage } from "../Comps/FilePage";
 import LeaderboardPage from "../Comps/LeaderboardPage";
-import { GetAllFiles } from "../apiclient/FileRetrievalapis";
+import { GetAllFiles, DeleteFile } from "../apiclient/FileRetrievalapis";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../Security/Authcontext";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
@@ -67,6 +67,11 @@ const Dashboard = () => {
   // Loading state for files
   const [isFilesLoading, setIsFilesLoading] = useState(true);
   const [filesError, setFilesError] = useState(null);
+  
+  // Delete states
+  const [deletingFileId, setDeletingFileId] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState(null);
   
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
@@ -379,6 +384,51 @@ const Dashboard = () => {
     if (isMobile) {
       setIsMobileSidebarOpen(false);
     }
+  };
+
+  // Delete file functions
+  const handleDeleteClick = (file) => {
+    setFileToDelete(file);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!fileToDelete) return;
+    
+    try {
+      setDeletingFileId(fileToDelete.id);
+      setShowDeleteConfirm(false);
+      
+      // Log the complete file object to see its structure
+      console.log("🔍 FILE TO DELETE - Complete object:", fileToDelete);
+      console.log("🔍 File ID:", fileToDelete.id);
+      console.log("🔍 File meta:", fileToDelete.meta);
+      console.log("🔍 File type:", fileToDelete.type);
+      
+      // Convert file type to match API expectations
+      const docType = fileToDelete.meta.fileType || fileToDelete.type.toLowerCase();
+      
+      console.log(`🗑️ FINAL VALUES FOR DELETE:`);
+      console.log(`   File ID: "${fileToDelete.id}"`);
+      console.log(`   Doc Type: "${docType}"`);
+      
+      await DeleteFile(fileToDelete.id, docType);
+      
+      // Remove from UI manually - no API refresh needed
+      setUploadedFiles(prev => prev.filter(f => f.id !== fileToDelete.id));
+      
+      console.log("✅ File deleted successfully");
+    } catch (error) {
+      console.error("❌ Delete failed:", error);
+    } finally {
+      setDeletingFileId(null);
+      setFileToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+    setFileToDelete(null);
   };
 
 
@@ -794,6 +844,8 @@ useEffect(() => {
                 isFilesLoading={isFilesLoading}
                 filesError={filesError}
                 refreshFiles={getFilesFun}
+                handleDeleteClick={handleDeleteClick}
+                deletingFileId={deletingFileId}
               />
             )}
             {currentPage === "study" && <StudyModePage isMobile={isMobile} />}
@@ -989,6 +1041,54 @@ useEffect(() => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && fileToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-xl md:rounded-2xl p-6 md:p-8 w-full max-w-md mx-4">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-xl flex items-center justify-center">
+                <Trash2 size={32} className="text-red-400" />
+              </div>
+              
+              <h3 className="text-lg md:text-xl font-semibold text-white mb-2">
+                Delete File?
+              </h3>
+              
+              <p className="text-slate-300 mb-2">
+                Are you sure you want to delete <span className="font-medium text-white">"{fileToDelete.name}"</span>?
+              </p>
+              
+              <p className="text-sm text-red-400 mb-6">
+                This will permanently delete the file and all associated data including study progress, MCQs, and notes. This action cannot be undone.
+              </p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDeleteCancel}
+                  className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deleting Toast Notification */}
+      {deletingFileId && (
+        <div className="fixed bottom-4 right-4 bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4 z-50 flex items-center gap-3 shadow-lg">
+          <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-white text-sm">Deleting file...</span>
         </div>
       )}
     </div>

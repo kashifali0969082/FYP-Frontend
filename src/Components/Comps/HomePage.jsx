@@ -17,7 +17,7 @@ import { AuthContext } from "../Security/Authcontext";
 import LearningProfileForm from "../TEsting/LearningProfileForm";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
 
-export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploadedFiles,setCurrentPage,setIsMobileSidebarOpen,isFilesLoading,filesError,refreshFiles}) => {
+export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploadedFiles,setCurrentPage,setIsMobileSidebarOpen,isFilesLoading,filesError,refreshFiles,handleDeleteClick,deletingFileId}) => {
     // Initialize with sample data to show component immediately
     const [streakData, setStreakData] = useState({
         current_streak: 7,
@@ -42,9 +42,6 @@ export const HomePage = ({setUploadedFiles,setIsUploadModalOpen,isMobile,uploade
       setIsMobileSidebarOpen(false);
     }
     console.log("Opening file in study mode:", file);
-  };
-    const deleteFile = (id) => {
-    setUploadedFiles(uploadedFiles.filter((file) => file.id !== id));
   };
   //   apis
 useEffect(() => {
@@ -331,10 +328,15 @@ console.log("Display name will be:", userData?.name || username)
                             <span className="text-sm md:text-base">Study</span>
                           </button>
                           <button 
-                            onClick={() => deleteFile(file.id)}
-                            className="p-2 rounded-lg hover:bg-red-500/20 hover:text-red-400 text-slate-400 transition-colors"
+                            onClick={() => handleDeleteClick(file)}
+                            disabled={deletingFileId === file.id}
+                            className="p-2 rounded-lg hover:bg-red-500/20 hover:text-red-400 text-slate-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            <Trash2 size={14} />
+                            {deletingFileId === file.id ? (
+                              <div className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <Trash2 size={14} />
+                            )}
                           </button>
                         </div>
                       </div>
