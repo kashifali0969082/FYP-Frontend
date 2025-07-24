@@ -41,6 +41,7 @@ import { getUserInfo, clearAuth } from "../../utils/auth";
 import LearningProfileForm from "./LearningProfileForm";
 import { getCookie, setCookie, deleteCookie } from "../Security/cookie";
 import { FileUpload } from "../apiclient/Filesapi";
+import Cookies from "js-cookie";
 
 const Dashboard = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -645,9 +646,25 @@ const Dashboard = () => {
  
   const navigate = useNavigate()
   function logouthandler(){
+    console.log("🚪 Starting logout process...");
+    
+    // Log current cookies before clearing
+    console.log("🍪 Before logout - access_token:", Cookies.get("access_token"));
+    console.log("🍪 Before logout - learningProfileSubmitted:", getCookie("learningProfileSubmitted"));
+    
     // Clear all authentication and user data
     clearAuth(); // Clears access_token
     deleteCookie("learningProfileSubmitted"); // Clear learning profile status
+    
+    // Also try to remove access_token with different parameters in case it was set with specific domain/path
+    Cookies.remove("access_token", { path: '/' });
+    Cookies.remove("access_token", { path: '/', domain: window.location.hostname });
+    
+    // Log cookies after clearing
+    console.log("🍪 After logout - access_token:", Cookies.get("access_token"));
+    console.log("🍪 After logout - learningProfileSubmitted:", getCookie("learningProfileSubmitted"));
+    
+    console.log("🚪 Redirecting to landing page...");
     
     // Force a complete page reload to ensure clean state
     window.location.href = "/";
