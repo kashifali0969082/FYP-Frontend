@@ -649,8 +649,8 @@ const Dashboard = () => {
     clearAuth(); // Clears access_token
     deleteCookie("learningProfileSubmitted"); // Clear learning profile status
     
-    // Navigate to landing page
-    navigate("/");
+    // Force a complete page reload to ensure clean state
+    window.location.href = "/";
   }
   
   const [showForm, setShowForm] = useState(false);
