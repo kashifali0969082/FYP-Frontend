@@ -37,9 +37,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../Security/Authcontext";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
 import { streakapi, streakLeaderboardapi } from "../apiclient/Studystreakapi";
-import { getUserInfo } from "../../utils/auth";
+import { getUserInfo, clearAuth } from "../../utils/auth";
 import LearningProfileForm from "./LearningProfileForm";
-import { getCookie, setCookie } from "../Security/cookie";
+import { getCookie, setCookie, deleteCookie } from "../Security/cookie";
 import { FileUpload } from "../apiclient/Filesapi";
 
 const Dashboard = () => {
@@ -645,7 +645,12 @@ const Dashboard = () => {
  
   const navigate = useNavigate()
   function logouthandler(){
-navigate("/")
+    // Clear all authentication and user data
+    clearAuth(); // Clears access_token
+    deleteCookie("learningProfileSubmitted"); // Clear learning profile status
+    
+    // Navigate to landing page
+    navigate("/");
   }
   
   const [showForm, setShowForm] = useState(false);
