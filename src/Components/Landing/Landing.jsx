@@ -31,7 +31,7 @@ import "./Landing";
             }
 
             console.log("User is already authenticated, redirecting to dashboard...");
-            navigate("/");
+            navigate("/dashboard");
             return;
           } catch (err) {
             console.error("Invalid token, removing from cookies:", err);
@@ -335,14 +335,19 @@ import "./Landing";
                 development.
               </p>
               <button
-                className={`google-signin-btn ${isSigningIn ? 'signing-in' : ''}`}
+                className={`google-signin-btn ${isSigningIn || isCheckingAuth ? 'signing-in' : ''}`}
                 onClick={handleSignInWithGoogle}
-                disabled={isSigningIn}
+                disabled={isSigningIn || isCheckingAuth}
               >
                 {isSigningIn ? (
                   <>
                     <div className="loading-spinner"></div>
                     <span>Connecting to Google...</span>
+                  </>
+                ) : isCheckingAuth ? (
+                  <>
+                    <div className="loading-spinner"></div>
+                    <span>Checking authentication...</span>
                   </>
                 ) : (
                   <>
