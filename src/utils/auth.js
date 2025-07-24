@@ -59,5 +59,8 @@ export const getUserInfo = () => {
  * Clear authentication data
  */
 export const clearAuth = () => {
-  Cookies.remove("access_token");
+  Cookies.remove("access_token", {
+    path: "/",
+    domain: ".adaptivelearnai.xyz",
+  });
 };
