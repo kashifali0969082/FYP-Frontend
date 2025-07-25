@@ -553,15 +553,19 @@ export const FilesPage = ({
             {/* AI Query toggle */}
             <button
               onClick={() => setShowAIQuery(!showAIQuery)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+              className={`relative flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 overflow-hidden ${
                 showAIQuery 
-                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white" 
-                  : "bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/50"
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25" 
+                  : "bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/50 hover:shadow-lg hover:shadow-blue-500/15 hover:border-blue-500/30"
               }`}
               title="Ask My Library"
             >
-              <Brain className="w-4 h-4" />
-              <span className="hidden sm:inline text-sm font-medium">Ask My Library</span>
+              {/* Animated gradient overlay when not active */}
+              {!showAIQuery && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent -translate-x-full animate-[shimmer_2s_ease-in-out_infinite] pointer-events-none"></div>
+              )}
+              <Brain className="w-4 h-4 relative z-10" />
+              <span className="hidden sm:inline text-sm font-medium relative z-10">Ask My Library</span>
             </button>
             
             {/* View toggle */}
@@ -661,11 +665,10 @@ export const FilesPage = ({
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="text-white text-sm leading-relaxed">
+                    <div className="text-white text-sm leading-relaxed prose prose-invert max-w-none">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         rehypePlugins={[rehypeSanitize]}
-                        className="prose prose-invert max-w-none"
                         components={{
                           // Custom styling for markdown elements
                           h1: ({children}) => <h1 className="text-2xl font-bold text-white mt-6 mb-4">{children}</h1>,
@@ -716,24 +719,40 @@ export const FilesPage = ({
                       <div className="space-y-2">
                         <span className="font-medium text-slate-300 text-sm">Referenced Documents:</span>
                         <div className="flex flex-wrap gap-2">
-                          {aiReferences.map((ref, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => handleDocumentReference(ref)}
-                              className="group inline-flex items-center gap-2 px-3 py-2 bg-blue-900/30 hover:bg-blue-900/50 border border-blue-500/30 hover:border-blue-400/50 rounded-lg text-blue-300 hover:text-blue-200 transition-all text-xs cursor-pointer"
-                            >
-                              <div className="flex items-center gap-1">
-                                {ref.type === 'Book' && <BookOpen className="w-3 h-3" />}
-                                {ref.type === 'Notes' && <StickyNote className="w-3 h-3" />}
-                                {ref.type === 'Presentation' && <Presentation className="w-3 h-3" />}
-                                <span className="font-medium">{ref.title}</span>
-                              </div>
-                              <div className="text-blue-400/70">
-                                • {ref.topic}
-                              </div>
-                              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </button>
-                          ))}
+                          {aiReferences.map((ref, idx) => {
+                            // Use same colors as file type pills
+                            const getRefTypeStyles = (type) => {
+                              switch (type) {
+                                case "Book":
+                                  return "bg-blue-500/20 hover:bg-blue-500/30 border-blue-400/30 hover:border-blue-400/50 text-blue-400 hover:text-blue-300";
+                                case "Presentation":
+                                  return "bg-green-500/20 hover:bg-green-500/30 border-green-400/30 hover:border-green-400/50 text-green-400 hover:text-green-300";
+                                case "Notes":
+                                  return "bg-purple-500/20 hover:bg-purple-500/30 border-purple-400/30 hover:border-purple-400/50 text-purple-400 hover:text-purple-300";
+                                default:
+                                  return "bg-gray-500/20 hover:bg-gray-500/30 border-gray-400/30 hover:border-gray-400/50 text-gray-400 hover:text-gray-300";
+                              }
+                            };
+                            
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => handleDocumentReference(ref)}
+                                className={`group inline-flex items-center gap-2 px-3 py-2 border rounded-lg transition-all text-xs cursor-pointer ${getRefTypeStyles(ref.type)}`}
+                              >
+                                <div className="flex items-center gap-1">
+                                  {ref.type === 'Book' && <BookOpen className="w-3 h-3" />}
+                                  {ref.type === 'Notes' && <StickyNote className="w-3 h-3" />}
+                                  {ref.type === 'Presentation' && <Presentation className="w-3 h-3" />}
+                                  <span className="font-medium">{ref.title}</span>
+                                </div>
+                                <div className="opacity-70">
+                                  • {ref.topic}
+                                </div>
+                                <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -935,24 +954,52 @@ export const FilesPage = ({
 
       {/* Bulk Delete Confirmation Modal */}
       {isBulkDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg">
-            <p className="mb-4">Are you sure you want to delete {selectedFiles.length} selected file{selectedFiles.length !== 1 ? 's' : ''}?</p>
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={cancelBulkDelete}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                disabled={isBulkDeleting}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmBulkDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                disabled={isBulkDeleting}
-              >
-                {isBulkDeleting ? "Deleting..." : "Delete"}
-              </button>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-xl md:rounded-2xl p-6 md:p-8 w-full max-w-md mx-4">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-xl flex items-center justify-center">
+                <Trash2 size={32} className="text-red-400" />
+              </div>
+              
+              <h3 className="text-lg md:text-xl font-semibold text-white mb-2">
+                Delete Files?
+              </h3>
+              
+              <p className="text-slate-300 mb-2">
+                Are you sure you want to delete <span className="font-medium text-white">{selectedFiles.length} selected file{selectedFiles.length !== 1 ? 's' : ''}</span>?
+              </p>
+              
+              <p className="text-sm text-red-400 mb-6">
+                This will permanently delete the selected files and all associated data including study progress, MCQs, and notes. This action cannot be undone.
+              </p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={cancelBulkDelete}
+                  disabled={isBulkDeleting}
+                  className={`flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors ${
+                    isBulkDeleting ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBulkDelete}
+                  disabled={isBulkDeleting}
+                  className={`flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                    isBulkDeleting ? "opacity-75 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {isBulkDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    "Delete"
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

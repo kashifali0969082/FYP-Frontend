@@ -1179,17 +1179,23 @@ useEffect(() => {
               )}
 
               {/* File Upload Area / Upload Progress - Consistent sizing */}
-              <div className="border-2 border-dashed rounded-lg md:rounded-xl p-6 md:p-8 text-center transition-all duration-300 min-h-[140px] flex flex-col justify-center">
+              <div className={`border-2 border-dashed rounded-lg md:rounded-xl p-6 md:p-8 text-center transition-all duration-300 min-h-[140px] flex flex-col justify-center ${
+                !isUploading ? (
+                  selectedFile
+                    ? "border-green-500 bg-green-500/10"
+                    : selectedFileType
+                    ? "border-slate-600 hover:border-slate-500 bg-slate-700/30 hover:bg-slate-700/50"
+                    : "border-slate-600 bg-slate-700/20 cursor-not-allowed"
+                ) : (
+                  uploadSuccess 
+                    ? "border-green-500 bg-green-500/10" 
+                    : "border-blue-500 bg-blue-500/10"
+                )
+              }`}>
                 {!isUploading ? (
                   /* File Drop Area */
                   <div
-                    className={`transition-colors cursor-pointer ${
-                      selectedFile
-                        ? "border-green-500 bg-green-500/10"
-                        : selectedFileType
-                        ? "hover:border-slate-500"
-                        : "cursor-not-allowed"
-                    }`}
+                    className="transition-colors cursor-pointer"
                     onClick={selectedFileType ? handleClick : undefined}
                   >
                     <Upload
@@ -1220,11 +1226,7 @@ useEffect(() => {
                   </div>
                 ) : (
                   /* Upload Progress Indicator */
-                  <div className={`transition-all duration-500 ${
-                    uploadSuccess 
-                      ? "border-green-500 bg-green-500/10" 
-                      : "border-blue-500 bg-blue-500/10"
-                  }`}>
+                  <div className="transition-all duration-500">
                     <div className="mb-4">
                       <div className="w-16 h-16 mx-auto mb-3 relative">
                         {/* Circular Progress */}
