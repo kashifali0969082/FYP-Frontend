@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 import {
   Search,
   Filter,
@@ -659,7 +662,53 @@ export const FilesPage = ({
                 ) : (
                   <div className="space-y-4">
                     <div className="text-white text-sm leading-relaxed">
-                      {aiAnswer}
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeSanitize]}
+                        className="prose prose-invert max-w-none"
+                        components={{
+                          // Custom styling for markdown elements
+                          h1: ({children}) => <h1 className="text-2xl font-bold text-white mt-6 mb-4">{children}</h1>,
+                          h2: ({children}) => <h2 className="text-xl font-semibold text-white mt-5 mb-3">{children}</h2>,
+                          h3: ({children}) => <h3 className="text-lg font-semibold text-white mt-4 mb-2">{children}</h3>,
+                          p: ({children}) => <p className="text-slate-200 mb-3 leading-relaxed">{children}</p>,
+                          strong: ({children}) => <strong className="font-semibold text-blue-200">{children}</strong>,
+                          em: ({children}) => <em className="italic text-blue-100">{children}</em>,
+                          code: ({inline, children}) => 
+                            inline ? (
+                              <code className="bg-slate-800/70 text-green-300 px-1.5 py-0.5 rounded text-sm">{children}</code>
+                            ) : (
+                              <code className="text-green-300 text-sm">{children}</code>
+                            ),
+                          pre: ({children}) => (
+                            <pre className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 my-3 overflow-x-auto">{children}</pre>
+                          ),
+                          ul: ({children}) => <ul className="list-disc list-inside space-y-1 my-2 text-slate-200">{children}</ul>,
+                          ol: ({children}) => <ol className="list-decimal list-inside space-y-1 my-2 text-slate-200">{children}</ol>,
+                          li: ({children}) => <li className="mb-1">{children}</li>,
+                          a: ({href, children}) => (
+                            <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">
+                              {children}
+                            </a>
+                          ),
+                          blockquote: ({children}) => (
+                            <blockquote className="border-l-4 border-blue-500/50 pl-4 italic text-slate-300 my-3">{children}</blockquote>
+                          ),
+                          table: ({children}) => (
+                            <div className="overflow-x-auto my-3">
+                              <table className="min-w-full border border-slate-700/50 rounded-lg">{children}</table>
+                            </div>
+                          ),
+                          th: ({children}) => (
+                            <th className="border border-slate-700/50 px-3 py-2 bg-slate-800/50 text-white font-semibold text-left">{children}</th>
+                          ),
+                          td: ({children}) => (
+                            <td className="border border-slate-700/50 px-3 py-2 text-slate-200">{children}</td>
+                          ),
+                        }}
+                      >
+                        {aiAnswer}
+                      </ReactMarkdown>
                     </div>
                     
                     {/* Document References with clickable links */}
