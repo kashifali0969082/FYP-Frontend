@@ -97,22 +97,35 @@ const Dashboard = () => {
       return false;
     }
 
+    // Allow both single numbers (e.g., "6") and ranges (e.g., "2-5")
+    const singlePagePattern = /^\d+$/;
     const rangePattern = /^\d+-\d+$/;
-    if (!rangePattern.test(range.trim())) {
-      setTocError("Please enter a valid range format (e.g., 2-3)");
+    
+    if (!singlePagePattern.test(range.trim()) && !rangePattern.test(range.trim())) {
+      setTocError("Please enter a valid page number (e.g., 6) or range (e.g., 2-5)");
       return false;
     }
 
-    const [startPage, endPage] = range.trim().split("-").map(Number);
+    // If it's a range, validate the range logic
+    if (rangePattern.test(range.trim())) {
+      const [startPage, endPage] = range.trim().split("-").map(Number);
 
-    if (startPage >= endPage) {
-      setTocError("Start page must be less than end page");
-      return false;
-    }
+      if (startPage >= endPage) {
+        setTocError("Start page must be less than end page");
+        return false;
+      }
 
-    if (startPage <= 0 || endPage <= 0) {
-      setTocError("Page numbers must be positive");
-      return false;
+      if (startPage <= 0 || endPage <= 0) {
+        setTocError("Page numbers must be positive");
+        return false;
+      }
+    } else {
+      // If it's a single page, validate it's positive
+      const pageNumber = Number(range.trim());
+      if (pageNumber <= 0) {
+        setTocError("Page number must be positive");
+        return false;
+      }
     }
 
     return true;
@@ -166,11 +179,6 @@ const Dashboard = () => {
     setUploadProgress(100);
     setUploadSuccess(true);
     
-    // Brief delay to show success message
-    setTimeout(() => {
-      alert(`Upload successful: ${response.message}`);
-    }, 500);
-
     // Manually add the uploaded file to the state instead of API call
     const newFile = {
       id: response.file_id || Date.now().toString(), // Use response ID or timestamp as fallback
@@ -1149,7 +1157,7 @@ useEffect(() => {
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g., 2-5"
+                    placeholder="e.g 6 or 2-5"
                     value={tocPageRange}
                     onChange={handleTocChange}
                     disabled={isUploading}
@@ -1165,55 +1173,50 @@ useEffect(() => {
                     </p>
                   )}
                   <p className="text-xs text-slate-500 mt-1">
-                    Enter the page range where the table of contents is located
-                    (e.g., 2-5)
+                    Enter a single page number (e.g., 6) or page range (e.g., 2-5) where the table of contents is located
                   </p>
                 </div>
               )}
 
-              {/* File Upload Area */}
-              <div
-                className={`border-2 border-dashed rounded-lg md:rounded-xl p-6 md:p-8 text-center transition-colors ${
-                  isUploading
-                    ? "cursor-not-allowed opacity-50"
-                    : "cursor-pointer"
-                } ${
-                  selectedFile
-                    ? "border-green-500 bg-green-500/10"
-                    : selectedFileType
-                    ? "border-slate-600 hover:border-slate-500"
-                    : "border-slate-700 cursor-not-allowed"
-                }`}
-                onClick={
-                  selectedFileType && !isUploading ? handleClick : undefined
-                }
-              >
-                <Upload
-                  size={
-                    typeof window !== "undefined" && window.innerWidth < 768
-                      ? 24
-                      : 32
-                  }
-                  className={`mx-auto mb-3 ${
-                    selectedFile ? "text-green-400" : "text-slate-400"
+              {/* File Upload Area - Hidden during upload to compress modal */}
+              {!isUploading && (
+                <div
+                  className={`border-2 border-dashed rounded-lg md:rounded-xl p-6 md:p-8 text-center transition-colors ${
+                    selectedFile
+                      ? "border-green-500 bg-green-500/10"
+                      : selectedFileType
+                      ? "border-slate-600 hover:border-slate-500 cursor-pointer"
+                      : "border-slate-700 cursor-not-allowed"
                   }`}
-                />
-                <p className="text-xs md:text-sm text-slate-400">
-                  {selectedFile
-                    ? `Selected: ${selectedFile.name}`
-                    : selectedFileType
-                    ? "Drop your file here or click to browse"
-                    : "Please select a file type first"}
-                </p>
+                  onClick={selectedFileType ? handleClick : undefined}
+                >
+                  <Upload
+                    size={
+                      typeof window !== "undefined" && window.innerWidth < 768
+                        ? 24
+                        : 32
+                    }
+                    className={`mx-auto mb-3 ${
+                      selectedFile ? "text-green-400" : "text-slate-400"
+                    }`}
+                  />
+                  <p className="text-xs md:text-sm text-slate-400">
+                    {selectedFile
+                      ? `Selected: ${selectedFile.name}`
+                      : selectedFileType
+                      ? "Drop your file here or click to browse"
+                      : "Please select a file type first"}
+                  </p>
 
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  disabled={!selectedFileType || isUploading}
-                />
-              </div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    disabled={!selectedFileType}
+                  />
+                </div>
+              )}
 
               {/* Upload Progress Indicator */}
               {isUploading && (
