@@ -281,7 +281,7 @@ import "./Landing";
         <nav className="nav-container">
           <div className="nav-logo">
             <i className="fas fa-brain"></i>
-            LearnAI
+            AdaptiveLearnAI
           </div>
           <ul className={`nav-menu ${isMobileMenuOpen ? "mobile-open" : ""}`}>
             <li>
