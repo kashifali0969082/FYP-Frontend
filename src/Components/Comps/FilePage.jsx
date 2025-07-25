@@ -118,80 +118,69 @@ export const FilesPage = ({
     ];
     
     try {
-      // Simulate progressive loading
-      for (let i = 0; i < loadingStages.length; i++) {
-        setLoadingStage(loadingStages[i]);
-        await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400));
+      // Progressive loading simulation
+      let stageIndex = 0;
+      const stageInterval = setInterval(() => {
+        if (stageIndex < loadingStages.length) {
+          setLoadingStage(loadingStages[stageIndex]);
+          stageIndex++;
+        }
+      }, 600);
+      
+      // Make actual API call to the backend
+      const response = await fetch("https://api.adaptivelearnai.xyz/library/search", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          // Add auth header if needed
+          ...(document.cookie.includes('access_token') && {
+            'Authorization': `Bearer ${document.cookie.split('access_token=')[1]?.split(';')[0]}`
+          })
+        },
+        body: JSON.stringify({ 
+          query: aiQuery.trim()
+        }),
+      });
+      
+      clearInterval(stageInterval);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      // TODO: Replace with actual API endpoint
-      const useDummyResponse = true; // Set to false when backend is ready
+      const data = await response.json();
+      console.log("🔍 Library search response:", data);
       
-      if (useDummyResponse) {
-        // Dummy response for demo
-        const dummyResponses = {
-          "machine learning": {
-            answer: "Machine Learning is a subset of artificial intelligence that enables computers to learn and make decisions from data without being explicitly programmed. It involves algorithms that can identify patterns, make predictions, and improve their performance over time through experience. The main types include supervised learning (learning from labeled data), unsupervised learning (finding patterns in unlabeled data), and reinforcement learning (learning through trial and error).",
-            sources: ["Introduction to ML", "AI Fundamentals", "Data Science Handbook"],
-            references: [
-              { id: "doc_001", title: "Introduction to ML", topic: "Supervised Learning", type: "Book" },
-              { id: "doc_002", title: "AI Fundamentals", topic: "Neural Networks", type: "Notes" },
-              { id: "doc_003", title: "Data Science Handbook", topic: "Algorithm Types", type: "Presentation" }
-            ]
-          },
-          "algorithms": {
-            answer: "Algorithms are step-by-step procedures or formulas for solving problems. In computer science, they're fundamental building blocks that define how to process data efficiently. Common algorithm types include sorting (like quicksort, mergesort), searching (binary search, linear search), and graph algorithms (Dijkstra's, BFS, DFS). The efficiency of algorithms is measured using Big O notation, which describes how runtime or space requirements grow with input size.",
-            sources: ["Algorithm Design Manual", "Computer Science Fundamentals", "Data Structures Guide"],
-            references: [
-              { id: "doc_004", title: "Algorithm Design Manual", topic: "Sorting Algorithms", type: "Book" },
-              { id: "doc_005", title: "Computer Science Fundamentals", topic: "Big O Notation", type: "Notes" },
-              { id: "doc_006", title: "Data Structures Guide", topic: "Graph Algorithms", type: "Presentation" }
-            ]
-          }
-        };
-        
-        // Find matching dummy response
-        const queryLower = aiQuery.toLowerCase();
-        const matchedResponse = Object.keys(dummyResponses).find(key => 
-          queryLower.includes(key)
-        );
-        
-        const response = matchedResponse 
-          ? dummyResponses[matchedResponse]
-          : {
-              answer: `I found some relevant information about "${aiQuery}" in your library. Based on your documents, this topic appears across multiple sources with various perspectives and detailed explanations. The content suggests comprehensive coverage of the subject matter with practical examples and theoretical foundations.`,
-              sources: ["Study Notes Collection", "Research Papers", "Course Materials"],
-              references: [
-                { id: "doc_007", title: "Study Notes Collection", topic: "General Overview", type: "Notes" },
-                { id: "doc_008", title: "Research Papers", topic: "Advanced Topics", type: "Book" },
-                { id: "doc_009", title: "Course Materials", topic: "Practical Examples", type: "Presentation" }
-              ]
-            };
-        
-        setAIAnswer(response.answer);
-        setAISources(response.sources);
-        setAIReferences(response.references);
-      } else {
-        // Real API call
-        const res = await fetch("/api/global-qa", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: aiQuery }),
-        });
-        const data = await res.json();
-        setAIAnswer(data.answer);
-        setAISources(data.sources || []);
-        setAIReferences(data.references || []);
-      }
+      // Update state with API response
+      setAIAnswer(data.answer || "No answer found for your query.");
+      setAISources(data.sources || []);
+      setAIReferences(data.references || []);
       
     } catch (err) {
-      console.error("Failed to fetch AI response:", err);
-      setAIAnswer("Sorry, I couldn't process your query at the moment. Please check your connection and try again.");
+      console.error("❌ Library search failed:", err);
+      
+      // Enhanced error handling with specific error messages
+      let errorMessage = "Sorry, I couldn't process your query at the moment. ";
+      
+      if (err.message.includes('Failed to fetch') || err.message.includes('Network Error')) {
+        errorMessage += "Please check your internet connection and try again.";
+      } else if (err.message.includes('401')) {
+        errorMessage += "Authentication failed. Please log in again.";
+      } else if (err.message.includes('404')) {
+        errorMessage += "Library search service is not available.";
+      } else if (err.message.includes('500')) {
+        errorMessage += "Server error occurred. Please try again later.";
+      } else {
+        errorMessage += "Please try again or contact support if the issue persists.";
+      }
+      
+      setAIAnswer(errorMessage);
       setAISources([]);
       setAIReferences([]);
+    } finally {
+      setIsAILoading(false);
+      setLoadingStage("");
     }
-    setIsAILoading(false);
-    setLoadingStage("");
   };
 
   const handleMicClick = async () => {
