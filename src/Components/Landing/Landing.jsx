@@ -336,7 +336,13 @@ import "./Landing";
             </div>
             <div className="hero-visual">
               <div className="ai-logo">
-                <i className="fas fa-robot"></i>
+                <img 
+                  src="/AdaptivelearnAILOGO.svg" 
+                  alt="AdaptiveLearnAI Logo" 
+                  width="300" 
+                  height="300"
+                  className="adaptive-learn-logo"
+                />
               </div>
             </div>
           </div>
