@@ -338,10 +338,8 @@ import "./Landing";
               <div className="ai-logo">
                 <img 
                   src="/AdaptivelearnAILOGO.svg" 
-                  alt="AdaptiveLearnAI Logo" 
-                  width="300" 
-                  height="300"
-                  className="adaptive-learn-logo"
+                  alt="book"
+                  className="adaptive-learn-logo w-64 h-64 md:w-72 md:h-72 lg:w-80 lg:h-80"
                 />
               </div>
             </div>
