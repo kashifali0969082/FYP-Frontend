@@ -1178,132 +1178,124 @@ useEffect(() => {
                 </div>
               )}
 
-              {/* File Upload Area - Hidden during upload to compress modal */}
-              {!isUploading && (
-                <div
-                  className={`border-2 border-dashed rounded-lg md:rounded-xl p-6 md:p-8 text-center transition-colors ${
-                    selectedFile
-                      ? "border-green-500 bg-green-500/10"
-                      : selectedFileType
-                      ? "border-slate-600 hover:border-slate-500 cursor-pointer"
-                      : "border-slate-700 cursor-not-allowed"
-                  }`}
-                  onClick={selectedFileType ? handleClick : undefined}
-                >
-                  <Upload
-                    size={
-                      typeof window !== "undefined" && window.innerWidth < 768
-                        ? 24
-                        : 32
-                    }
-                    className={`mx-auto mb-3 ${
-                      selectedFile ? "text-green-400" : "text-slate-400"
+              {/* File Upload Area / Upload Progress - Consistent sizing */}
+              <div className="border-2 border-dashed rounded-lg md:rounded-xl p-6 md:p-8 text-center transition-all duration-300 min-h-[140px] flex flex-col justify-center">
+                {!isUploading ? (
+                  /* File Drop Area */
+                  <div
+                    className={`transition-colors cursor-pointer ${
+                      selectedFile
+                        ? "border-green-500 bg-green-500/10"
+                        : selectedFileType
+                        ? "hover:border-slate-500"
+                        : "cursor-not-allowed"
                     }`}
-                  />
-                  <p className="text-xs md:text-sm text-slate-400">
-                    {selectedFile
-                      ? `Selected: ${selectedFile.name}`
-                      : selectedFileType
-                      ? "Drop your file here or click to browse"
-                      : "Please select a file type first"}
-                  </p>
+                    onClick={selectedFileType ? handleClick : undefined}
+                  >
+                    <Upload
+                      size={
+                        typeof window !== "undefined" && window.innerWidth < 768
+                          ? 24
+                          : 32
+                      }
+                      className={`mx-auto mb-3 ${
+                        selectedFile ? "text-green-400" : "text-slate-400"
+                      }`}
+                    />
+                    <p className="text-xs md:text-sm text-slate-400">
+                      {selectedFile
+                        ? `Selected: ${selectedFile.name}`
+                        : selectedFileType
+                        ? "Drop your file here or click to browse"
+                        : "Please select a file type first"}
+                    </p>
 
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                    disabled={!selectedFileType}
-                  />
-                </div>
-              )}
-
-              {/* Upload Progress Indicator */}
-              {isUploading && (
-                <div className={`border-2 border-dashed rounded-lg md:rounded-xl p-6 md:p-8 text-center transition-all duration-500 ${
-                  uploadSuccess 
-                    ? "border-green-500 bg-green-500/10" 
-                    : "border-blue-500 bg-blue-500/10"
-                }`}>
-                  <div className="mb-4">
-                    <div className="w-16 h-16 mx-auto mb-3 relative">
-                      {/* Circular Progress */}
-                      <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 64 64">
-                        <circle
-                          cx="32"
-                          cy="32"
-                          r="28"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                          className="text-slate-600"
-                        />
-                        <circle
-                          cx="32"
-                          cy="32"
-                          r="28"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                          strokeDasharray={`${2 * Math.PI * 28}`}
-                          strokeDashoffset={`${2 * Math.PI * 28 * (1 - uploadProgress / 100)}`}
-                          className={`transition-all duration-300 ${
-                            uploadSuccess ? "text-green-400" : "text-blue-400"
-                          }`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        {uploadSuccess ? (
-                          <div className="text-green-400 animate-bounce">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                        ) : (
-                          <span className="text-lg font-bold text-blue-400">{uploadProgress}%</span>
-                        )}
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden"
+                      disabled={!selectedFileType}
+                    />
+                  </div>
+                ) : (
+                  /* Upload Progress Indicator */
+                  <div className={`transition-all duration-500 ${
+                    uploadSuccess 
+                      ? "border-green-500 bg-green-500/10" 
+                      : "border-blue-500 bg-blue-500/10"
+                  }`}>
+                    <div className="mb-4">
+                      <div className="w-16 h-16 mx-auto mb-3 relative">
+                        {/* Circular Progress */}
+                        <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 64 64">
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r="28"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                            className="text-slate-600"
+                          />
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r="28"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                            strokeDasharray={`${2 * Math.PI * 28}`}
+                            strokeDashoffset={`${2 * Math.PI * 28 * (1 - uploadProgress / 100)}`}
+                            className={`transition-all duration-300 ${
+                              uploadSuccess ? "text-green-400" : "text-blue-400"
+                            }`}
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          {uploadSuccess ? (
+                            <div className="text-green-400 animate-bounce">
+                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          ) : (
+                            <span className="text-lg font-bold text-blue-400">{uploadProgress}%</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    {uploadSuccess ? (
-                      <div className="text-green-400 animate-bounce">
-                        <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                    ) : (
-                      <Upload size={24} className="mx-auto text-blue-400 animate-bounce" />
-                    )}
+                    
+                    <div className={`font-medium mb-2 ${
+                      uploadSuccess ? "text-green-400" : "text-white"
+                    }`}>
+                      {uploadStatus || "Uploading..."}
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-full bg-slate-700 rounded-full h-2 mb-3">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ease-out ${
+                          uploadSuccess 
+                            ? "bg-gradient-to-r from-green-500 to-green-400" 
+                            : "bg-gradient-to-r from-blue-500 to-purple-600"
+                        }`}
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
+                    
+                    <p className="text-xs text-slate-400">
+                      {uploadSuccess 
+                        ? "File uploaded successfully!" 
+                        : selectedFile 
+                        ? `Uploading ${selectedFile.name}` 
+                        : "Processing file..."
+                      }
+                    </p>
                   </div>
-                  
-                  <div className={`font-medium mb-2 ${
-                    uploadSuccess ? "text-green-400" : "text-white"
-                  }`}>
-                    {uploadStatus || "Uploading..."}
-                  </div>
-                  
-                  {/* Progress Bar */}
-                  <div className="w-full bg-slate-700 rounded-full h-2 mb-3">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ease-out ${
-                        uploadSuccess 
-                          ? "bg-gradient-to-r from-green-500 to-green-400" 
-                          : "bg-gradient-to-r from-blue-500 to-purple-600"
-                      }`}
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
-                  </div>
-                  
-                  <p className="text-xs text-slate-400">
-                    {uploadSuccess 
-                      ? "File uploaded successfully!" 
-                      : selectedFile 
-                      ? `Uploading ${selectedFile.name}` 
-                      : "Processing file..."
-                    }
-                  </p>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
