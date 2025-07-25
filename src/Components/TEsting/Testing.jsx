@@ -1135,7 +1135,7 @@ useEffect(() => {
                       </span>
                     </div>
                     <p className="text-xs md:text-sm mt-1 text-slate-400">
-                      .pdf , docx , .txt
+                      PDF, DOCX, TXT files only
                     </p>
                   </button>
                 </div>
