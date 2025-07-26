@@ -775,118 +775,172 @@ useEffect(() => {
           <nav className="flex-1 p-3 md:p-4">
             <ul className="space-y-2">
               <li>
-                <button
-                  onClick={() => navigateToPage("home")}
-                  className={`flex items-center ${
-                    isSidebarCollapsed && !isMobile
-                      ? "justify-center"
-                      : "space-x-3"
-                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                    currentPage === "home"
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
-                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                  }`}
-                >
-                  <BookOpen size={20} />
-                  {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">Home</span>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigateToPage("home")}
+                    className={`flex items-center ${
+                      isSidebarCollapsed && !isMobile
+                        ? "justify-center"
+                        : "space-x-3"
+                    } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                      currentPage === "home"
+                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <BookOpen size={20} />
+                    {(!isSidebarCollapsed || isMobile) && (
+                      <span className="text-sm md:text-base">Home</span>
+                    )}
+                  </button>
+                  {/* Tooltip for collapsed sidebar */}
+                  {isSidebarCollapsed && !isMobile && (
+                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-slate-600">
+                      <span className="text-sm font-medium">Home</span>
+                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800"></div>
+                    </div>
                   )}
-                </button>
+                </div>
               </li>
               <li>
-                <button
-                  onClick={() => navigateToPage("study")}
-                  className={`flex items-center ${
-                    isSidebarCollapsed && !isMobile
-                      ? "justify-center"
-                      : "space-x-3"
-                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                    currentPage === "study"
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
-                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                  }`}
-                >
-                  <BookOpen size={20} />
-                  {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">Study Mode</span>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigateToPage("study")}
+                    className={`flex items-center ${
+                      isSidebarCollapsed && !isMobile
+                        ? "justify-center"
+                        : "space-x-3"
+                    } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                      currentPage === "study"
+                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <BookOpen size={20} />
+                    {(!isSidebarCollapsed || isMobile) && (
+                      <span className="text-sm md:text-base">Study Mode</span>
+                    )}
+                  </button>
+                  {/* Tooltip for collapsed sidebar */}
+                  {isSidebarCollapsed && !isMobile && (
+                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-slate-600">
+                      <span className="text-sm font-medium">Study Mode</span>
+                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800"></div>
+                    </div>
                   )}
-                </button>
+                </div>
               </li>
               <li>
-                <button
-                  onClick={() => navigateToPage("quiz-builder")}
-                  className={`flex items-center ${
-                    isSidebarCollapsed && !isMobile
-                      ? "justify-center"
-                      : "space-x-3"
-                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                    currentPage === "quiz-builder"
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
-                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                  }`}
-                >
-                  <Target size={20} />
-                  {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">Quiz Builder</span>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigateToPage("quiz-builder")}
+                    className={`flex items-center ${
+                      isSidebarCollapsed && !isMobile
+                        ? "justify-center"
+                        : "space-x-3"
+                    } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                      currentPage === "quiz-builder"
+                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <Target size={20} />
+                    {(!isSidebarCollapsed || isMobile) && (
+                      <span className="text-sm md:text-base">Quiz Builder</span>
+                    )}
+                  </button>
+                  {/* Tooltip for collapsed sidebar */}
+                  {isSidebarCollapsed && !isMobile && (
+                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-slate-600">
+                      <span className="text-sm font-medium">Quiz Builder</span>
+                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800"></div>
+                    </div>
                   )}
-                </button>
+                </div>
               </li>
               <li>
-                <button
-                  onClick={() => navigateToPage("quiz-history")}
-                  className={`flex items-center ${
-                    isSidebarCollapsed && !isMobile
-                      ? "justify-center"
-                      : "space-x-3"
-                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                    currentPage === "quiz-history"
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
-                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                  }`}
-                >
-                  <History size={20} />
-                  {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">Quiz History</span>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigateToPage("quiz-history")}
+                    className={`flex items-center ${
+                      isSidebarCollapsed && !isMobile
+                        ? "justify-center"
+                        : "space-x-3"
+                    } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                      currentPage === "quiz-history"
+                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <History size={20} />
+                    {(!isSidebarCollapsed || isMobile) && (
+                      <span className="text-sm md:text-base">Quiz History</span>
+                    )}
+                  </button>
+                  {/* Tooltip for collapsed sidebar */}
+                  {isSidebarCollapsed && !isMobile && (
+                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-slate-600">
+                      <span className="text-sm font-medium">Quiz History</span>
+                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800"></div>
+                    </div>
                   )}
-                </button>
+                </div>
               </li>
               <li>
-                <button
-                  onClick={() => navigateToPage("files")}
-                  className={`flex items-center ${
-                    isSidebarCollapsed && !isMobile
-                      ? "justify-center"
-                      : "space-x-3"
-                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                    currentPage === "files"
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
-                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                  }`}
-                >
-                  <Files size={20} />
-                  {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">Library</span>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigateToPage("files")}
+                    className={`flex items-center ${
+                      isSidebarCollapsed && !isMobile
+                        ? "justify-center"
+                        : "space-x-3"
+                    } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                      currentPage === "files"
+                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <Files size={20} />
+                    {(!isSidebarCollapsed || isMobile) && (
+                      <span className="text-sm md:text-base">Library</span>
+                    )}
+                  </button>
+                  {/* Tooltip for collapsed sidebar */}
+                  {isSidebarCollapsed && !isMobile && (
+                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-slate-600">
+                      <span className="text-sm font-medium">Library</span>
+                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800"></div>
+                    </div>
                   )}
-                </button>
+                </div>
               </li>
               <li>
-                <button
-                  onClick={() => navigateToPage("leaderboard")}
-                  className={`flex items-center ${
-                    isSidebarCollapsed && !isMobile
-                      ? "justify-center"
-                      : "space-x-3"
-                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                    currentPage === "leaderboard"
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
-                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                  }`}
-                >
-                  <Trophy size={20} />
-                  {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">Leaderboard</span>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigateToPage("leaderboard")}
+                    className={`flex items-center ${
+                      isSidebarCollapsed && !isMobile
+                        ? "justify-center"
+                        : "space-x-3"
+                    } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                      currentPage === "leaderboard"
+                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <Trophy size={20} />
+                    {(!isSidebarCollapsed || isMobile) && (
+                      <span className="text-sm md:text-base">Leaderboard</span>
+                    )}
+                  </button>
+                  {/* Tooltip for collapsed sidebar */}
+                  {isSidebarCollapsed && !isMobile && (
+                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-slate-600">
+                      <span className="text-sm font-medium">Leaderboard</span>
+                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800"></div>
+                    </div>
                   )}
-                </button>
+                </div>
               </li>
             </ul>
           </nav>
