@@ -750,9 +750,12 @@ useEffect(() => {
           {/* Logo/Title */}
           <div className="p-4 md:p-6 border-b border-slate-700/50 flex items-center justify-between">
             {(!isSidebarCollapsed || isMobile) && (
-              <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              <button 
+                onClick={() => navigateToPage("home")}
+                className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent hover:from-blue-300 hover:to-purple-300 transition-all duration-200 cursor-pointer"
+              >
                 AdaptiveLearnAI
-              </h1>
+              </button>
             )}
             {!isMobile && (
               <button
@@ -976,6 +979,7 @@ useEffect(() => {
             isMobileSidebarOpen={isMobileSidebarOpen}
             isSidebarCollapsed={isSidebarCollapsed}
             isMobile={isMobile}
+            onNavigateHome={() => navigateToPage("home")}
           />
           <div className="flex-1 p-4 md:p-8">
             {currentPage === "home" && (
