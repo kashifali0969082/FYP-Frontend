@@ -181,7 +181,7 @@ export const QuizBuilderMain = ({
   };
 
   return (
-    <div className="min-h-screen p-6 md:p-8">
+    <div className="min-h-screen p-3 md:p-6 xl:p-8">
       <div className="max-w-4xl mx-auto">        
         {renderCurrentStep()}
       </div>

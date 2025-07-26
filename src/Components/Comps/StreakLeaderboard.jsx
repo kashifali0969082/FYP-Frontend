@@ -150,29 +150,29 @@ const StreakLeaderboard = ({ data }) => {
         }
       `}</style>
 
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-6 border border-gray-700/50 shadow-2xl backdrop-blur-sm">
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl md:rounded-2xl xl:rounded-3xl p-4 md:p-6 border border-gray-700/50 shadow-2xl backdrop-blur-sm">
         {/* Enhanced Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 md:mb-8 gap-4 sm:gap-0">
+          <div className="flex items-center gap-3 md:gap-4">
             <div className="relative">
-              <div className="p-3 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-2xl shadow-lg shadow-purple-500/25">
-                <Flame className="w-7 h-7 text-white animate-pulse" />
+              <div className="p-2 md:p-3 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-xl md:rounded-2xl shadow-lg shadow-purple-500/25">
+                <Flame className="w-5 h-5 md:w-7 md:h-7 text-white animate-pulse" />
               </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-gray-800 animate-ping"></div>
+              <div className="absolute -top-0.5 -right-0.5 md:-top-1 md:-right-1 w-3 h-3 md:w-4 md:h-4 bg-green-400 rounded-full border-2 border-gray-800 animate-ping"></div>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              <h2 className="text-lg md:text-xl xl:text-2xl font-bold text-white bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                 Streak Champions
               </h2>
-              <div className="flex items-center gap-3 mt-1">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1">
                 <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <span className="text-gray-400 text-sm">{data.stats?.total_active_users || 0} active learners</span>
+                  <Calendar className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
+                  <span className="text-gray-400 text-xs md:text-sm">{data.stats?.total_active_users || 0} active learners</span>
                 </div>
-                <div className="w-1 h-1 bg-gray-500 rounded-full"></div>
+                <div className="hidden sm:block w-1 h-1 bg-gray-500 rounded-full"></div>
                 <div className="flex items-center gap-1">
-                  <TrendingUp className="w-4 h-4 text-green-400" />
-                  <span className="text-green-400 text-sm">Live rankings</span>
+                  <TrendingUp className="w-3 h-3 md:w-4 md:h-4 text-green-400" />
+                  <span className="text-green-400 text-xs md:text-sm">Live rankings</span>
                 </div>
               </div>
             </div>

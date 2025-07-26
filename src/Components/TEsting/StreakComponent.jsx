@@ -68,36 +68,36 @@ const StreakComponent = ({ streakData, isLoading }) => {
 
 
   return (
-    <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-xl p-6 text-white relative overflow-hidden">
+    <div className="bg-gradient-to-br from-orange-400 to-red-500 rounded-lg md:rounded-xl p-4 md:p-6 text-white relative overflow-hidden">
       {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
+      <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-white/10 rounded-full -mr-12 md:-mr-16 -mt-12 md:-mt-16"></div>
+      <div className="absolute bottom-0 left-0 w-16 h-16 md:w-24 md:h-24 bg-white/5 rounded-full -ml-8 md:-ml-12 -mb-8 md:-mb-12"></div>
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded-lg">
-            <Flame className="w-6 h-6" />
+      <div className="flex items-center justify-between mb-3 md:mb-4">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="p-1.5 md:p-2 bg-white/20 rounded-lg">
+            <Flame className="w-4 h-4 md:w-6 md:h-6" />
           </div>
           <div>
-            <h3 className="font-semibold text-lg">Study Streak</h3>
-            <p className="text-white/80 text-sm">Keep it up!</p>
+            <h3 className="font-semibold text-base md:text-lg">Study Streak</h3>
+            <p className="text-white/80 text-xs md:text-sm">Keep it up!</p>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-3xl font-bold">{current_streak}</div>
-          <div className="text-white/80 text-sm">days</div>
+          <div className="text-2xl md:text-3xl font-bold">{current_streak}</div>
+          <div className="text-white/80 text-xs md:text-sm">days</div>
         </div>
       </div>
 
       {/* Streak Days Visualization */}
-      <div className="mb-4">
+      <div className="mb-3 md:mb-4">
 
-        <div className="flex justify-between gap-1">
+        <div className="flex justify-between gap-0.5 md:gap-1">
           {streakDays.map((day, index) => (
             <div key={index} className="flex flex-col items-center">
               <div className="text-xs text-white/70 mb-1">{day.dayOfWeek}</div>
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium transition-all duration-200 ${
+              <div className={`w-6 h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-xs font-medium transition-all duration-200 ${
                 day.status === 'active' 
                   ? 'bg-white text-orange-500 shadow-lg' 
                   : day.status === 'today' 
@@ -114,14 +114,14 @@ const StreakComponent = ({ streakData, isLoading }) => {
       </div>
 
       {/* Stats */}
-      <div className="flex justify-between items-center pt-3 border-t border-white/20">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-3 border-t border-white/20 gap-2 sm:gap-0">
         <div className="flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-yellow-300" />
-          <span className="text-sm">Best: {longest_streak} days</span>
+          <Trophy className="w-3 h-3 md:w-4 md:h-4 text-yellow-300" />
+          <span className="text-xs md:text-sm">Best: {longest_streak} days</span>
         </div>
         <div className="flex items-center gap-2">
-          <Target className="w-4 h-4 text-green-300" />
-          <span className="text-sm">Goal: {current_streak + 2} days</span>
+          <Target className="w-3 h-3 md:w-4 md:h-4 text-green-300" />
+          <span className="text-xs md:text-sm">Goal: {current_streak + 2} days</span>
         </div>
       </div>
     </div>
