@@ -138,7 +138,7 @@ console.log("Display name will be:", userData?.name || username)
             <h2 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4">
               {isUserDataLoading ? (
                 <div className="flex items-center gap-3">
-                  <span>Welcome back,</span>
+                  <span>Welcome,</span>
                   <div className="h-8 md:h-10 bg-white/20 rounded animate-pulse w-32 md:w-48"></div>
                 </div>
               ) : (

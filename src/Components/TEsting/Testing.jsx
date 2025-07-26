@@ -890,31 +890,6 @@ useEffect(() => {
 
           {/* Bottom Section */}
           <div className="p-3 md:p-4 border-t border-slate-700/50">
-            {/* Dark/Light Mode Toggle */}
-            {(!isSidebarCollapsed || isMobile) && (
-              <div className="flex items-center justify-between mb-4 md:mb-6">
-                <span className="text-xs md:text-sm font-medium text-slate-300">
-                  Theme
-                </span>
-                <button
-                  onClick={toggleDarkMode}
-                  className={`relative inline-flex h-5 w-9 md:h-6 md:w-11 items-center rounded-full transition-colors ${
-                    isDarkMode
-                      ? "bg-gradient-to-r from-blue-500 to-purple-500"
-                      : "bg-slate-600"
-                  }`}
-                  
-                >
-                  <span
-                    className={`inline-block h-3 w-3 md:h-4 md:w-4 transform rounded-full bg-white transition-transform ${
-                      isDarkMode
-                        ? "translate-x-5 md:translate-x-6"
-                        : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
-            )}
 
             {/* Profile */}
             <div
