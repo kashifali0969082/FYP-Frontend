@@ -11,6 +11,8 @@ import {
   Loader2,
   X,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 import { deleteDocument } from "../../Api/Apifun";
 import { useState } from "react";
 
@@ -23,17 +25,19 @@ export const HomePage = ({
   setIsMobileSidebarOpen,
 }) => {
   console.log("uploaded", uploadedFiles);
-  
+  const navigate = useNavigate();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const openInStudyMode = (file) => {
-    setCurrentPage("study");
-    if (isMobile) {
-      setIsMobileSidebarOpen(false);
-    }
     console.log("Opening file in study mode:", file);
+    navigate("/StudyMode", {
+      state: {
+        type: file.type,
+        id: file.id, // or any other key you want
+      },
+    });
   };
 
   const handleDeleteClick = (file) => {
@@ -43,18 +47,25 @@ export const HomePage = ({
 
   const confirmDelete = async () => {
     if (!fileToDelete) return;
-    
+
     setIsDeleting(true);
-    
+
     try {
-      console.log("Deleting file with ID:", fileToDelete.id, "Type:", fileToDelete.type);
+      console.log(
+        "Deleting file with ID:",
+        fileToDelete.id,
+        "Type:",
+        fileToDelete.type
+      );
       let resp = await deleteDocument(fileToDelete.type, fileToDelete.id);
       console.log("Delete response:", resp);
-      
+
       if (resp.status === 204) {
         alert(`${fileToDelete.type} deleted successfully`);
         // Update the uploaded files list
-        setUploadedFiles(uploadedFiles.filter((file) => file.id !== fileToDelete.id));
+        setUploadedFiles(
+          uploadedFiles.filter((file) => file.id !== fileToDelete.id)
+        );
       } else {
         alert(`Failed to delete ${fileToDelete.type}. Please try again.`);
       }
@@ -280,7 +291,8 @@ export const HomePage = ({
                   Delete File
                 </h3>
                 <p className="text-sm md:text-base text-slate-400 mb-6">
-                  Are you sure you want to delete "{fileToDelete?.name}"? This action cannot be undone.
+                  Are you sure you want to delete "{fileToDelete?.name}"? This
+                  action cannot be undone.
                 </p>
 
                 {/* Buttons */}

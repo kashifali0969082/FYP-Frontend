@@ -26,7 +26,7 @@ import {
 import { MobileHeader } from "../Comps/MobileHeader";
 import { HomePage } from "../Comps/HomePage";
 import { MCQsPage } from "../Comps/McqPage";
-import { StudyModePage } from "../Comps/StudyMode";
+import StudyMode from "../PdfViewer/viewer";
 import { FilesPage } from "../Comps/FilePage";
 import { FileUpload, GetAllBooks, GetAllSlides } from "../../Api/Apifun";
 
@@ -563,7 +563,7 @@ const Dashboard = () => {
                 uploadedFiles={uploadedFiles}
               />
             )}
-            {currentPage === "study" && <StudyModePage isMobile={isMobile} />}
+            {currentPage === "study" && <StudyMode  />}
             {currentPage === "mcqs" && <MCQsPage isMobile={isMobile} />}
             {currentPage === "files" && (
               <FilesPage setIsUploadModalOpen={setIsUploadModalOpen} />
