@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Flame, Award, Crown, Star, TrendingUp, Zap, Target, Calendar } from 'lucide-react';
 
-const StreakLeaderboard = ({ data }) => {
+const StreakLeaderboard = ({ data, isMobile }) => {
   const [animatedRanks, setAnimatedRanks] = useState([]);
 
   useEffect(() => {
@@ -209,13 +209,13 @@ const StreakLeaderboard = ({ data }) => {
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 )}
                 
-                <div className="flex items-center justify-between p-3 md:p-4 xl:p-5 gap-3">
-                  <div className="flex items-center gap-3 md:gap-4 xl:gap-5 flex-1 min-w-0">
+                <div className="flex items-center justify-between p-3 md:p-4 xl:p-5 gap-2 md:gap-3">
+                  <div className="flex items-center gap-2 md:gap-3 xl:gap-4 flex-1 min-w-0 overflow-hidden">
                     {/* Enhanced Rank Badge */}
                     <div className="relative flex-shrink-0">
-                      <div className={`w-10 h-10 md:w-12 md:h-12 xl:w-14 xl:h-14 rounded-lg md:rounded-xl xl:rounded-2xl flex items-center justify-center ${getRankBadgeStyle(user.rank)} transform group-hover:scale-110 transition-all duration-300`}>
+                      <div className={`w-8 h-8 md:w-10 md:h-10 xl:w-12 xl:h-12 rounded-lg md:rounded-xl xl:rounded-2xl flex items-center justify-center ${getRankBadgeStyle(user.rank)} transform group-hover:scale-110 transition-all duration-300`}>
                         {user.rank <= 3 ? getRankIcon(user.rank) : (
-                          <span className="text-sm md:text-lg xl:text-xl font-black tracking-tight">#{user.rank}</span>
+                          <span className="text-xs md:text-sm xl:text-lg font-black tracking-tight">#{user.rank}</span>
                         )}
                       </div>
                       {user.rank === 1 && (
@@ -233,43 +233,43 @@ const StreakLeaderboard = ({ data }) => {
                     </div>
 
                     {/* Enhanced User Info */}
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
-                        <span className={`font-bold text-sm md:text-base xl:text-lg truncate ${user.is_you ? 'text-blue-300' : 'text-white'}`}>
-                          {user.name.length > 20 ? `${user.name.substring(0, 20)}...` : user.name}
+                    <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+                      <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-2 min-w-0">
+                        <span className={`font-bold text-xs md:text-sm xl:text-base truncate ${user.is_you ? 'text-blue-300' : 'text-white'} max-w-[120px] md:max-w-none`}>
+                          {user.name.length > (isMobile ? 12 : 20) ? `${user.name.substring(0, isMobile ? 12 : 20)}...` : user.name}
                         </span>
                         {user.is_you && (
-                          <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-2 md:px-3 py-0.5 md:py-1 rounded-full font-medium shadow-lg flex-shrink-0">
+                          <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-1.5 md:px-2 py-0.5 rounded-full font-medium shadow-lg flex-shrink-0">
                             You
                           </span>
                         )}
                         <div className="flex items-center gap-1 text-xs flex-shrink-0">
                           <span>{streakLevel.icon}</span>
-                          <span className="text-gray-400 font-medium hidden sm:inline">{streakLevel.label}</span>
+                          <span className="text-gray-400 font-medium hidden lg:inline">{streakLevel.label}</span>
                         </div>
                       </div>
                       
                       {/* Progress Bar */}
-                      <div className="flex items-center gap-2 md:gap-3 mb-1">
-                        <div className="flex-1 bg-gray-700 rounded-full h-1.5 md:h-2 overflow-hidden min-w-0">
+                      <div className="flex items-center gap-1 md:gap-2 mb-1 min-w-0">
+                        <div className="flex-1 bg-gray-700 rounded-full h-1 md:h-1.5 overflow-hidden min-w-0">
                           <div 
                             className={`h-full bg-gradient-to-r ${getStreakColor(user.current_streak)} transition-all duration-1000 ease-out rounded-full`}
                             style={{ width: `${progressWidth}%` }}
                           ></div>
                         </div>
-                        <span className="text-gray-400 text-xs min-w-[50px] md:min-w-[60px] flex-shrink-0">
+                        <span className="text-gray-400 text-xs min-w-[35px] md:min-w-[50px] flex-shrink-0">
                           {user.current_streak}/{user.longest_streak}
                         </span>
                       </div>
                       
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs md:text-sm">
-                        <div className="flex items-center gap-1">
-                          <Target className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                          <span className="text-gray-400 truncate">Best: <span className="text-gray-300 font-medium">{user.longest_streak} days</span></span>
+                      <div className="flex flex-col gap-1 text-xs">
+                        <div className="flex items-center gap-1 min-w-0">
+                          <Target className="w-2.5 h-2.5 md:w-3 md:h-3 text-gray-500 flex-shrink-0" />
+                          <span className="text-gray-400 truncate">Best: <span className="text-gray-300 font-medium">{user.longest_streak}</span></span>
                         </div>
                         {user.current_streak === user.longest_streak && user.current_streak > 0 && (
                           <div className="flex items-center gap-1">
-                            <Zap className="w-3 h-3 text-yellow-400 flex-shrink-0" />
+                            <Zap className="w-2.5 h-2.5 md:w-3 md:h-3 text-yellow-400 flex-shrink-0" />
                             <span className="text-yellow-400 text-xs font-medium">Personal Best!</span>
                           </div>
                         )}
@@ -278,23 +278,21 @@ const StreakLeaderboard = ({ data }) => {
                   </div>
 
                   {/* Enhanced Current Streak Display */}
-                  <div className="flex flex-col items-end gap-1 md:gap-2 flex-shrink-0">
-                    <div className="flex items-center gap-2 md:gap-3">
-                      <div className="flex items-center gap-1 md:gap-2">
-                        <Flame className={`w-4 h-4 md:w-5 md:h-5 xl:w-6 xl:h-6 ${getStreakTextColor(user.current_streak)} drop-shadow-sm animate-pulse`} />
-                        <div className="text-right">
-                          <div className={`font-black text-lg md:text-xl xl:text-2xl ${getStreakTextColor(user.current_streak)} tracking-tight`}>
-                            {user.current_streak}
-                          </div>
-                          <div className="text-gray-400 text-xs font-medium -mt-0.5 md:-mt-1">days</div>
+                  <div className="flex flex-col items-end gap-0.5 md:gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-1 md:gap-2">
+                      <Flame className={`w-3 h-3 md:w-4 md:h-4 xl:w-5 xl:h-5 ${getStreakTextColor(user.current_streak)} drop-shadow-sm animate-pulse`} />
+                      <div className="text-right">
+                        <div className={`font-black text-sm md:text-lg xl:text-xl ${getStreakTextColor(user.current_streak)} tracking-tight`}>
+                          {user.current_streak}
                         </div>
+                        <div className="text-gray-400 text-xs font-medium -mt-0.5">days</div>
                       </div>
                     </div>
                     
                     {/* Streak difference from #1 */}
                     {user.rank > 1 && data.top_users[0] && (
-                      <div className="text-xs text-gray-500 bg-gray-800 px-1.5 md:px-2 py-0.5 md:py-1 rounded-md whitespace-nowrap">
-                        -{data.top_users[0].current_streak - user.current_streak} from #1
+                      <div className="text-xs text-gray-500 bg-gray-800 px-1 md:px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                        -{data.top_users[0].current_streak - user.current_streak}
                       </div>
                     )}
                   </div>

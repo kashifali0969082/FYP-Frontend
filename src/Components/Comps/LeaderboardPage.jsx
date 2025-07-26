@@ -117,7 +117,7 @@ const LeaderboardPage = ({ isMobile }) => {
       </div>
 
       {/* Leaderboard Component */}
-      <StreakLeaderboard data={leaderboardData} />
+      <StreakLeaderboard data={leaderboardData} isMobile={isMobile} />
     </div>
   );
 };
