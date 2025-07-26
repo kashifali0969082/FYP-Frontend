@@ -709,15 +709,20 @@ export const FilesPage = ({
                           },
                           strong: ({children}) => <strong className="font-semibold text-blue-200">{children}</strong>,
                           em: ({children}) => <em className="italic text-blue-100">{children}</em>,
-                          code: ({inline, children}) => 
+                          code: ({inline, children, className, ...props}) => 
                             inline ? (
-                              <code className="bg-slate-800/70 text-green-300 px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>
+                              <code className="bg-slate-800/70 text-green-300 px-1.5 py-0.5 rounded text-sm font-mono">
+                                {children}
+                              </code>
                             ) : (
-                              <code className="bg-slate-900/50 text-green-300 text-sm font-mono block p-3 rounded-lg border border-slate-700/50 my-2 overflow-x-auto whitespace-pre-wrap">{children}</code>
+                              <code 
+                                className="bg-slate-900/50 text-green-300 text-sm font-mono block p-4 rounded-lg border border-slate-700/50 my-3 overflow-x-auto whitespace-pre"
+                                {...props}
+                              >
+                                {children}
+                              </code>
                             ),
-                          pre: ({children}) => (
-                            <pre className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-4 my-3 overflow-x-auto">{children}</pre>
-                          ),
+                          pre: ({children}) => children,
                           ul: ({children}) => <ul className="list-disc list-inside space-y-1 my-2 text-slate-200">{children}</ul>,
                           ol: ({children}) => <ol className="list-decimal list-inside space-y-1 my-2 text-slate-200">{children}</ol>,
                           li: ({children}) => <li className="mb-1">{children}</li>,
