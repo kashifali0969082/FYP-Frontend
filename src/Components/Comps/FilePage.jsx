@@ -642,17 +642,17 @@ export const FilesPage = ({
               <button
                 onClick={handleAISubmit}
                 disabled={!aiQuery.trim() || isAILoading}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-slate-600 disabled:to-slate-600 disabled:opacity-50 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+                className="px-3 md:px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-slate-600 disabled:to-slate-600 disabled:opacity-50 text-white rounded-lg font-medium transition-all flex items-center gap-2"
               >
                 {isAILoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Ask
+                    <span className="hidden md:inline">Ask</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    Ask
+                    <span className="hidden md:inline">Ask</span>
                   </>
                 )}
               </button>
@@ -660,20 +660,20 @@ export const FilesPage = ({
 
             {/* AI Response */}
             {(aiAnswer || isAILoading) && (
-              <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/30">
+              <div className="bg-slate-800/30 rounded-lg p-3 md:p-4 border border-slate-700/30 overflow-hidden">
                 {isAILoading ? (
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 text-slate-400">
                       <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
-                      <span className="font-medium">{loadingStage || "Processing..."}</span>
+                      <span className="font-medium text-xs md:text-sm truncate">{loadingStage || "Processing..."}</span>
                     </div>
                     <div className="w-full bg-slate-700/30 rounded-full h-1">
                       <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-1 rounded-full animate-pulse" style={{width: '60%'}}></div>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="text-white text-sm leading-relaxed prose prose-invert max-w-none">
+                  <div className="space-y-4 overflow-hidden">
+                    <div className="text-white text-xs md:text-sm leading-relaxed prose prose-invert max-w-none overflow-hidden">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         rehypePlugins={[rehypeSanitize]}
@@ -707,51 +707,51 @@ export const FilesPage = ({
                             if (typeof children === 'string') {
                               return (
                                 <p 
-                                  className="text-slate-200 mb-3 leading-relaxed" 
+                                  className="text-slate-200 mb-3 leading-relaxed break-words" 
                                   dangerouslySetInnerHTML={{ __html: highlightSources(children) }}
                                 />
                               );
                             }
                             
-                            return <p className="text-slate-200 mb-3 leading-relaxed">{children}</p>;
+                            return <p className="text-slate-200 mb-3 leading-relaxed break-words">{children}</p>;
                           },
                           strong: ({children}) => <strong className="font-semibold text-blue-200">{children}</strong>,
                           em: ({children}) => <em className="italic text-blue-100">{children}</em>,
                           code: ({inline, children, className, ...props}) => 
                             inline ? (
-                              <code className="bg-slate-800/70 text-green-300 px-1.5 py-0.5 rounded text-sm font-mono">
+                              <code className="bg-slate-800/70 text-green-300 px-1.5 py-0.5 rounded text-xs md:text-sm font-mono break-all">
                                 {children}
                               </code>
                             ) : (
                               <code 
-                                className="bg-slate-900/50 text-green-300 text-sm font-mono block p-4 rounded-lg border border-slate-700/50 my-3 overflow-x-auto whitespace-pre"
+                                className="bg-slate-900/50 text-green-300 text-xs md:text-sm font-mono block p-3 md:p-4 rounded-lg border border-slate-700/50 my-3 overflow-x-auto whitespace-pre max-w-full"
                                 {...props}
                               >
                                 {children}
                               </code>
                             ),
                           pre: ({children}) => children,
-                          ul: ({children}) => <ul className="list-disc list-inside space-y-1 my-2 text-slate-200">{children}</ul>,
-                          ol: ({children}) => <ol className="list-decimal list-inside space-y-1 my-2 text-slate-200">{children}</ol>,
-                          li: ({children}) => <li className="mb-1">{children}</li>,
+                          ul: ({children}) => <ul className="list-disc list-inside space-y-1 my-2 text-slate-200 break-words">{children}</ul>,
+                          ol: ({children}) => <ol className="list-decimal list-inside space-y-1 my-2 text-slate-200 break-words">{children}</ol>,
+                          li: ({children}) => <li className="mb-1 break-words">{children}</li>,
                           a: ({href, children}) => (
-                            <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">
+                            <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline break-all">
                               {children}
                             </a>
                           ),
                           blockquote: ({children}) => (
-                            <blockquote className="border-l-4 border-blue-500/50 pl-4 italic text-slate-300 my-3">{children}</blockquote>
+                            <blockquote className="border-l-4 border-blue-500/50 pl-4 italic text-slate-300 my-3 break-words">{children}</blockquote>
                           ),
                           table: ({children}) => (
-                            <div className="overflow-x-auto my-3">
-                              <table className="min-w-full border border-slate-700/50 rounded-lg">{children}</table>
+                            <div className="overflow-x-auto my-3 max-w-full">
+                              <table className="min-w-full border border-slate-700/50 rounded-lg text-xs md:text-sm">{children}</table>
                             </div>
                           ),
                           th: ({children}) => (
-                            <th className="border border-slate-700/50 px-3 py-2 bg-slate-800/50 text-white font-semibold text-left">{children}</th>
+                            <th className="border border-slate-700/50 px-2 md:px-3 py-2 bg-slate-800/50 text-white font-semibold text-left text-xs md:text-sm">{children}</th>
                           ),
                           td: ({children}) => (
-                            <td className="border border-slate-700/50 px-3 py-2 text-slate-200">{children}</td>
+                            <td className="border border-slate-700/50 px-2 md:px-3 py-2 text-slate-200 text-xs md:text-sm break-words">{children}</td>
                           ),
                         }}
                       >
@@ -761,9 +761,9 @@ export const FilesPage = ({
                     
                     {/* Document References with clickable links */}
                     {aiReferences.length > 0 && (
-                      <div className="space-y-2">
-                        <span className="font-medium text-slate-300 text-sm">Referenced Documents:</span>
-                        <div className="flex flex-wrap gap-2">
+                      <div className="space-y-2 overflow-hidden">
+                        <span className="font-medium text-slate-300 text-xs md:text-sm">Referenced Documents:</span>
+                        <div className="flex flex-wrap gap-1 md:gap-2 overflow-hidden">
                           {aiReferences.map((ref, idx) => {
                             // Use same colors as file type pills
                             const getRefTypeStyles = (type) => {
@@ -783,18 +783,28 @@ export const FilesPage = ({
                               <button
                                 key={idx}
                                 onClick={() => handleDocumentReference(ref)}
-                                className={`group inline-flex items-center gap-2 px-3 py-2 border rounded-lg transition-all text-xs cursor-pointer ${getRefTypeStyles(ref.type)}`}
+                                className={`group inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 border rounded-lg transition-all text-xs cursor-pointer min-w-0 max-w-full ${getRefTypeStyles(ref.type)}`}
                               >
-                                <div className="flex items-center gap-1">
-                                  {ref.type === 'Book' && <BookOpen className="w-3 h-3" />}
-                                  {ref.type === 'Notes' && <StickyNote className="w-3 h-3" />}
-                                  {ref.type === 'Presentation' && <Presentation className="w-3 h-3" />}
-                                  <span className="font-medium">{ref.title}</span>
+                                <div className="flex items-center gap-1 min-w-0 flex-shrink">
+                                  {ref.type === 'Book' && <BookOpen className="w-3 h-3 flex-shrink-0" />}
+                                  {ref.type === 'Notes' && <StickyNote className="w-3 h-3 flex-shrink-0" />}
+                                  {ref.type === 'Presentation' && <Presentation className="w-3 h-3 flex-shrink-0" />}
+                                  <span className="font-medium truncate min-w-0">
+                                    {(() => {
+                                      const title = ref.title;
+                                      const maxLength = isMobile ? 15 : 25;
+                                      return title.length > maxLength ? `${title.substring(0, maxLength)}...` : title;
+                                    })()}
+                                  </span>
                                 </div>
-                                <div className="opacity-70">
-                                  • {ref.topic}
+                                <div className="opacity-70 truncate min-w-0 hidden sm:block">
+                                  • {(() => {
+                                    const topic = ref.topic;
+                                    const maxLength = isMobile ? 10 : 20;
+                                    return topic.length > maxLength ? `${topic.substring(0, maxLength)}...` : topic;
+                                  })()}
                                 </div>
-                                <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 hidden md:block" />
                               </button>
                             );
                           })}
@@ -804,15 +814,21 @@ export const FilesPage = ({
                     
                     {/* Legacy sources (if no references) */}
                     {aiSources.length > 0 && aiReferences.length === 0 && (
-                      <div className="text-xs text-slate-400">
+                      <div className="text-xs text-slate-400 overflow-hidden">
                         <span className="font-medium text-slate-300">Sources: </span>
-                        <div className="flex flex-wrap gap-2 mt-1">
+                        <div className="flex flex-wrap gap-1 md:gap-2 mt-1 overflow-hidden">
                           {aiSources.map((source, idx) => (
                             <span
                               key={idx}
-                              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-900/30 border border-blue-500/30 rounded-full text-blue-300"
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-900/30 border border-blue-500/30 rounded-full text-blue-300 text-xs max-w-full min-w-0"
                             >
-                              📄 {source}
+                              <span className="flex-shrink-0">📄</span>
+                              <span className="truncate min-w-0">
+                                {(() => {
+                                  const maxLength = isMobile ? 20 : 30;
+                                  return source.length > maxLength ? `${source.substring(0, maxLength)}...` : source;
+                                })()}
+                              </span>
                             </span>
                           ))}
                         </div>
