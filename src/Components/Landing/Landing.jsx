@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
+import { Menu } from "lucide-react";
 import "./Landing";
 
 
@@ -288,7 +289,7 @@ import "./Landing";
             </li>
           </ul>
           <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
-            <i className="fas fa-bars">bars</i>
+            <Menu size={20} />
           </button>
         </nav>
       </header>
