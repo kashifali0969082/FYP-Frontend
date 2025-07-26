@@ -368,13 +368,13 @@ export const FilesPage = ({
   };
 
   const GridView = ({ files }) => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
       {files.map((file) => {
         const IconComponent = file.icon;
         return (
           <div
             key={file.id}
-            className="group relative bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 hover:bg-slate-800/70 transition-all duration-300 border border-slate-700/50"
+            className="group relative bg-slate-800/50 backdrop-blur-sm rounded-lg md:rounded-xl p-3 md:p-4 hover:bg-slate-800/70 transition-all duration-300 border border-slate-700/50 overflow-hidden"
           >
             {/* Selection checkbox */}
             <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -402,8 +402,12 @@ export const FilesPage = ({
 
             {/* File info */}
             <div className="text-center mb-4">
-              <h3 className="font-medium text-white text-sm truncate mb-1">
-                {file.title || file.name}
+              <h3 className="font-medium text-white text-xs md:text-sm truncate mb-1 px-2">
+                {(() => {
+                  const fileName = file.title || file.name;
+                  const maxLength = isMobile ? 15 : 25;
+                  return fileName.length > maxLength ? `${fileName.substring(0, maxLength)}...` : fileName;
+                })()}
               </h3>
               <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
                 <span className="flex items-center gap-1">
@@ -427,14 +431,14 @@ export const FilesPage = ({
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-3 rounded-lg text-xs font-medium transition-all">
+            <div className="flex gap-1 md:gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-1.5 md:py-2 px-2 md:px-3 rounded-lg text-xs font-medium transition-all">
                 <Play className="w-3 h-3 inline mr-1" />
-                Study
+                <span className="hidden sm:inline">Study</span>
               </button>
               <button 
                 onClick={() => handleDeleteClick(file)}
-                className="p-2 bg-red-600/50 hover:bg-red-600 text-red-300 hover:text-white rounded-lg transition-colors"
+                className="p-1.5 md:p-2 bg-red-600/50 hover:bg-red-600 text-red-300 hover:text-white rounded-lg transition-colors flex-shrink-0"
               >
                 <Trash2 className="w-3 h-3" />
               </button>
@@ -446,17 +450,17 @@ export const FilesPage = ({
   );
 
   const ListView = ({ files }) => (
-    <div className="space-y-3">
+    <div className="space-y-2 md:space-y-3">
       {files.map((file) => {
         const IconComponent = file.icon;
         return (
           <div
             key={file.id}
-            className="group bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 hover:bg-slate-800/70 transition-all duration-300 border border-slate-700/50"
+            className="group bg-slate-800/50 backdrop-blur-sm rounded-lg md:rounded-xl p-3 md:p-4 hover:bg-slate-800/70 transition-all duration-300 border border-slate-700/50 overflow-hidden"
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4 min-w-0">
               {/* Selection checkbox */}
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                 <input
                   type="checkbox"
                   checked={selectedFiles.includes(file.id)}
@@ -466,26 +470,30 @@ export const FilesPage = ({
               </div>
 
               {/* File icon */}
-              <div className={`w-12 h-12 ${file.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                <IconComponent className="w-6 h-6 text-white" />
+              <div className={`w-10 h-10 md:w-12 md:h-12 ${file.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                <IconComponent className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
 
               {/* File info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-medium text-white text-sm truncate">
-                    {file.title || file.name}
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="flex items-center gap-2 mb-1 min-w-0">
+                  <h3 className="font-medium text-white text-xs md:text-sm truncate max-w-[150px] md:max-w-none">
+                    {(() => {
+                      const fileName = file.title || file.name;
+                      const maxLength = isMobile ? 20 : 35;
+                      return fileName.length > maxLength ? `${fileName.substring(0, maxLength)}...` : fileName;
+                    })()}
                   </h3>
                   {file.isFavorite && (
                     <Star className="w-4 h-4 text-yellow-400 fill-current flex-shrink-0" />
                   )}
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-gray-400">
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 truncate">
                     <Calendar className="w-3 h-3 flex-shrink-0" />
                     {new Date(file.uploadDate).toLocaleDateString()}
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 truncate">
                     <HardDrive className="w-3 h-3 flex-shrink-0" />
                     {file.size || "Unknown size"}
                   </span>
@@ -508,14 +516,14 @@ export const FilesPage = ({
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-3 rounded-lg text-xs font-medium transition-all">
+              <div className="flex gap-1 md:gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-1.5 md:py-2 px-2 md:px-3 rounded-lg text-xs font-medium transition-all">
                   <Play className="w-3 h-3 inline mr-1" />
-                  Study
+                  <span className="hidden sm:inline">Study</span>
                 </button>
                 <button 
                   onClick={() => handleDeleteClick(file)}
-                  className="p-2 bg-red-600/50 hover:bg-red-600 text-red-300 hover:text-white rounded-lg transition-colors"
+                  className="p-1.5 md:p-2 bg-red-600/50 hover:bg-red-600 text-red-300 hover:text-white rounded-lg transition-colors"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
