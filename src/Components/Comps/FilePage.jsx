@@ -674,17 +674,49 @@ export const FilesPage = ({
                           h1: ({children}) => <h1 className="text-2xl font-bold text-white mt-6 mb-4">{children}</h1>,
                           h2: ({children}) => <h2 className="text-xl font-semibold text-white mt-5 mb-3">{children}</h2>,
                           h3: ({children}) => <h3 className="text-lg font-semibold text-white mt-4 mb-2">{children}</h3>,
-                          p: ({children}) => <p className="text-slate-200 mb-3 leading-relaxed">{children}</p>,
+                          p: ({children}) => {
+                            // Simple document name highlighting
+                            const highlightSources = (text) => {
+                              if (typeof text !== 'string') return text;
+                              
+                              // Simple patterns for document references
+                              const patterns = [
+                                /("([^"]+\.(?:pdf|pptx?|docx?|txt))")/gi,
+                                /(Lecture\s+[\d\-]+[\w\-]*)/gi,
+                                /(Introduction[_\s]to[_\s][\w\-]+)/gi
+                              ];
+                              
+                              let highlightedText = text;
+                              patterns.forEach(pattern => {
+                                highlightedText = highlightedText.replace(pattern, (match) => {
+                                  return `<span class="font-bold italic text-blue-300">${match}</span>`;
+                                });
+                              });
+                              
+                              return highlightedText;
+                            };
+                            
+                            if (typeof children === 'string') {
+                              return (
+                                <p 
+                                  className="text-slate-200 mb-3 leading-relaxed" 
+                                  dangerouslySetInnerHTML={{ __html: highlightSources(children) }}
+                                />
+                              );
+                            }
+                            
+                            return <p className="text-slate-200 mb-3 leading-relaxed">{children}</p>;
+                          },
                           strong: ({children}) => <strong className="font-semibold text-blue-200">{children}</strong>,
                           em: ({children}) => <em className="italic text-blue-100">{children}</em>,
                           code: ({inline, children}) => 
                             inline ? (
-                              <code className="bg-slate-800/70 text-green-300 px-1.5 py-0.5 rounded text-sm">{children}</code>
+                              <code className="bg-slate-800/70 text-green-300 px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>
                             ) : (
-                              <code className="text-green-300 text-sm">{children}</code>
+                              <code className="bg-slate-900/50 text-green-300 text-sm font-mono block p-3 rounded-lg border border-slate-700/50 my-2 overflow-x-auto whitespace-pre-wrap">{children}</code>
                             ),
                           pre: ({children}) => (
-                            <pre className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 my-3 overflow-x-auto">{children}</pre>
+                            <pre className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-4 my-3 overflow-x-auto">{children}</pre>
                           ),
                           ul: ({children}) => <ul className="list-disc list-inside space-y-1 my-2 text-slate-200">{children}</ul>,
                           ol: ({children}) => <ol className="list-decimal list-inside space-y-1 my-2 text-slate-200">{children}</ol>,
