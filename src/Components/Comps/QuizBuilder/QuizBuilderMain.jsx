@@ -155,6 +155,7 @@ export const QuizBuilderMain = ({
             selectedDocument={selectedDocument}
             onNext={() => setCurrentStep(2)}
             setCurrentPage={setCurrentPage}
+            isMobile={isMobile}
           />
         );
       case 2:
