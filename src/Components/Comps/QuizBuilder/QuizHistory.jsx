@@ -11,11 +11,10 @@ import {
   Filter,
   ChevronDown,
   CheckCircle,
-  XCircle,
-  RotateCcw
+  XCircle
 } from 'lucide-react';
 
-export const QuizHistory = ({ isMobile, onReviewQuiz, onRetakeQuiz }) => {
+export const QuizHistory = ({ isMobile, onReviewQuiz }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('recent');
   const [showFilters, setShowFilters] = useState(false);
@@ -87,40 +86,40 @@ export const QuizHistory = ({ isMobile, onReviewQuiz, onRetakeQuiz }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl md:text-2xl xl:text-3xl font-bold text-white mb-1 md:mb-2 truncate">
             Quiz History
           </h2>
-          <p className="text-slate-400">
+          <p className="text-xs md:text-sm text-slate-400 break-words">
             Track your learning progress and review past quiz attempts
           </p>
         </div>
         
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 md:space-x-3 flex-shrink-0">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center space-x-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+            className="flex items-center space-x-1 md:space-x-2 px-3 md:px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm"
           >
-            <Filter size={18} />
-            <span>Filter</span>
-            <ChevronDown size={16} className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+            <Filter size={16} className="md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Filter</span>
+            <ChevronDown size={14} className={`transition-transform ${showFilters ? 'rotate-180' : ''} md:w-4 md:h-4`} />
           </button>
         </div>
       </div>
 
       {/* Filters */}
       {showFilters && (
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Sort By</label>
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 md:p-6 overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            <div className="min-w-0">
+              <label className="block text-xs md:text-sm font-medium text-slate-300 mb-2">Sort By</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500 text-sm"
               >
                 <option value="recent">Most Recent</option>
                 <option value="score">Highest Score</option>
@@ -128,18 +127,18 @@ export const QuizHistory = ({ isMobile, onReviewQuiz, onRetakeQuiz }) => {
                 <option value="time">Fastest Time</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Document Type</label>
-              <select className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+            <div className="min-w-0">
+              <label className="block text-xs md:text-sm font-medium text-slate-300 mb-2">Document Type</label>
+              <select className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500 text-sm">
                 <option value="all">All Types</option>
                 <option value="book">Books</option>
                 <option value="presentation">Presentations</option>
                 <option value="notes">Notes</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Difficulty</label>
-              <select className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500">
+            <div className="min-w-0">
+              <label className="block text-xs md:text-sm font-medium text-slate-300 mb-2">Difficulty</label>
+              <select className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500 text-sm">
                 <option value="all">All Levels</option>
                 <option value="easy">Easy</option>
                 <option value="medium">Medium</option>
@@ -152,97 +151,103 @@ export const QuizHistory = ({ isMobile, onReviewQuiz, onRetakeQuiz }) => {
 
       {/* Search */}
       <div className="relative">
-        <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+        <Search size={isMobile ? 16 : 20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
         <input
           type="text"
           placeholder="Search quiz history..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500/50 transition-all"
+          className="w-full pl-10 pr-4 py-2 md:py-3 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500/50 transition-all text-sm md:text-base"
         />
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg md:rounded-xl p-3 md:p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-400 text-sm">Total Quizzes</p>
-              <p className="text-2xl font-bold text-white">{quizHistory.length}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-slate-400 text-xs md:text-sm truncate">Total Quizzes</p>
+              <p className="text-lg md:text-2xl font-bold text-white">{quizHistory.length}</p>
             </div>
-            <Trophy size={24} className="text-blue-400" />
+            <Trophy size={isMobile ? 16 : 24} className="text-blue-400 flex-shrink-0" />
           </div>
         </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg md:rounded-xl p-3 md:p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-400 text-sm">Avg. Accuracy</p>
-              <p className="text-2xl font-bold text-white">
+            <div className="min-w-0 flex-1">
+              <p className="text-slate-400 text-xs md:text-sm truncate">Avg. Accuracy</p>
+              <p className="text-lg md:text-2xl font-bold text-white">
                 {Math.round(quizHistory.reduce((acc, quiz) => acc + quiz.accuracy, 0) / quizHistory.length)}%
               </p>
             </div>
-            <Target size={24} className="text-green-400" />
+            <Target size={isMobile ? 16 : 24} className="text-green-400 flex-shrink-0" />
           </div>
         </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg md:rounded-xl p-3 md:p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-400 text-sm">Total Questions</p>
-              <p className="text-2xl font-bold text-white">
+            <div className="min-w-0 flex-1">
+              <p className="text-slate-400 text-xs md:text-sm truncate">Total Questions</p>
+              <p className="text-lg md:text-2xl font-bold text-white">
                 {quizHistory.reduce((acc, quiz) => acc + quiz.totalQuestions, 0)}
               </p>
             </div>
-            <CheckCircle size={24} className="text-purple-400" />
+            <CheckCircle size={isMobile ? 16 : 24} className="text-purple-400 flex-shrink-0" />
           </div>
         </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg md:rounded-xl p-3 md:p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-400 text-sm">Time Spent</p>
-              <p className="text-2xl font-bold text-white">
+            <div className="min-w-0 flex-1">
+              <p className="text-slate-400 text-xs md:text-sm truncate">Time Spent</p>
+              <p className="text-lg md:text-2xl font-bold text-white">
                 {formatTime(quizHistory.reduce((acc, quiz) => acc + quiz.timeSpent, 0))}
               </p>
             </div>
-            <Clock size={24} className="text-orange-400" />
+            <Clock size={isMobile ? 16 : 24} className="text-orange-400 flex-shrink-0" />
           </div>
         </div>
       </div>
 
       {/* Quiz History List */}
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {quizHistory.map((quiz) => (
           <div
             key={quiz.id}
-            className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:bg-slate-800/70 transition-all duration-300"
+            className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg md:rounded-xl p-4 md:p-6 hover:bg-slate-800/70 transition-all duration-300 overflow-hidden"
           >
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-white text-lg">{quiz.documentName}</h3>
-                  <span className="text-sm text-slate-400">{formatDate(quiz.completedAt)}</span>
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-2 md:mb-3 gap-2">
+                  <h3 className="font-semibold text-white text-sm md:text-lg truncate min-w-0 flex-1">
+                    {(() => {
+                      const name = quiz.documentName;
+                      const maxLength = isMobile ? 20 : 40;
+                      return name.length > maxLength ? `${name.substring(0, maxLength)}...` : name;
+                    })()}
+                  </h3>
+                  <span className="text-xs md:text-sm text-slate-400 flex-shrink-0">{formatDate(quiz.completedAt)}</span>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <p className="text-slate-400">Score</p>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 text-xs md:text-sm">
+                  <div className="min-w-0">
+                    <p className="text-slate-400 truncate">Score</p>
                     <p className="font-medium text-white">
                       {quiz.score}/{quiz.totalQuestions}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-slate-400">Accuracy</p>
+                  <div className="min-w-0">
+                    <p className="text-slate-400 truncate">Accuracy</p>
                     <p className={`font-medium ${getScoreColor(quiz.accuracy)}`}>
                       {quiz.accuracy}%
                     </p>
                   </div>
-                  <div>
-                    <p className="text-slate-400">Time</p>
+                  <div className="min-w-0">
+                    <p className="text-slate-400 truncate">Time</p>
                     <p className="font-medium text-white">{formatTime(quiz.timeSpent)}</p>
                   </div>
-                  <div>
-                    <p className="text-slate-400">Difficulty</p>
+                  <div className="min-w-0">
+                    <p className="text-slate-400 truncate">Difficulty</p>
                     <span className={`
-                      px-2 py-1 rounded-full text-xs font-medium
+                      px-2 py-1 rounded-full text-xs font-medium inline-block
                       ${quiz.difficulty === 'Easy' ? 'bg-green-400/20 text-green-400' :
                         quiz.difficulty === 'Medium' ? 'bg-yellow-400/20 text-yellow-400' :
                         'bg-red-400/20 text-red-400'
@@ -254,27 +259,20 @@ export const QuizHistory = ({ isMobile, onReviewQuiz, onRetakeQuiz }) => {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-2 md:gap-3 flex-wrap">
                 <button 
                   onClick={() => onReviewQuiz && onReviewQuiz(quiz)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                  className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs md:text-sm"
                 >
-                  <Eye size={16} />
+                  <Eye size={isMobile ? 14 : 16} />
                   <span>Review</span>
                 </button>
-                <button 
-                  onClick={() => onRetakeQuiz && onRetakeQuiz(quiz)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-                >
-                  <RotateCcw size={16} />
-                  <span>Retake</span>
-                </button>
-                <button className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors">
-                  <Download size={16} />
-                  <span>Export</span>
+                <button className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-xs md:text-sm">
+                  <Download size={isMobile ? 14 : 16} />
+                  <span className="hidden sm:inline">Export</span>
                 </button>
                 <button className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors">
-                  <Trash2 size={16} />
+                  <Trash2 size={isMobile ? 14 : 16} />
                 </button>
               </div>
             </div>
