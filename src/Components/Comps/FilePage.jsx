@@ -561,7 +561,7 @@ export const FilesPage = ({
             {/* AI Query toggle */}
             <button
               onClick={() => setShowAIQuery(!showAIQuery)}
-              className={`relative flex items-center gap-2 px-2 md:px-3 py-2 rounded-lg transition-all duration-300 overflow-hidden text-sm ${
+              className={`relative flex items-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-lg transition-all duration-300 overflow-hidden text-sm md:text-base ${
                 showAIQuery 
                   ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25" 
                   : "bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/50 hover:shadow-lg hover:shadow-blue-500/15 hover:border-blue-500/30"
@@ -572,7 +572,7 @@ export const FilesPage = ({
               {!showAIQuery && (
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent -translate-x-full animate-[shimmer_2s_ease-in-out_infinite] pointer-events-none"></div>
               )}
-              <Brain className="w-3 h-3 md:w-4 md:h-4 relative z-10" />
+              <Brain className="w-4 h-4 md:w-5 md:h-5 relative z-10" />
               <span className="hidden sm:inline font-medium relative z-10">Ask My Library</span>
             </button>
             
