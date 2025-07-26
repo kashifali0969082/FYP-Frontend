@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Moon, Sun, RotateCcw, FileText, MessageCircle, X, Brain, Network, HelpCircle, Gamepad2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Moon, Sun, RotateCcw, FileText, MessageCircle, X, Brain, Network, HelpCircle, Gamepad2, Search, BookmarkPlus, Share } from 'lucide-react';
 import { Button } from './button';
 import { Input } from './ui/input';
 import { toast } from 'sonner';
@@ -42,7 +42,7 @@ const availableTools = [
   }
 ];
 
-export const PDFViewer= ({
+export const PDFViewer = ({
   currentPage,
   totalPages,
   onPageChange,
@@ -56,19 +56,24 @@ export const PDFViewer= ({
   const [textSelection, setTextSelection] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [hoveredTool, setHoveredTool] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const contentRef = useRef(null);
   const popupRef = useRef(null);
 
   const handleZoomIn = () => {
     setZoom(Math.min(zoom + 0.1, 2.0));
+    toast.success(`Zoom: ${Math.round((zoom + 0.1) * 100)}%`);
   };
 
   const handleZoomOut = () => {
     setZoom(Math.max(zoom - 0.1, 0.5));
+    toast.success(`Zoom: ${Math.round((zoom - 0.1) * 100)}%`);
   };
 
   const handleResetZoom = () => {
     setZoom(1.0);
+    toast.success('Zoom reset to 100%');
   };
 
   const handlePrevPage = () => {
@@ -90,6 +95,18 @@ export const PDFViewer= ({
       onPageChange(page);
     } else {
       setPageInput(currentPage.toString());
+      toast.error('Invalid page number');
+    }
+  };
+
+  const handleSearch = () => {
+    if (searchTerm.trim()) {
+      setIsSearching(true);
+      // Simulate search
+      setTimeout(() => {
+        setIsSearching(false);
+        toast.success(`Searching for "${searchTerm}"`);
+      }, 1000);
     }
   };
 
@@ -164,7 +181,7 @@ export const PDFViewer= ({
   // Close popup when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (popupRef.current && !popupRef.current.contains(event.target )) {
+      if (popupRef.current && !popupRef.current.contains(event.target)) {
         setShowPopup(false);
         setTextSelection(null);
         setHoveredTool(null);
@@ -244,23 +261,23 @@ export const PDFViewer= ({
   const pageContent = generatePageContent();
 
   return (
-    <div className="flex flex-col h-full bg-background overflow-hidden relative">
+    <div className="flex flex-col h-full bg-gradient-to-br from-slate-900/50 to-slate-800/50 backdrop-blur-sm overflow-hidden relative rounded-2xl border border-slate-700/30">
       {/* Enhanced Text Selection Popup with All Tools */}
       {showPopup && textSelection && (
         <div
           ref={popupRef}
-          className="fixed z-50 bg-card border rounded-lg shadow-lg animate-in fade-in zoom-in-95"
+          className="fixed z-50 bg-slate-800/95 backdrop-blur-xl border border-slate-600/50 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200"
           style={{
-            left: `${Math.max(10, Math.min(window.innerWidth - 280, textSelection.x - 140))}px`,
+            left: `${Math.max(10, Math.min(window.innerWidth - 320, textSelection.x - 160))}px`,
             top: `${Math.max(10, textSelection.y)}px`,
           }}
         >
-          <div className="p-3">
+          <div className="p-4">
             {/* Header */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground mb-1">Selected text:</p>
-                <p className="text-xs font-medium truncate max-w-48" title={textSelection.text}>
+                <p className="text-xs text-slate-400 mb-1 font-medium">Selected text:</p>
+                <p className="text-sm font-medium truncate max-w-56 text-white" title={textSelection.text}>
                   "{textSelection.text}"
                 </p>
               </div>
@@ -268,15 +285,15 @@ export const PDFViewer= ({
                 onClick={handleClosePopup}
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 ml-2 flex-shrink-0"
+                className="h-6 w-6 p-0 ml-3 flex-shrink-0 hover:bg-slate-700/50 rounded-lg"
               >
                 <X className="w-3 h-3" />
               </Button>
             </div>
 
             {/* Tools Grid */}
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">Choose an action:</p>
+            <div className="space-y-3">
+              <p className="text-xs text-slate-400 font-medium">Choose an action:</p>
               <div className="grid grid-cols-5 gap-2">
                 {availableTools.map((tool) => (
                   <div key={tool.id} className="relative">
@@ -284,8 +301,10 @@ export const PDFViewer= ({
                       onClick={() => handleToolSelect(tool.id)}
                       variant={tool.id === 'ask' ? 'default' : 'outline'}
                       size="sm"
-                      className={`h-10 w-10 p-0 relative transition-colors ${tool.color} ${
-                        tool.id === 'ask' ? 'ring-2 ring-primary/20' : ''
+                      className={`h-12 w-12 p-0 relative transition-all duration-200 ${tool.color} ${
+                        tool.id === 'ask' 
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-blue-500/30 shadow-lg' 
+                          : 'border-slate-600/50 hover:border-slate-500/70 bg-slate-800/50 hover:bg-slate-700/50'
                       }`}
                       onMouseEnter={() => setHoveredTool(tool.id)}
                       onMouseLeave={() => setHoveredTool(null)}
@@ -293,13 +312,13 @@ export const PDFViewer= ({
                       {tool.icon}
                     </Button>
                     
-                    {/* Tooltip */}
+                    {/* Enhanced Tooltip */}
                     {hoveredTool === tool.id && (
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg border whitespace-nowrap z-10">
-                        <div className="font-medium">{tool.name}</div>
-                        <div className="text-muted-foreground text-xs">{tool.description}</div>
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900/95 backdrop-blur-xl text-white text-xs rounded-lg shadow-xl border border-slate-600/50 whitespace-nowrap z-10 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                        <div className="font-medium text-white">{tool.name}</div>
+                        <div className="text-slate-300 text-xs mt-0.5">{tool.description}</div>
                         {/* Tooltip arrow */}
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-border"></div>
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-600/50"></div>
                       </div>
                     )}
                   </div>
@@ -308,8 +327,8 @@ export const PDFViewer= ({
             </div>
 
             {/* Quick hint */}
-            <div className="mt-3 pt-2 border-t">
-              <p className="text-xs text-muted-foreground text-center">
+            <div className="mt-3 pt-3 border-t border-slate-700/50">
+              <p className="text-xs text-slate-500 text-center">
                 {hoveredTool ? availableTools.find(t => t.id === hoveredTool)?.description : 'Hover over tools for details'}
               </p>
             </div>
@@ -317,179 +336,269 @@ export const PDFViewer= ({
         </div>
       )}
 
-      {/* Compact Toolbar with Centered Navigation */}
-      <div className="border-b p-2 flex items-center justify-between bg-card flex-shrink-0">
+      {/* Enhanced Toolbar */}
+      <div className="border-b border-slate-700/50 p-3 flex items-center justify-between bg-slate-800/60 backdrop-blur-lg flex-shrink-0 rounded-t-2xl">
         {/* Left: Zoom Controls */}
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleZoomOut} className="h-7">
-            <ZoomOut className="w-4 h-4" />
-          </Button>
-          
-          <span className="text-xs text-muted-foreground min-w-[2.5rem] text-center">
-            {Math.round(zoom * 100)}%
-          </span>
-          
-          <Button variant="outline" size="sm" onClick={handleZoomIn} className="h-7">
-            <ZoomIn className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center bg-slate-700/50 rounded-lg p-1">
+            <Button variant="ghost" size="sm" onClick={handleZoomOut} className="h-8 px-2 hover:bg-slate-600/50">
+              <ZoomOut className="w-4 h-4" />
+            </Button>
+            
+            <span className="text-xs text-slate-300 min-w-[3rem] text-center font-mono bg-slate-800/50 px-2 py-1 rounded mx-1">
+              {Math.round(zoom * 100)}%
+            </span>
+            
+            <Button variant="ghost" size="sm" onClick={handleZoomIn} className="h-8 px-2 hover:bg-slate-600/50">
+              <ZoomIn className="w-4 h-4" />
+            </Button>
+          </div>
 
-          <Button variant="outline" size="sm" onClick={handleResetZoom} className="h-7">
-            <RotateCcw className="w-4 h-4" />
+          <Button variant="ghost" size="sm" onClick={handleResetZoom} className="h-8 px-3 hover:bg-slate-700/50 rounded-lg">
+            <RotateCcw className="w-4 h-4 mr-1" />
+            <span className="text-xs">Reset</span>
           </Button>
         </div>
 
         {/* Center: Page Navigation */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={handlePrevPage}
             disabled={currentPage <= 1}
-            className="h-7"
+            className="h-8 px-3 hover:bg-slate-700/50 disabled:opacity-50 rounded-lg"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
           
-          <form onSubmit={handlePageInputSubmit} className="flex items-center gap-1">
-            <Input
-              type="text"
-              value={pageInput}
-              onChange={(e) => setPageInput(e.target.value)}
-              className="w-12 text-center h-7 text-xs"
-              size={3}
-            />
-            <span className="text-muted-foreground text-xs">of {totalPages}</span>
-          </form>
+          <div className="flex items-center gap-2 bg-slate-700/50 rounded-lg px-3 py-1">
+            <form onSubmit={handlePageInputSubmit} className="flex items-center gap-2">
+              <Input
+                type="text"
+                value={pageInput}
+                onChange={(e) => setPageInput(e.target.value)}
+                className="w-12 text-center h-6 text-xs bg-slate-800/50 border-slate-600/50 rounded text-white font-mono"
+                size={3}
+              />
+              <span className="text-slate-400 text-xs">of</span>
+              <span className="text-slate-300 text-xs font-mono">{totalPages}</span>
+            </form>
+          </div>
           
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={handleNextPage}
             disabled={currentPage >= totalPages}
-            className="h-7"
+            className="h-8 px-3 hover:bg-slate-700/50 disabled:opacity-50 rounded-lg"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
 
-        {/* Right: Dark Mode Toggle */}
+        {/* Right: Search and Theme Controls */}
         <div className="flex items-center gap-2">
+          {/* Search */}
+          <div className="flex items-center bg-slate-700/50 rounded-lg">
+            <Input
+              type="text"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-32 h-8 text-xs bg-transparent border-none text-white placeholder-slate-400"
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSearch}
+              disabled={isSearching}
+              className="h-8 px-2 hover:bg-slate-600/50"
+            >
+              <Search className={`w-4 h-4 ${isSearching ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+
+          {/* Additional tools */}
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 hover:bg-slate-700/50 rounded-lg"
+            title="Bookmark page"
+          >
+            <BookmarkPlus className="w-4 h-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 hover:bg-slate-700/50 rounded-lg"
+            title="Share"
+          >
+            <Share className="w-4 h-4" />
+          </Button>
+
+          {/* Dark Mode Toggle */}
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => setIsDarkMode(!isDarkMode)}
-            className="h-7"
+            className="h-8 px-2 hover:bg-slate-700/50 rounded-lg"
+            title="Toggle theme"
           >
             {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
         </div>
       </div>
 
-      {/* PDF Content Area with Custom Scrollbar */}
+      {/* PDF Content Area with Enhanced Styling */}
       <div 
-        className={`flex-1 overflow-auto transition-colors custom-scrollbar ${
-          isDarkMode ? 'bg-gray-900' : 'bg-gray-100'
+        className={`flex-1 overflow-auto transition-all duration-300 ${
+          isDarkMode 
+            ? 'bg-gradient-to-br from-slate-900/80 to-slate-800/80' 
+            : 'bg-gradient-to-br from-gray-100 to-white'
         }`}
       >        
-        <div className="h-full flex justify-center p-3">
+        <div className="h-full flex justify-center p-4">
           <div 
             ref={contentRef}
-            className={`w-full max-w-4xl transition-all duration-200 ${
-              isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'
-            } rounded-lg shadow-lg overflow-hidden select-text`}
+            className={`w-full max-w-4xl transition-all duration-300 shadow-2xl rounded-xl overflow-hidden border ${
+              isDarkMode 
+                ? 'bg-slate-800/80 text-slate-100 border-slate-700/50' 
+                : 'bg-white text-gray-900 border-gray-200'
+            } backdrop-blur-sm select-text`}
             style={{ 
               fontSize: `${zoom}em`,
               lineHeight: 1.6
             }}
           >
-            <div className="p-4 lg:p-6 h-full overflow-auto">
-              {/* PDF Header - Compact */}
-              <div className="flex items-center gap-3 mb-4 pb-3 border-b">
-                <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
-                <div className="min-w-0">
-                  <h1 className="text-lg mb-1 truncate">{fileName}</h1>
-                  <p className="text-xs text-muted-foreground">Page {currentPage} of {totalPages}</p>
+            <div className="p-6 lg:p-8 h-full overflow-auto study-scrollbar">
+              {/* Enhanced PDF Header */}
+              <div className="flex items-center gap-4 mb-6 pb-4 border-b border-slate-700/30">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-xl font-semibold mb-1 truncate text-white">{fileName}</h1>
+                  <div className="flex items-center gap-4 text-sm text-slate-400">
+                    <span>Page {currentPage} of {totalPages}</span>
+                    <span>•</span>
+                    <span>Chapter {pageContent.chapter}</span>
+                    <span>•</span>
+                    <span>{Math.round((currentPage / totalPages) * 100)}% complete</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Dynamic Content - Tighter spacing with selectable text */}
-              <div className="space-y-4 user-select-text">
-                <div className="border-b pb-3">
-                  <h1 className="text-2xl mb-2">Chapter {pageContent.chapter}: {pageContent.topic}</h1>
-                  <p className="text-muted-foreground text-sm">Section {pageContent.section} - Introduction and Fundamentals</p>
+              {/* Enhanced Dynamic Content */}
+              <div className="space-y-6 user-select-text">
+                <div className="border-b border-slate-700/30 pb-4">
+                  <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    Chapter {pageContent.chapter}: {pageContent.topic}
+                  </h1>
+                  <p className="text-slate-400 text-lg">Section {pageContent.section} - Introduction and Fundamentals</p>
                 </div>
                 
-                <div className="space-y-3">
-                  <h2 className="text-xl">Overview</h2>
-                  <p className="leading-relaxed text-sm">
-                    This section introduces the fundamental concepts of {pageContent.topic.toLowerCase()}. 
-                    Understanding these principles is essential for developing efficient algorithms and 
-                    solving complex computational problems in computer science. Algorithm analysis provides 
-                    the mathematical foundation for understanding how programs behave under different conditions.
-                  </p>
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-semibold text-white">Overview</h2>
+                  <div className="prose prose-lg prose-invert max-w-none">
+                    <p className="leading-relaxed text-slate-300">
+                      This section introduces the fundamental concepts of {pageContent.topic.toLowerCase()}. 
+                      Understanding these principles is essential for developing efficient algorithms and 
+                      solving complex computational problems in computer science. Algorithm analysis provides 
+                      the mathematical foundation for understanding how programs behave under different conditions.
+                    </p>
+                    
+                    <p className="leading-relaxed text-slate-300">
+                      The concepts covered in this chapter build upon previous knowledge and provide 
+                      the foundation for more advanced topics. Students should focus on understanding 
+                      both the theoretical aspects and practical applications. Performance analysis is crucial 
+                      for writing efficient code that scales well with larger input sizes.
+                    </p>
+                  </div>
                   
-                  <p className="leading-relaxed text-sm">
-                    The concepts covered in this chapter build upon previous knowledge and provide 
-                    the foundation for more advanced topics. Students should focus on understanding 
-                    both the theoretical aspects and practical applications. Performance analysis is crucial 
-                    for writing efficient code that scales well with larger input sizes.
-                  </p>
-                  
-                  <h3 className="text-lg mt-4">Key Concepts</h3>
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-1 list-disc pl-4">
+                  <h3 className="text-xl font-semibold text-white mt-6">Key Concepts</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {pageContent.concepts.map((concept, index) => (
-                      <li key={index} className="leading-relaxed text-sm">{concept}</li>
+                      <div key={index} className="flex items-center space-x-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700/30">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                        <span className="text-slate-300">{concept}</span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                   
-                  <div className={`mt-6 p-3 rounded-lg ${
-                    isDarkMode ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'
+                  <div className={`mt-8 p-4 rounded-xl border ${
+                    isDarkMode 
+                      ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-800/50' 
+                      : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
                   }`}>
-                    <h4 className="flex items-center gap-2 mb-2 text-sm">
-                      <span className="text-blue-500">💡</span>
+                    <h4 className="flex items-center gap-2 mb-3 text-lg font-semibold">
+                      <span className="text-2xl">💡</span>
                       Study Tip
                     </h4>
-                    <p className="text-xs">
+                    <p className="text-sm leading-relaxed text-slate-300">
                       Practice implementing these concepts in your preferred programming language. 
                       Use the study tools on the right to create flashcards and quizzes for better retention. 
                       Work through the exercises at the end of each section to reinforce your understanding.
-                      <strong> Try highlighting any text in this document to access all learning tools instantly!</strong>
+                      <strong className="text-blue-400"> Try highlighting any text in this document to access all learning tools instantly!</strong>
                     </p>
                   </div>
 
                   {/* Detailed Algorithm Analysis Section */}
-                  <div className="mt-6 space-y-3">
-                    <h3 className="text-lg">Algorithm Analysis in Detail</h3>
-                    <p className="text-sm leading-relaxed">
-                      Algorithm analysis is the theoretical study of computer program performance and resource usage. 
-                      It involves mathematical techniques to describe the running time of an algorithm as a function 
-                      of its input size. This analysis helps us predict how the algorithm will perform on large datasets 
-                      and compare different algorithmic approaches.
-                    </p>
-                    
-                    <p className="text-sm leading-relaxed">
-                      The most common complexity measures are time complexity and space complexity. Time complexity 
-                      describes how the running time increases with input size, while space complexity describes 
-                      how memory usage grows. Both are typically expressed using Big O notation, which provides 
-                      an upper bound on the growth rate.
-                    </p>
+                  <div className="mt-8 space-y-4">
+                    <h3 className="text-xl font-semibold text-white">Algorithm Analysis in Detail</h3>
+                    <div className="prose prose-lg prose-invert max-w-none space-y-4">
+                      <p className="leading-relaxed text-slate-300">
+                        Algorithm analysis is the theoretical study of computer program performance and resource usage. 
+                        It involves mathematical techniques to describe the running time of an algorithm as a function 
+                        of its input size. This analysis helps us predict how the algorithm will perform on large datasets 
+                        and compare different algorithmic approaches.
+                      </p>
+                      
+                      <p className="leading-relaxed text-slate-300">
+                        The most common complexity measures are time complexity and space complexity. Time complexity 
+                        describes how the running time increases with input size, while space complexity describes 
+                        how memory usage grows. Both are typically expressed using Big O notation, which provides 
+                        an upper bound on the growth rate.
+                      </p>
 
-                    <h4 className="text-base mt-4">Common Time Complexities</h4>
-                    <div className="space-y-2 text-sm">
-                      <p><strong>O(1) - Constant Time:</strong> Operations that take the same amount of time regardless of input size, such as array indexing or hash table lookups.</p>
-                      <p><strong>O(log n) - Logarithmic Time:</strong> Algorithms that divide the problem in half at each step, like binary search or balanced tree operations.</p>
-                      <p><strong>O(n) - Linear Time:</strong> Algorithms that examine each element once, such as linear search or finding the maximum element in an unsorted array.</p>
-                      <p><strong>O(n log n) - Linearithmic Time:</strong> Efficient sorting algorithms like merge sort and heap sort fall into this category.</p>
-                      <p><strong>O(n²) - Quadratic Time:</strong> Algorithms with nested loops over the input, such as bubble sort or simple matrix multiplication.</p>
+                      <h4 className="text-lg font-semibold text-white mt-6">Common Time Complexities</h4>
+                      <div className="space-y-3">
+                        {[
+                          { notation: "O(1)", name: "Constant Time", desc: "Operations that take the same amount of time regardless of input size, such as array indexing or hash table lookups." },
+                          { notation: "O(log n)", name: "Logarithmic Time", desc: "Algorithms that divide the problem in half at each step, like binary search or balanced tree operations." },
+                          { notation: "O(n)", name: "Linear Time", desc: "Algorithms that examine each element once, such as linear search or finding the maximum element in an unsorted array." },
+                          { notation: "O(n log n)", name: "Linearithmic Time", desc: "Efficient sorting algorithms like merge sort and heap sort fall into this category." },
+                          { notation: "O(n²)", name: "Quadratic Time", desc: "Algorithms with nested loops over the input, such as bubble sort or simple matrix multiplication." }
+                        ].map((complexity, index) => (
+                          <div key={index} className="p-4 bg-slate-800/40 rounded-lg border border-slate-700/30">
+                            <div className="flex items-start space-x-3">
+                              <code className="bg-slate-700/50 text-blue-400 px-2 py-1 rounded text-sm font-mono">{complexity.notation}</code>
+                              <div>
+                                <h5 className="font-semibold text-white">{complexity.name}:</h5>
+                                <p className="text-sm text-slate-400 leading-relaxed">{complexity.desc}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Example/Algorithm Box - Compact */}
-                  <div className={`mt-4 p-3 rounded-lg font-mono text-xs ${
-                    isDarkMode ? 'bg-gray-700 border border-gray-600' : 'bg-gray-50 border border-gray-300'
+                  {/* Enhanced Algorithm Example */}
+                  <div className={`mt-6 p-4 rounded-xl border ${
+                    isDarkMode 
+                      ? 'bg-slate-800/60 border-slate-700/50' 
+                      : 'bg-gray-50 border-gray-300'
                   }`}>
-                    <h4 className="mb-2 font-sans text-sm">Algorithm Example: Binary Search</h4>
-                    <pre className="whitespace-pre-wrap overflow-auto">
+                    <h4 className="mb-3 font-semibold text-white flex items-center gap-2">
+                      <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-xs">{ }</span>
+                      </div>
+                      Algorithm Example: Binary Search
+                    </h4>
+                    <pre className="whitespace-pre-wrap overflow-auto text-sm bg-slate-900/50 p-4 rounded-lg border border-slate-700/30 text-slate-300 font-mono">
 {`function binarySearch(arr, target) {
   let left = 0;
   let right = arr.length - 1;
@@ -514,33 +623,47 @@ export const PDFViewer= ({
                     </pre>
                   </div>
 
-                  {/* Exercises Section - Compact */}
-                  <div className="mt-6">
-                    <h3 className="text-lg mb-3">Practice Exercises</h3>
-                    <div className="space-y-2">
-                      <div className={`p-2 rounded text-sm ${
-                        isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
-                      }`}>
-                        <p><strong>Exercise {currentPage}.1:</strong> Implement the basic binary search algorithm and analyze its time complexity step by step. Explain why it's O(log n).</p>
-                      </div>
-                      <div className={`p-2 rounded text-sm ${
-                        isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
-                      }`}>
-                        <p><strong>Exercise {currentPage}.2:</strong> Compare linear search vs binary search performance. When would you use each approach?</p>
-                      </div>
-                      <div className={`p-2 rounded text-sm ${
-                        isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
-                      }`}>
-                        <p><strong>Exercise {currentPage}.3:</strong> Apply the concept to solve a real-world problem: design an efficient algorithm to find a specific record in a large sorted database.</p>
-                      </div>
+                  {/* Enhanced Exercises Section */}
+                  <div className="mt-8">
+                    <h3 className="text-xl font-semibold text-white mb-4">Practice Exercises</h3>
+                    <div className="space-y-3">
+                      {[
+                        "Implement the basic binary search algorithm and analyze its time complexity step by step. Explain why it's O(log n).",
+                        "Compare linear search vs binary search performance. When would you use each approach?",
+                        "Apply the concept to solve a real-world problem: design an efficient algorithm to find a specific record in a large sorted database."
+                      ].map((exercise, index) => (
+                        <div key={index} className={`p-4 rounded-lg border ${
+                          isDarkMode 
+                            ? 'bg-slate-800/40 border-slate-700/30' 
+                            : 'bg-gray-50 border-gray-200'
+                        }`}>
+                          <div className="flex items-start space-x-3">
+                            <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                              {index + 1}
+                            </div>
+                            <p className="text-sm text-slate-300 leading-relaxed">
+                              <strong className="text-white">Exercise {currentPage}.{index + 1}:</strong> {exercise}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Footer - Compact */}
-              <div className="mt-8 pt-4 border-t text-center text-xs text-muted-foreground">
-                <p>Introduction to Algorithms • Page {currentPage} • Highlight text to access all learning tools</p>
+              {/* Enhanced Footer */}
+              <div className="mt-12 pt-6 border-t border-slate-700/30 text-center">
+                <div className="flex items-center justify-center space-x-6 text-sm text-slate-500">
+                  <span className="flex items-center space-x-1">
+                    <FileText className="w-4 h-4" />
+                    <span>Introduction to Algorithms</span>
+                  </span>
+                  <span>•</span>
+                  <span>Page {currentPage}</span>
+                  <span>•</span>
+                  <span className="text-blue-400">Highlight text to access learning tools</span>
+                </div>
               </div>
             </div>
           </div>
