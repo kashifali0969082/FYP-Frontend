@@ -3,6 +3,8 @@ import { DocumentSelection } from './DocumentSelection';
 import { QuizCustomization } from './QuizCustomization';
 import { QuizInterface } from './QuizInterface';
 import { Trophy, Target } from 'lucide-react';
+import { useStreakUpdate } from '../../../hooks/useStreakUpdate';
+import StreakUpdateModal from '../StreakUpdateModal';
 
 export const QuizBuilderMain = ({ 
   uploadedFiles, 
@@ -17,10 +19,16 @@ export const QuizBuilderMain = ({
   const [quizData, setQuizData] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Streak update hook
+  const { triggerStreakUpdate, isModalOpen, streakData: streakUpdateData, closeModal } = useStreakUpdate();
+
   // Mock API call - replace with actual API integration
   const generateQuiz = async (config) => {
     setIsGenerating(true);
     setQuizConfig(config);
+    
+    // Trigger streak update when generating quiz
+    await triggerStreakUpdate();
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 3000));
@@ -177,6 +185,13 @@ export const QuizBuilderMain = ({
       <div className="max-w-4xl mx-auto">        
         {renderCurrentStep()}
       </div>
+      
+      {/* Streak Update Modal */}
+      <StreakUpdateModal 
+        isOpen={isModalOpen} 
+        onClose={closeModal} 
+        streakData={streakUpdateData} 
+      />
     </div>
   );
 };

@@ -21,9 +21,17 @@ import "./Landing";
         if (savedToken) {
           try {
             const decoded = jwtDecode(savedToken);
+            const currentTime = Date.now() / 1000; // Convert to seconds
+
+            if (decoded.exp && decoded.exp < currentTime) {
+              console.log("Token expired, removing from cookies");
+              Cookies.remove("access_token");
+              setIsCheckingAuth(false);
+              return;
+            }
+
             console.log("User is already authenticated, redirecting to dashboard...");
-            // User is already logged in, redirect to dashboard
-            navigate("/");
+            navigate("/dashboard");
             return;
           } catch (err) {
             console.error("Invalid token, removing from cookies:", err);
@@ -327,14 +335,19 @@ import "./Landing";
                 development.
               </p>
               <button
-                className={`google-signin-btn ${isSigningIn ? 'signing-in' : ''}`}
+                className={`google-signin-btn ${isSigningIn || isCheckingAuth ? 'signing-in' : ''}`}
                 onClick={handleSignInWithGoogle}
-                disabled={isSigningIn}
+                disabled={isSigningIn || isCheckingAuth}
               >
                 {isSigningIn ? (
                   <>
                     <div className="loading-spinner"></div>
                     <span>Connecting to Google...</span>
+                  </>
+                ) : isCheckingAuth ? (
+                  <>
+                    <div className="loading-spinner"></div>
+                    <span>Checking authentication...</span>
                   </>
                 ) : (
                   <>

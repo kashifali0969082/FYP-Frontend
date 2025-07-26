@@ -1,9 +1,9 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 
 export const AuthContext = createContext();
-
+export const useAuth = () => useContext(AuthContext)
 export function AuthProvider({ children }) {
    const [username, setusername] = useState('');
    const [tokenChecked, setTokenChecked] = useState(false);

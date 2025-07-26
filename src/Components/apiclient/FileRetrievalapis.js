@@ -1,14 +1,11 @@
 import { apiclient } from "./Apis";
 import Cookies from "js-cookie";
 
-// Hardcoded token for localhost development
-const LOCALHOST_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkYjM5MWJmZS1kNTgwLTQ4NTUtYjRiZS0xOWVjNmQ0NWU3Y2MiLCJlbWFpbCI6ImFiZHVsbGFobmFzZWVtMjdAZ21haWwuY29tIiwibmFtZSI6IkFiZHVsbGFoIE5hc2VlbSIsInByb2ZpbGVfcGljIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS0RkY0lKRm5GaElPUEhYd0prdXA5NWw1aTFVM3dubTBzSUhIclJpVm9qaHI5WDB3PXM5Ni1jIiwiZXhwIjoxNzUzMzAyMTEyfQ.XHJwKfspbm2UqB5G_SBs7F1CBzXqDiPMh66SVfiuO0E";
 
 // Helper function to get token
 const getToken = () => {
   const token = Cookies.get("access_token");
-  // Use localhost token if no token found (for development)
-  return token || LOCALHOST_TOKEN;
+  return token;
 };
 
 // Get all books
@@ -69,9 +66,7 @@ export const GetAllFiles = async () => {
     throw new Error("No authentication token found");
   }
 
-  try {
-    console.log("🔄 Fetching files with token:", token.substring(0, 20) + "...");
-    
+  try {    
     // Fetch all file types in parallel
     const [booksResponse, slidesResponse, notesResponse] = await Promise.allSettled([
       GetAllBooks(),

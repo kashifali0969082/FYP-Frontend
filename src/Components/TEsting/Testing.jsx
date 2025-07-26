@@ -36,13 +36,15 @@ import { GetAllFiles, DeleteFile } from "../apiclient/FileRetrievalapis";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../Security/Authcontext";
 import { learningProfilestatusapi } from "../apiclient/LearningProfileapis";
-import { userapi, streakapi, streakLeaderboardapi } from "../apiclient/Studystreakapi";
+import { streakapi, streakLeaderboardapi } from "../apiclient/Studystreakapi";
+import { getUserInfo, clearAuth } from "../../utils/auth";
 import LearningProfileForm from "./LearningProfileForm";
-import { getCookie, setCookie } from "../Security/cookie";
+import { getCookie, setCookie, deleteCookie } from "../Security/cookie";
 import { FileUpload } from "../apiclient/Filesapi";
+import Cookies from "js-cookie";
 
 const Dashboard = () => {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+   const [isDarkMode, setIsDarkMode] = useState(true)
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedFileType, setSelectedFileType] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
@@ -65,6 +67,9 @@ const Dashboard = () => {
     id: ""
   });
   
+  
+
+
   // Loading state for user data
   const [isUserDataLoading, setIsUserDataLoading] = useState(true);
   
@@ -383,32 +388,34 @@ const Dashboard = () => {
       });
   };
 
-  // User API function for sidebar with caching
+  // User data function for sidebar using token (no API call needed)
   const fetchUserData = () => {
-    // Check cache to avoid unnecessary API calls
+    // Check cache to avoid unnecessary processing
     if (dataCache.userDataFetched && userData.id) {
-      console.log("🚀 Using cached user data, skipping API call");
+      console.log("🚀 Using cached user data, skipping token extraction");
       setIsUserDataLoading(false);
       return Promise.resolve(userData);
     }
 
-    console.log("🔧 Testing.jsx - fetchUserData called - starting user data fetch for sidebar");
+    console.log("🔧 Testing.jsx - fetchUserData called - extracting user data from token");
     setIsUserDataLoading(true);
 
-    return userapi()
-      .then((response) => {
-        console.log("🔧 Testing.jsx - Sidebar User API Response:", response.data);
-        const { id, email, name, profile_pic } = response.data;
+    try {
+      const userInfo = getUserInfo();
+      
+      if (userInfo) {
+        console.log("🔧 Testing.jsx - Token User Data:", userInfo);
         
-        const userInfo = {
-          id,
-          email,
-          name,
-          profile_pic
+        // Map token fields to our expected format
+        const userData = {
+          id: userInfo.user_id || userInfo.sub,
+          email: userInfo.email,
+          name: userInfo.name,
+          profile_pic: userInfo.profile_pic || userInfo.picture
         };
         
-        console.log("🔧 Testing.jsx - Setting userData to:", userInfo);
-        setUserData(userInfo);
+        console.log("🔧 Testing.jsx - Setting userData to:", userData);
+        setUserData(userData);
         setIsUserDataLoading(false);
         
         // Update cache
@@ -417,14 +424,18 @@ const Dashboard = () => {
           userDataFetched: true,
           lastFetchTime: Date.now()
         }));
-        
-        return userInfo;
-      })
-      .catch((error) => {
-        console.log("🔧 Testing.jsx - API error in sidebar fetchUserData:", error);
+
+        return Promise.resolve(userData);
+      } else {
+        console.error("❌ No user info found in token");
         setIsUserDataLoading(false);
-        throw error;
-      });
+        return Promise.reject(new Error("No user info in token"));
+      }
+    } catch (error) {
+      console.error("❌ Error extracting user data from token:", error);
+      setIsUserDataLoading(false);
+      return Promise.reject(error);
+    }
   };
 
   useEffect(() => {
@@ -440,10 +451,9 @@ const Dashboard = () => {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  const toggleDarkMode = () => {
+const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
   };
-
   const handleFileUpload = async () => {
 
     
@@ -638,7 +648,15 @@ const Dashboard = () => {
  
   const navigate = useNavigate()
   function logouthandler(){
-navigate("/")
+    console.log("🚪 Starting logout process...");
+    
+    // Log current cookies before clearing
+    
+    // Clear all authentication and user data
+    clearAuth(); // Clears access_token
+    deleteCookie("learningProfileSubmitted"); // Clear learning profile status
+
+    window.location.href = "/";
   }
   
   const [showForm, setShowForm] = useState(false);
