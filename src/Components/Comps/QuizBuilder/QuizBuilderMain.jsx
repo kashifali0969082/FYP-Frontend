@@ -5,7 +5,7 @@ import { QuizInterface } from './QuizInterface';
 import { Trophy, Target } from 'lucide-react';
 import { useStreakUpdate } from '../../../hooks/useStreakUpdate';
 import StreakUpdateModal from '../StreakUpdateModal';
-import { generateQuizApi } from './quizApiClient';
+import { generateQuizApi } from '../../apiclient/quizApiClient';
 
 export const QuizBuilderMain = ({ 
   uploadedFiles, 

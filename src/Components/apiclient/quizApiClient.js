@@ -1,5 +1,5 @@
-import { apiclient } from "../../apiclient/Apis";
-import { getAuthToken } from "../../../utils/auth";
+import { apiclient } from "./Apis";
+import { getAuthToken } from "../../utils/auth";
 import QueryString from "qs";
 
 // Dynamic token getter for API calls

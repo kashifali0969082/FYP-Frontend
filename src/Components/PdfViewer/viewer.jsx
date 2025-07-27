@@ -6,7 +6,7 @@ import { Toaster } from "../Comps/sonner";
 import { Button } from "../Comps/button";
 import { ArrowLeft, BookOpen, EyeOff, Sparkles, Zap, Brain, Target, Menu, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
 import { toast } from "sonner";
-import { StreamDocument, StudyModeInit } from "../../Api/Apifun";
+import { StreamDocument, StudyModeInit } from "../apiclient/Apifun";
 import { useLocation } from "react-router-dom";
 
 export default function StudyMode() {

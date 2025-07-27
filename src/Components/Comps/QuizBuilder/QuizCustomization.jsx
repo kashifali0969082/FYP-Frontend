@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 import { apiclient } from '../../../Components/apiclient/Apis';
-import { fetchModels } from './quizApiClient';
+import { fetchModels } from '../../apiclient/quizApiClient';
 export const QuizCustomization = ({ 
   selectedDocument, 
   onBack, 

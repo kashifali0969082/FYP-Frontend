@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { GlobalWorkerOptions, getDocument, version } from "pdfjs-dist";
-import { StreamDocument } from "../../Api/Apifun";
+import { StreamDocument } from "../apiclient/Apifun";
 // Set the worker source for PDF.js using jsDelivr CDN (usually more reliable)
 GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`;
 
