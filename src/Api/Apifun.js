@@ -74,6 +74,7 @@ export const StreamDocument = async ({ document_id, document_type }) => {
       Authorization: `Bearer ${apikey}`,
       Accept: "application/json",
     },
+        responseType: "arraybuffer", 
   });
 
   return data;

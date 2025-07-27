@@ -26,7 +26,8 @@ export default function StudyMode() {
   const location = useLocation();
   const { type, id } = location.state || {};
   const [minemockData, setminemockdata] = useState();
-
+ const [pdfData, setPdfData] = useState(null);
+  const [numPages, setNumPages] = useState(null);
   // Apply dark theme by default
   useEffect(() => {
     Stusyinit();
@@ -43,6 +44,8 @@ export default function StudyMode() {
         document_id: id,
         document_type: type.toLowerCase(),
       });
+ const byteArray = new Uint8Array(resp2.data);
+        setPdfData(byteArray);
       console.log("init ", resp2);
     } catch (error) {
       console.log("error while initalizing study mode", error);
@@ -94,28 +97,6 @@ export default function StudyMode() {
             tool_type: "diagram",
             created_at: "2025-07-18T00:18:57.169477+00:00",
           },
-          {
-            id: "50f05769-4485-4d7e-b63b-0c4ca1fea93c",
-            chat_session_id: chatSessionId,
-            role: "user",
-            content:
-              "can you give me the exact text that was given to you as the page content please",
-            model_id: null,
-            tool_response_id: null,
-            tool_type: null,
-            created_at: "2025-07-18T00:24:33.859215+00:00",
-          },
-          {
-            id: "dfe42e62-3883-4880-9a22-998367643638",
-            chat_session_id: chatSessionId,
-            role: "assistant",
-            content:
-              "The exact text that was given to me as the page content is:\n\n```\nHOW BLOCKCHAIN WORKS?\n```",
-            model_id: "d50a33ce-2462-4a5a-9aa7-efc2d1749745",
-            tool_response_id: null,
-            tool_type: null,
-            created_at: "2025-07-18T00:24:34.545374+00:00",
-          },
         ],
       };
 
@@ -131,74 +112,74 @@ export default function StudyMode() {
       try {
         setIsLoading(true);
         // Mock API response - sometimes without TOC
-        const mockData = {
-          document: {
-            id: "a4b8b023-5d0f-47fd-9c11-de9c38808600",
-            user_id: "db391bfe-d580-4855-b4be-19ec6d45e7cc",
-            title: "Introduction to Algorithms",
-            file_name: "Introduction_to_algorithms-6-12.pdf",
-            created_at: "2025-07-10T23:06:34.028593",
-          },
-          chat_session_id: "8bb10527-c62d-43e1-bd81-c3a44b590262",
-          // Conditionally include TOC
-          toc: {
-            book_id: "a4b8b023-5d0f-47fd-9c11-de9c38808600",
-            chapters: [
-              {
-                chapter_id: "10273a10-b1ea-4514-b6c7-d1bf2d20a856",
-                chapter_number: "1",
-                title: "Chapter 1: Foundations",
-                sections: [
-                  {
-                    section_id: "06671124-438a-424b-84cc-43ef360501b0",
-                    title: "1.1 Algorithms",
-                    page: 5,
-                  },
-                  {
-                    section_id: "b8e19ca7-0dab-49cc-832a-91a099c32031",
-                    title: "1.2 Algorithms as a technology",
-                    page: 11,
-                  },
-                  {
-                    section_id: "6a0fe27b-a200-4777-becb-5ec0c62b6cee",
-                    title: "2 Getting Started",
-                    page: 16,
-                  },
-                ],
-              },
-              {
-                chapter_id: "0ada99be-dfc6-4efa-acca-c91d67458e4e",
-                chapter_number: "2",
-                title: "Chapter 2: Sorting and Order Statistics",
-                sections: [
-                  {
-                    section_id: "d945fa7c-2d8d-4302-811c-05a7ab9646dc",
-                    title: "6 Heapsort",
-                    page: 151,
-                  },
-                  {
-                    section_id: "abcdfe9d-b9cd-4820-ae8d-5ba3a9c16cb6",
-                    title: "6.1 Heaps",
-                    page: 151,
-                  },
-                ],
-              },
-            ],
-          },
-          last_position: {
-            page_number: 12,
-            chapter_id: null,
-            section_id: null,
-            updated_at: "2025-07-18T01:56:41.864035+00:00",
-          },
-        };
+        // const mockData = {
+        //   document: {
+        //     id: "a4b8b023-5d0f-47fd-9c11-de9c38808600",
+        //     user_id: "db391bfe-d580-4855-b4be-19ec6d45e7cc",
+        //     title: "Introduction to Algorithms",
+        //     file_name: "Introduction_to_algorithms-6-12.pdf",
+        //     created_at: "2025-07-10T23:06:34.028593",
+        //   },
+        //   chat_session_id: "8bb10527-c62d-43e1-bd81-c3a44b590262",
+        //   // Conditionally include TOC
+        //   toc: {
+        //     book_id: "a4b8b023-5d0f-47fd-9c11-de9c38808600",
+        //     chapters: [
+        //       {
+        //         chapter_id: "10273a10-b1ea-4514-b6c7-d1bf2d20a856",
+        //         chapter_number: "1",
+        //         title: "Chapter 1: Foundations",
+        //         sections: [
+        //           {
+        //             section_id: "06671124-438a-424b-84cc-43ef360501b0",
+        //             title: "1.1 Algorithms",
+        //             page: 5,
+        //           },
+        //           {
+        //             section_id: "b8e19ca7-0dab-49cc-832a-91a099c32031",
+        //             title: "1.2 Algorithms as a technology",
+        //             page: 11,
+        //           },
+        //           {
+        //             section_id: "6a0fe27b-a200-4777-becb-5ec0c62b6cee",
+        //             title: "2 Getting Started",
+        //             page: 16,
+        //           },
+        //         ],
+        //       },
+        //       {
+        //         chapter_id: "0ada99be-dfc6-4efa-acca-c91d67458e4e",
+        //         chapter_number: "2",
+        //         title: "Chapter 2: Sorting and Order Statistics",
+        //         sections: [
+        //           {
+        //             section_id: "d945fa7c-2d8d-4302-811c-05a7ab9646dc",
+        //             title: "6 Heapsort",
+        //             page: 151,
+        //           },
+        //           {
+        //             section_id: "abcdfe9d-b9cd-4820-ae8d-5ba3a9c16cb6",
+        //             title: "6.1 Heaps",
+        //             page: 151,
+        //           },
+        //         ],
+        //       },
+        //     ],
+        //   },
+        //   last_position: {
+        //     page_number: 12,
+        //     chapter_id: null,
+        //     section_id: null,
+        //     updated_at: "2025-07-18T01:56:41.864035+00:00",
+        //   },
+        // };
         console.log("mockdata", minemockData);
 
         setStudyData(minemockData);
-        setCurrentPage(mockData.last_position.page_number);
+        setCurrentPage(minemockData.data.last_position.page_number);
 
         // Load chat history
-        await loadChatHistory(mockData.chat_session_id);
+        await loadChatHistory(minemockData.data.chat_session_id);
       } catch (error) {
         console.error("Failed to initialize study mode:", error);
         toast.error("Failed to load study materials");
@@ -345,7 +326,7 @@ export default function StudyMode() {
 
   if (isLoading || !studyData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center relative overflow-hidden">
+      <div className="h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center relative overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 right-20 w-72 h-72 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
@@ -430,7 +411,7 @@ export default function StudyMode() {
   }
 
   return (
-    <div className={`${isFullscreen ? 'fixed inset-0 z-50' : 'min-h-screen'} bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col overflow-hidden relative`}>
+    <div className="h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col overflow-hidden relative">
       {/* Background decorative elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-3xl"></div>
@@ -444,7 +425,7 @@ export default function StudyMode() {
       <div className="absolute bottom-32 left-1/3 w-1.5 h-1.5 bg-pink-400 rounded-full animate-pulse delay-1000 opacity-50"></div>
 
       {/* Enhanced Header */}
-      <header className="relative z-10 bg-slate-800/90 backdrop-blur-xl border-b border-slate-700/50 shadow-2xl">
+      <header className="relative z-10 bg-slate-800/90 backdrop-blur-xl border-b border-slate-700/50 shadow-2xl flex-shrink-0">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 flex-1">
@@ -548,18 +529,17 @@ export default function StudyMode() {
         </div>
       </header>
 
-      {/* Main Content Area */}
+      {/* Main Content Area with proper height calculations */}
       <div
         ref={containerRef}
-        className="flex-1 flex overflow-hidden relative"
-        style={{ height: isFullscreen ? "calc(100vh - 80px)" : "calc(100vh - 80px)" }}
+        className="flex-1 flex overflow-hidden relative min-h-0"
       >
         {isMobile ? (
           <div className="flex flex-col w-full h-full">
             {/* Mobile TOC */}
             {hasTOC && !isPDFHidden && (
-              <div className="flex-shrink-0 bg-slate-800/60 backdrop-blur-lg border-b border-slate-700/50">
-                <div className="max-h-48 overflow-y-auto study-scrollbar">
+              <div className="flex-shrink-0 bg-slate-800/60 backdrop-blur-lg border-b border-slate-700/50 max-h-48">
+                <div className="h-full overflow-y-auto study-scrollbar">
                   <TableOfContents
                     isCollapsed={isTOCCollapsed}
                     onToggleCollapse={handleTOCToggle}
@@ -574,14 +554,16 @@ export default function StudyMode() {
             {/* Mobile PDF Viewer */}
             {!isPDFHidden && (
               <div className="flex-1 min-h-0 overflow-hidden bg-slate-900/50 rounded-t-2xl mt-1">
-                <PDFViewer
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                  documentId={studyData.data.document.id}
-                  fileName={studyData.data.document.file_name}
-                  onTextHighlight={handleTextHighlight}
-                />
+                <div className="h-full overflow-y-auto study-scrollbar">
+                  <PDFViewer
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    documentId={studyData.data.document.id}
+                    fileName={studyData.data.document.file_name}
+                    onTextHighlight={handleTextHighlight}
+                  />
+                </div>
               </div>
             )}
 
@@ -709,8 +691,9 @@ export default function StudyMode() {
         }} 
       />
 
-      {/* Custom CSS for scrollbars and animations */}
-      <style jsx>{`
+      {/* Global Styles */}
+      <style jsx global>{`
+        /* Custom Scrollbars for Study Mode */
         .study-scrollbar {
           scrollbar-width: thin;
           scrollbar-color: rgba(100, 116, 139, 0.5) rgba(30, 41, 59, 0.3);
@@ -730,6 +713,7 @@ export default function StudyMode() {
           background: linear-gradient(180deg, #3b82f6, #8b5cf6);
           border-radius: 10px;
           border: 2px solid rgba(30, 41, 59, 0.3);
+          transition: background 0.3s ease;
         }
 
         .study-scrollbar::-webkit-scrollbar-thumb:hover {
@@ -740,18 +724,73 @@ export default function StudyMode() {
           background: rgba(30, 41, 59, 0.3);
         }
 
+        /* Thin scrollbars for compact areas */
+        .study-scrollbar-thin {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(100, 116, 139, 0.4) rgba(30, 41, 59, 0.2);
+        }
+
+        .study-scrollbar-thin::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+
+        .study-scrollbar-thin::-webkit-scrollbar-track {
+          background: rgba(30, 41, 59, 0.2);
+          border-radius: 8px;
+        }
+
+        .study-scrollbar-thin::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #6366f1, #a855f7);
+          border-radius: 8px;
+          border: 1px solid rgba(30, 41, 59, 0.2);
+        }
+
+        .study-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, #4f46e5, #9333ea);
+        }
+
+        /* Enhanced animations */
         @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          33% { transform: translateY(-10px) rotate(120deg); }
-          66% { transform: translateY(5px) rotate(240deg); }
+          0%, 100% { 
+            transform: translateY(0px) rotate(0deg); 
+          }
+          33% { 
+            transform: translateY(-15px) rotate(120deg); 
+          }
+          66% { 
+            transform: translateY(8px) rotate(240deg); 
+          }
         }
 
         @keyframes pulse-glow {
           0%, 100% { 
             box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            transform: scale(1);
           }
           50% { 
             box-shadow: 0 0 40px rgba(139, 92, 246, 0.8);
+            transform: scale(1.05);
+          }
+        }
+
+        @keyframes gradient-shift {
+          0%, 100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
+
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
           }
         }
 
@@ -759,8 +798,17 @@ export default function StudyMode() {
           animation: pulse-glow 2s ease-in-out infinite;
         }
 
-        .reverse {
-          animation-direction: reverse;
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+
+        .animate-gradient {
+          background-size: 200% 200%;
+          animation: gradient-shift 3s ease infinite;
+        }
+
+        .animate-fade-in-up {
+          animation: fade-in-up 0.6s ease-out forwards;
         }
 
         /* Enhanced glassmorphism effects */
@@ -773,10 +821,11 @@ export default function StudyMode() {
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
-        /* Custom button hover effects */
+        /* Enhanced button hover effects */
         .btn-gradient-hover {
           position: relative;
           overflow: hidden;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .btn-gradient-hover::before {
@@ -787,46 +836,16 @@ export default function StudyMode() {
           width: 100%;
           height: 100%;
           background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-          transition: left 0.5s;
+          transition: left 0.5s ease;
         }
 
         .btn-gradient-hover:hover::before {
           left: 100%;
         }
 
-        /* Enhanced loading animations */
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-
-        .loading-shimmer {
-          position: relative;
-          overflow: hidden;
-        }
-
-        .loading-shimmer::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-          animation: shimmer 2s infinite;
-        }
-
-        /* Floating elements animation */
-        .floating-element {
-          animation: float 6s ease-in-out infinite;
-        }
-
-        .floating-element:nth-child(2) {
-          animation-delay: -2s;
-        }
-
-        .floating-element:nth-child(3) {
-          animation-delay: -4s;
+        .btn-gradient-hover:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
 
         /* Enhanced focus states */
@@ -839,9 +858,10 @@ export default function StudyMode() {
           box-shadow: 
             0 0 0 3px rgba(59, 130, 246, 0.5),
             0 8px 25px rgba(0, 0, 0, 0.3);
+          transform: translateY(-1px);
         }
 
-        /* Improved text selection */
+        /* Enhanced text selection */
         ::selection {
           background: rgba(59, 130, 246, 0.3);
           color: white;
@@ -852,88 +872,64 @@ export default function StudyMode() {
           color: white;
         }
 
-        /* Enhanced transitions for better UX */
+        /* Smooth transitions for all elements */
         * {
           transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
           transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
           transition-duration: 150ms;
         }
 
-        /* Subtle grid pattern overlay */
-        .grid-overlay {
-          background-image: 
-            linear-gradient(rgba(100, 116, 139, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(100, 116, 139, 0.03) 1px, transparent 1px);
-          background-size: 20px 20px;
+        /* Height and overflow fixes */
+        html, body {
+          height: 100%;
+          overflow: hidden;
         }
 
-        /* Enhanced border gradients */
-        .border-gradient {
-          border: 1px solid transparent;
-          background: linear-gradient(rgba(30, 41, 59, 0.8), rgba(30, 41, 59, 0.8)) padding-box,
-                      linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2)) border-box;
+        #root {
+          height: 100%;
         }
 
-        /* Smooth reveal animation for content */
-        @keyframes reveal {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
+        /* Ensure proper scrolling behavior */
+        .overflow-auto {
+          overflow: auto;
+        }
+
+        .overflow-y-auto {
+          overflow-y: auto;
+        }
+
+        .overflow-x-hidden {
+          overflow-x: hidden;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+          .study-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
           }
-          to {
-            opacity: 1;
-            transform: translateY(0);
+          
+          .glass-panel {
+            backdrop-filter: blur(16px);
           }
         }
 
-        .animate-reveal {
-          animation: reveal 0.6s ease-out forwards;
+        @media (max-width: 480px) {
+          .study-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+          }
         }
 
-        /* Staggered reveal for multiple elements */
-        .animate-reveal:nth-child(1) { animation-delay: 0.1s; }
-        .animate-reveal:nth-child(2) { animation-delay: 0.2s; }
-        .animate-reveal:nth-child(3) { animation-delay: 0.3s; }
-        .animate-reveal:nth-child(4) { animation-delay: 0.4s; }
-        .animate-reveal:nth-child(5) { animation-delay: 0.5s; }
-
-        /* Enhanced card hover effects */
-        .card-hover {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .card-hover:hover {
-          transform: translateY(-4px);
-          box-shadow: 
-            0 20px 25px -5px rgba(0, 0, 0, 0.3),
-            0 10px 10px -5px rgba(0, 0, 0, 0.2),
-            0 0 0 1px rgba(59, 130, 246, 0.1);
-        }
-
-        /* Improved button press feedback */
-        .btn-press {
-          transition: all 0.1s ease;
-        }
-
-        .btn-press:active {
-          transform: scale(0.98);
-        }
-
-        /* Custom gradient borders */
-        .gradient-border {
-          position: relative;
-        }
-
-        .gradient-border::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          padding: 1px;
-          background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.5));
-          border-radius: inherit;
-          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          mask-composite: xor;
-          -webkit-mask-composite: xor;
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+          *,
+          *::before,
+          *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
         }
       `}</style>
     </div>

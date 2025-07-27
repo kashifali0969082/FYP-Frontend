@@ -60,6 +60,7 @@ export const PDFViewer = ({
   const [isSearching, setIsSearching] = useState(false);
   const contentRef = useRef(null);
   const popupRef = useRef(null);
+console.log("pdf Viewer function is calling");
 
   const handleZoomIn = () => {
     setZoom(Math.min(zoom + 0.1, 2.0));
@@ -473,9 +474,11 @@ export const PDFViewer = ({
               lineHeight: 1.6
             }}
           >
-            <div className="p-6 lg:p-8 h-full overflow-auto study-scrollbar">
-              {/* Enhanced PDF Header */}
-              <div className="flex items-center gap-4 mb-6 pb-4 border-b border-slate-700/30">
+            
+             <div className="p-6 lg:p-8 h-full overflow-auto study-scrollbar">
+              this is a
+            </div>
+             {/* <div className="flex items-center gap-4 mb-6 pb-4 border-b border-slate-700/30">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                   <FileText className="w-6 h-6 text-white" />
                 </div>
@@ -491,7 +494,6 @@ export const PDFViewer = ({
                 </div>
               </div>
 
-              {/* Enhanced Dynamic Content */}
               <div className="space-y-6 user-select-text">
                 <div className="border-b border-slate-700/30 pb-4">
                   <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
@@ -545,7 +547,6 @@ export const PDFViewer = ({
                     </p>
                   </div>
 
-                  {/* Detailed Algorithm Analysis Section */}
                   <div className="mt-8 space-y-4">
                     <h3 className="text-xl font-semibold text-white">Algorithm Analysis in Detail</h3>
                     <div className="prose prose-lg prose-invert max-w-none space-y-4">
@@ -586,7 +587,6 @@ export const PDFViewer = ({
                     </div>
                   </div>
 
-                  {/* Enhanced Algorithm Example */}
                   <div className={`mt-6 p-4 rounded-xl border ${
                     isDarkMode 
                       ? 'bg-slate-800/60 border-slate-700/50' 
@@ -623,7 +623,6 @@ export const PDFViewer = ({
                     </pre>
                   </div>
 
-                  {/* Enhanced Exercises Section */}
                   <div className="mt-8">
                     <h3 className="text-xl font-semibold text-white mb-4">Practice Exercises</h3>
                     <div className="space-y-3">
@@ -652,8 +651,7 @@ export const PDFViewer = ({
                 </div>
               </div>
 
-              {/* Enhanced Footer */}
-              <div className="mt-12 pt-6 border-t border-slate-700/30 text-center">
+                <div className="mt-12 pt-6 border-t border-slate-700/30 text-center">
                 <div className="flex items-center justify-center space-x-6 text-sm text-slate-500">
                   <span className="flex items-center space-x-1">
                     <FileText className="w-4 h-4" />
@@ -665,7 +663,7 @@ export const PDFViewer = ({
                   <span className="text-blue-400">Highlight text to access learning tools</span>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

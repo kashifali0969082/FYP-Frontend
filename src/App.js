@@ -4,11 +4,12 @@ import LandingPage from "./Components/Landing/Landing";
 import Testing from "./Components/TEsting/Testing";
 import Dashboard from "./Components/TEsting/Testing";
 import StudyMode from "./Components/PdfViewer/viewer";
+import PdfRenderer from "./Components/Comps/pdftest";
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<PdfRenderer />} />
         <Route path="/dashboard" element={< Dashboard/>} />
                 <Route path="/StudyMode" element={<StudyMode />} />
 
