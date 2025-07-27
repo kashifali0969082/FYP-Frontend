@@ -79,7 +79,7 @@ export const QuizInterface = ({
     const isCorrect = userAnswer === question.correct_answer;
 
     // Show explanation immediately after submission if explanations are enabled
-    if (quizConfig?.includeExplanations) {
+    if (quizConfig?.explanation) {
       setShowExplanation(prev => ({
         ...prev,
         [questionId]: true
@@ -94,7 +94,7 @@ export const QuizInterface = ({
         } else {
           handleFinalSubmit();
         }
-      }, quizConfig?.includeExplanations ? 3000 : 1500); // Longer delay if showing explanation
+      }, quizConfig?.explanation ? 3000 : 1500); // Longer delay if showing explanation
     }
   };
 
@@ -109,7 +109,7 @@ export const QuizInterface = ({
     setScore(correctAnswers);
     
     // If explanations are enabled and we're in "Submit at End" mode, show all explanations
-    if (quizConfig?.includeExplanations && !isPerQuestionSubmission) {
+    if (quizConfig?.explanation && !isPerQuestionSubmission) {
       const allExplanations = {};
       quizData.questions.forEach(question => {
         allExplanations[question.id] = true;
@@ -205,7 +205,7 @@ export const QuizInterface = ({
         </div>
 
         {/* Detailed Review - Show if explanations are enabled */}
-        {quizConfig?.includeExplanations && (
+        {quizConfig?.explanation && (
           <div className="space-y-6">
             <h3 className="text-2xl font-bold text-white text-center mb-6">Question Review</h3>
             {quizData.questions.map((question, index) => {
@@ -398,7 +398,7 @@ export const QuizInterface = ({
         </div>
 
         {/* Explanation */}
-        {quizConfig?.includeExplanations && showExplanation[currentQuestion.id] && (
+        {quizConfig?.explanation && showExplanation[currentQuestion.id] && (
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
             <div className="flex items-start space-x-3">
               <AlertCircle size={20} className="text-blue-400 mt-0.5 flex-shrink-0" />

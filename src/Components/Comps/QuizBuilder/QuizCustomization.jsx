@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Settings,
   Hash,
@@ -13,9 +13,9 @@ import {
   Download,
   FileText
 } from 'lucide-react';
-import { quizgenerateapi } from '../../apiclient/QuizGeneratorapi';
-import { FileUpload } from '../../apiclient/Filesapi';
 
+import { apiclient } from '../../../Components/apiclient/Apis';
+import { fetchModels } from './quizApiClient';
 export const QuizCustomization = ({ 
   selectedDocument, 
   onBack, 
@@ -23,42 +23,74 @@ export const QuizCustomization = ({
   isGenerating = false 
 }) => {
   const [quizConfig, setQuizConfig] = useState({
-    sections: [],
-    numQuestions: 10,
-    difficulty: 'Medium',
-    query: '',
-    model: 'OpenAI GPT-4',
-    includeExplanations: true,
+    num_mcqs: 10,
+    difficulty_level: 'Medium',
+    user_query: '',
+    model_id: '',
+    explanation: true,
     submissionStyle: 'Submit At the End',
-    quizAction: 'attempt' // 'attempt' or 'download'
+    quizAction: 'attempt', // 'attempt' or 'download'
+    file_type: 'pdf', // 'pdf' or 'docx', only used when quizAction is 'download'
+    doc_type: 'pdf', // document type for processing
+    doc_ids: null // Will be set from selectedDocument
   });
 
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [models, setModels] = useState([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(true);
 
+  useEffect(() => {
+    const getModels = async () => {
+      try {
+        const { data } = await fetchModels();
+        setModels(data);
+        if (data.length > 0) {
+          setQuizConfig(prev => ({ ...prev, model_id: data[0].id }));
+        }
+      } catch (error) {
+        console.error('Error fetching models:', error);
+      } finally {
+        setIsLoadingModels(false);
+      }
+    };
+    getModels();
+  }, []);
+
+  const fileTypeOptions = ['pdf', 'docx'];
   const difficultyOptions = ['Easy', 'Medium', 'Hard', 'Mix'];
-  const modelOptions = [
-    'OpenAI GPT-4',
-    'Claude 3',
-    'Gemini 1.5',
-    'Groq Mixtral'
-  ];
 
   const handleSubmit = () => {
-    // Validate that query is not empty
-    if (!quizConfig.query.trim()) {
+    // Validate that user_query is not empty
+    if (!quizConfig.user_query.trim()) {
       alert('Please specify a topic for the quiz.');
       return;
     }
-    onGenerateQuiz(quizConfig);
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('user_query', quizConfig.user_query);
+    formData.append('difficulty_level', quizConfig.difficulty_level.toLowerCase());
+    formData.append('num_mcqs', quizConfig.num_mcqs);
+    formData.append('explanation', quizConfig.explanation);
+    formData.append('model_id', quizConfig.model_id);
+    formData.append('doc_ids', selectedDocument.id);
+    formData.append('doc_type', quizConfig.doc_type);
+
+    // Only append file_type if it's a download request
+    if (quizConfig.quizAction === 'download') {
+      formData.append('file_type', quizConfig.file_type);
+    }
+    
+    onGenerateQuiz(formData, quizConfig.quizAction === 'download');
   };
 
   const updateConfig = (key, value) => {
     setQuizConfig(prev => {
       const newConfig = { ...prev, [key]: value };
       
-      // Automatically set includeExplanations to true when download is selected
+      // Automatically set explanation to true when download is selected
       if (key === 'quizAction' && value === 'download') {
-        newConfig.includeExplanations = true;
+        newConfig.explanation = true;
       }
       
       return newConfig;
@@ -66,7 +98,7 @@ export const QuizCustomization = ({
   };
  
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-h-[80vh] overflow-y-auto px-2 md:px-0" style={{scrollbarWidth: 'thin'}}>
       {/* Header with Breadcrumb */}
       <div className="flex items-center justify-between">
         <div>
@@ -111,16 +143,16 @@ export const QuizCustomization = ({
           </label>
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => updateConfig('numQuestions', Math.max(5, quizConfig.numQuestions - 5))}
+              onClick={() => updateConfig('num_mcqs', Math.max(5, quizConfig.num_mcqs - 5))}
               className="w-10 h-10 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center justify-center"
             >
               −
             </button>
             <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg px-4 py-2 min-w-[80px] text-center">
-              <span className="text-white font-medium">{quizConfig.numQuestions}</span>
+              <span className="text-white font-medium">{quizConfig.num_mcqs}</span>
             </div>
             <button
-              onClick={() => updateConfig('numQuestions', Math.min(50, quizConfig.numQuestions + 5))}
+              onClick={() => updateConfig('num_mcqs', Math.min(50, quizConfig.num_mcqs + 5))}
               className="w-10 h-10 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center justify-center"
             >
               +
@@ -139,10 +171,10 @@ export const QuizCustomization = ({
             {difficultyOptions.map((difficulty) => (
               <button
                 key={difficulty}
-                onClick={() => updateConfig('difficulty', difficulty)}
+                onClick={() => updateConfig('difficulty_level', difficulty)}
                 className={`
                   px-4 py-3 rounded-lg border transition-all duration-300 text-center
-                  ${quizConfig.difficulty === difficulty
+                  ${quizConfig.difficulty_level === difficulty
                     ? 'bg-gradient-to-r from-blue-500 to-purple-600 border-blue-500 text-white'
                     : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-slate-600/50'
                   }
@@ -195,6 +227,30 @@ export const QuizCustomization = ({
               </div>
             </button>
           </div>
+
+          {/* Document Type Selector - Only show when download is selected */}
+          {quizConfig.quizAction === 'download' && (
+            <div className="mt-4 p-4 bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-lg">
+              <div className="flex items-center space-x-2 mb-3">
+                <FileText size={18} className="text-blue-400" />
+                <span className="text-white font-medium">Download Format</span>
+              </div>
+              <select
+                value={quizConfig.doc_type}
+                onChange={(e) => {
+                  updateConfig('doc_type', e.target.value);
+                  updateConfig('file_type', e.target.value);
+                }}
+                className="w-full px-4 py-3 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-blue-500/50 transition-all"
+              >
+                {fileTypeOptions.map((type) => (
+                  <option key={type} value={type.toLowerCase()} className="bg-slate-800">
+                    {type.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Query/Topic Input */}
@@ -206,16 +262,16 @@ export const QuizCustomization = ({
           <input
             type="text"
             placeholder="e.g., Sorting Algorithms from Chapter 2"
-            value={quizConfig.query}
-            onChange={(e) => updateConfig('query', e.target.value)}
+            value={quizConfig.user_query}
+            onChange={(e) => updateConfig('user_query', e.target.value)}
             className={`w-full px-4 py-3 bg-slate-800/50 backdrop-blur-sm border rounded-lg text-white placeholder-slate-400 focus:outline-none transition-all ${
-              quizConfig.query.trim() 
+              quizConfig.user_query.trim() 
                 ? 'border-slate-700/50 focus:border-blue-500/50' 
                 : 'border-red-500/50 focus:border-red-500/70'
             }`}
             required
           />
-          {!quizConfig.query.trim() && (
+          {!quizConfig.user_query.trim() && (
             <p className="text-red-400 text-sm">Topic specification is required</p>
           )}
         </div>
@@ -227,15 +283,20 @@ export const QuizCustomization = ({
             <span>AI Model</span>
           </label>
           <select
-            value={quizConfig.model}
-            onChange={(e) => updateConfig('model', e.target.value)}
+            value={quizConfig.model_id}
+            onChange={(e) => updateConfig('model_id', e.target.value)}
             className="w-full px-4 py-3 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg text-white focus:outline-none focus:border-blue-500/50 transition-all"
+            disabled={isLoadingModels}
           >
-            {modelOptions.map((model) => (
-              <option key={model} value={model} className="bg-slate-800">
-                {model}
-              </option>
-            ))}
+            {isLoadingModels ? (
+              <option className="bg-slate-800">Loading models...</option>
+            ) : (
+              models.map((model) => (
+                <option key={model.id} value={model.id} className="bg-slate-800">
+                  {model.display_name}
+                </option>
+              ))
+            )}
           </select>
         </div>
 
@@ -255,7 +316,7 @@ export const QuizCustomization = ({
           <button
             onClick={() => {
               if (quizConfig.quizAction !== 'download') {
-                updateConfig('includeExplanations', !quizConfig.includeExplanations);
+                updateConfig('explanation', !quizConfig.explanation);
               }
             }}
             disabled={quizConfig.quizAction === 'download'}
@@ -263,7 +324,7 @@ export const QuizCustomization = ({
               relative w-12 h-6 rounded-full transition-colors duration-300 disabled:cursor-not-allowed
               ${quizConfig.quizAction === 'download' 
                 ? 'bg-blue-500' 
-                : quizConfig.includeExplanations 
+                : quizConfig.explanation 
                   ? 'bg-blue-500' 
                   : 'bg-slate-600'
               }
@@ -272,7 +333,7 @@ export const QuizCustomization = ({
             <div
               className={`
                 absolute top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300
-                ${(quizConfig.includeExplanations || quizConfig.quizAction === 'download') 
+                ${(quizConfig.explanation || quizConfig.quizAction === 'download') 
                   ? 'transform translate-x-7' 
                   : 'transform translate-x-1'
                 }
@@ -323,7 +384,7 @@ export const QuizCustomization = ({
       <div className="flex justify-end pt-6 border-t border-slate-700/50">
         <button
           onClick={handleSubmit}
-          disabled={isGenerating || !quizConfig.query.trim()}
+          disabled={isGenerating || !quizConfig.user_query.trim()}
           className={`
             flex items-center space-x-2 px-8 py-3 rounded-lg transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed
             ${quizConfig.quizAction === 'attempt'

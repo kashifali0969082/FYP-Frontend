@@ -7,6 +7,7 @@ import {
   Filter,
   Upload,
   FileText,
+  Book,
   BookOpen,
   Presentation,
   StickyNote,

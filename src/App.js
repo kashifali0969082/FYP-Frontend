@@ -1,14 +1,19 @@
 import "./App.css";
 import { Route, Routes, BrowserRouter, Navigate } from "react-router-dom";
 import LandingPage from "./Components/Landing/Landing";
+// import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
+
+import LandingPage from "./Components/Landing/Landing";
 import ErrorComponent from "./Components/Landing/ErrorComponent";
-import Testing from "./Components/TEsting/Testing";
 import Dashboard from "./Components/TEsting/Testing";
 import Streaks from "./Components/TEsting/Streaks";
 import { StreakComponent } from "./Components/TEsting/StreakComponent";
 import { AuthProvider, useAuth } from "./Components/Security/Authcontext";
+import StudyMode from "./Components/PdfViewer/viewer";
+import PdfRenderer from "./Components/Comps/pdftest";
 import LearningProfileForm from "./Components/TEsting/LearningProfileForm";
+import { AuthProvider } from "./Components/Security/Authcontext";
 
 
 
@@ -35,6 +40,17 @@ function App() {
           <Authenticatedroute>
           < LearningProfileForm/>
           </Authenticatedroute>} />
+
+          
+          <Route path="/pdf" element={
+             <Authenticatedroute>
+             < PdfRenderer />
+             </Authenticatedroute>} />
+        
+          <Route path="/StudyMode" element={
+            <Authenticatedroute>
+            <StudyMode />
+            </Authenticatedroute>} />
         
       </Routes>
     </BrowserRouter>
@@ -42,4 +58,4 @@ function App() {
   );
 }
 
-export default App
+export default App;

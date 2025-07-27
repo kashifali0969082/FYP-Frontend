@@ -155,7 +155,7 @@ console.log("Display name will be:", userData?.name || username)
         </div>
 
         {/* Upload Section */}
-        <div 
+        <div
           onClick={() => setIsUploadModalOpen(true)}
           className="relative group cursor-pointer"
         >

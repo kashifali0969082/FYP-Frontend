@@ -5,6 +5,7 @@ import { QuizInterface } from './QuizInterface';
 import { Trophy, Target } from 'lucide-react';
 import { useStreakUpdate } from '../../../hooks/useStreakUpdate';
 import StreakUpdateModal from '../StreakUpdateModal';
+import { generateQuizApi } from './quizApiClient';
 
 export const QuizBuilderMain = ({ 
   uploadedFiles, 
@@ -22,107 +23,58 @@ export const QuizBuilderMain = ({
   // Streak update hook
   const { triggerStreakUpdate, isModalOpen, streakData: streakUpdateData, closeModal } = useStreakUpdate();
 
-  // Mock API call - replace with actual API integration
-  const generateQuiz = async (config) => {
-    setIsGenerating(true);
-    setQuizConfig(config);
-    
-    // Trigger streak update when generating quiz
-    await triggerStreakUpdate();
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Mock quiz data - replace with actual API response
-    const mockQuizData = {
-      questions: [
-        {
-          id: '1',
-          question: 'What is the time complexity of Binary Search?',
-          options: ['O(n)', 'O(log n)', 'O(n²)', 'O(1)'],
-          correct_answer: 'O(log n)',
-          explanation: 'Binary Search divides the search space in half with each comparison, resulting in O(log n) time complexity.',
-          difficulty: 2,
-          topic: 'Algorithms',
-          question_type: 'multiple_choice'
-        },
-        {
-          id: '2',
-          question: 'Which data structure uses LIFO principle?',
-          options: ['Queue', 'Stack', 'Array', 'Linked List'],
-          correct_answer: 'Stack',
-          explanation: 'Stack follows Last In, First Out (LIFO) principle where the last element added is the first one to be removed.',
-          difficulty: 1,
-          topic: 'Data Structures',
-          question_type: 'multiple_choice'
-        },
-        {
-          id: '3',
-          question: 'What is the worst-case time complexity of Quick Sort?',
-          options: ['O(n log n)', 'O(n²)', 'O(n)', 'O(log n)'],
-          correct_answer: 'O(n²)',
-          explanation: 'Quick Sort has a worst-case time complexity of O(n²) when the pivot is always the smallest or largest element.',
-          difficulty: 3,
-          topic: 'Sorting Algorithms',
-          question_type: 'multiple_choice'
-        }
-      ]
-    };
-    
-    setQuizData(mockQuizData);
-    setIsGenerating(false);
-    
-    // Check if user wants to download or attempt the quiz
-    if (config.quizAction === 'download') {
-      // Generate and download the quiz
-      downloadQuiz(mockQuizData, config);
-      // Stay on the customization page
-    } else {
-      // Proceed to quiz interface for attempting
-      setCurrentStep(3);
-    }
-  };
-
-  const downloadQuiz = (quizData, config) => {
-    // Create quiz content for download
-    const quizContent = generateQuizDocument(quizData, config);
-    
-    // Create blob and download
-    const blob = new Blob([quizContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${selectedDocument?.name || 'Quiz'}_${config.query.replace(/\s+/g, '_')}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    // Show success message
-    alert('Quiz downloaded successfully!');
-  };
-
-  const generateQuizDocument = (quizData, config) => {
-    let content = `QUIZ: ${config.query}\n`;
-    content += `Document: ${selectedDocument?.name}\n`;
-    content += `Difficulty: ${config.difficulty}\n`;
-    content += `Questions: ${config.numQuestions}\n`;
-    content += `Generated on: ${new Date().toLocaleDateString()}\n`;
-    content += `\n${'='.repeat(50)}\n\n`;
-    
-    quizData.questions.forEach((question, index) => {
-      content += `Question ${index + 1}: ${question.question}\n\n`;
-      question.options.forEach((option, optionIndex) => {
-        content += `${String.fromCharCode(65 + optionIndex)}. ${option}\n`;
-      });
-      content += `\nCorrect Answer: ${question.correct_answer}\n`;
-      if (config.includeExplanations) {
-        content += `Explanation: ${question.explanation}\n`;
+  const generateQuiz = async (formData, isDownload) => {
+    try {
+      setIsGenerating(true);
+      // Trigger streak update when generating quiz
+      await triggerStreakUpdate();
+      const response = await generateQuizApi(formData, isDownload);
+      if (response.status !== 200) {
+        throw new Error('Failed to generate quiz');
       }
-      content += `\n${'-'.repeat(30)}\n\n`;
-    });
-    
-    return content;
+      if (isDownload) {
+        // Handle file download
+        const blob = new Blob([response.data]);
+        const contentDisposition = response.headers.get('content-disposition');
+        const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+        const filename = filenameMatch?.[1] || 'quiz.' + formData.get('file_type');
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        alert('Quiz downloaded successfully!');
+      } else {
+        // Handle quiz attempt
+        const { data } = response;
+        if (data.status === 'success') {
+          setQuizData({
+            questions: data.generated_mcqs,
+            quiz_id: data.quiz_id
+          });
+          setQuizConfig({
+            num_mcqs: parseInt(formData.get('num_mcqs')),
+            difficulty_level: formData.get('difficulty_level'),
+            user_query: formData.get('user_query'),
+            explanation: formData.get('explanation') === 'true',
+            model_id: formData.get('model_id'),
+            doc_ids: formData.get('doc_ids')
+          });
+          setCurrentStep(3); // Move to quiz interface
+        } else {
+          throw new Error(data.message || 'Failed to generate quiz');
+        }
+      }
+    } catch (error) {
+      console.error('Error generating quiz:', error);
+      alert(error.message || 'Failed to generate quiz. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleDocumentSelect = (document) => {
@@ -139,9 +91,9 @@ export const QuizBuilderMain = ({
     setQuizData(null);
   };
 
-  const handleSaveQuiz = (quizResults) => {
+  const handleSaveQuiz = async (quizResults) => {
     console.log('Saving quiz results:', quizResults);
-    // Implement save functionality
+    // TODO: Implement quiz results submission to backend
   };
 
   const renderCurrentStep = () => {
