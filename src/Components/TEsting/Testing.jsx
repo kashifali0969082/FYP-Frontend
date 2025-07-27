@@ -27,9 +27,9 @@ import {
 
 import { MobileHeader } from "../Comps/MobileHeader";
 import { HomePage } from "../Comps/HomePage";
-import { MCQsPage } from "../Comps/McqPage";
+// import { MCQsPage } from "../Comps/McqPage";
 import StudyMode from "../PdfViewer/viewer";
-import { StudyModePage } from "../Comps/StudyMode";
+// import { StudyModePage } from "../Comps/StudyMode";
 import { FilesPage } from "../Comps/FilePage";
 import LeaderboardPage from "../Comps/LeaderboardPage";
 import { QuizBuilderMain } from "../Comps/QuizBuilder/QuizBuilderMain";
@@ -1063,7 +1063,7 @@ useEffect(() => {
                 isLeaderboardLoading={isLeaderboardLoading}
               />
             )}
-            {currentPage === "study" && <StudyModePage isMobile={isMobile} />}
+            {/* {currentPage === "study" && <StudyModePage isMobile={isMobile} />} */}
             {currentPage === "quiz-builder" && (
               <QuizBuilderMain
                 uploadedFiles={uploadedFiles}
