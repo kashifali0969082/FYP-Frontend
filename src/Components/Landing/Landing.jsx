@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
+import { Menu } from "lucide-react";
 import "./Landing";
 
 
@@ -165,13 +166,13 @@ import "./Landing";
       icon: "fas fa-user-cog",
       title: "Personalized Learning",
       description:
-        "Advanced AI algorithms analyze your learning patterns and adapt content to match your unique style and pace.",
+        "Adaptive AI that analyzes your learning patterns and adapt content to match your unique style and pace.",
     },
     {
       icon: "fas fa-brain",
       title: "AI Assistance",
       description:
-        "Get instant help, explanations, and guidance from our intelligent AI tutors available 24/7.",
+        "Get instant help, explanations, and guidance from our intelligent AI assisant available 24/7."
     },
     {
       icon: "fas fa-gamepad",
@@ -184,30 +185,6 @@ import "./Landing";
       title: "Accessibility",
       description:
         "Inclusive design ensures learning materials are accessible to everyone, regardless of abilities.",
-    },
-    {
-      icon: "fas fa-chart-line",
-      title: "Progress Tracking",
-      description:
-        "Monitor your learning journey with detailed analytics and personalized insights.",
-    },
-    {
-      icon: "fas fa-users",
-      title: "Collaborative Learning",
-      description:
-        "Connect with peers, join study groups, and learn together in our vibrant community.",
-    },
-    {
-      icon: "fas fa-users",
-      title: "Collaborative Learning",
-      description:
-        "Connect with peers, join study groups, and learn together in our vibrant community.",
-    },
-    {
-      icon: "fas fa-users",
-      title: "Collaborative Learning",
-      description:
-        "Connect with peers, join study groups, and learn together in our vibrant community.",
     },
   ];
   const GoogleIcon = () => (
@@ -246,7 +223,7 @@ import "./Landing";
   const footerSections = [
     {
       title: "Platform",
-      links: ["Features", "Courses", "AI Tutors", "Mobile App"],
+      links: ["Features", "Study Mode", "AI Assistant", "Quiz Builder"],
     },
     {
       title: "Company",
@@ -281,7 +258,7 @@ import "./Landing";
         <nav className="nav-container">
           <div className="nav-logo">
             <i className="fas fa-brain"></i>
-            LearnAI
+            AdaptiveLearnAI
           </div>
           <ul className={`nav-menu ${isMobileMenuOpen ? "mobile-open" : ""}`}>
             <li>
@@ -312,7 +289,7 @@ import "./Landing";
             </li>
           </ul>
           <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
-            <i className="fas fa-bars">bars</i>
+            <Menu size={20} />
           </button>
         </nav>
       </header>
@@ -360,7 +337,11 @@ import "./Landing";
             </div>
             <div className="hero-visual">
               <div className="ai-logo">
-                <i className="fas fa-robot"></i>
+                <img 
+                  src="/logo.svg" 
+                  alt="book"
+                  className="adaptive-learn-logo w-64 h-64 md:w-72 md:h-72 lg:w-80 lg:h-80"
+                />
               </div>
             </div>
           </div>
@@ -385,7 +366,7 @@ import "./Landing";
         </section>
 
         {/* Stats Section */}
-        <section className="stats-section">
+        {/* <section className="stats-section">
           <div className="stats-container">
             {stats.map((stat, index) => (
               <div key={index} className="stat-item">
@@ -394,32 +375,18 @@ import "./Landing";
               </div>
             ))}
           </div>
-        </section>
+        </section> */}
       </div>
-
+     
       {/* Footer */}
       <footer className="footer">
         <div className="footer-container">
           <div className="footer-section">
-            <h3>LearnAI</h3>
+            <h3>AdaptiveLearnAI</h3>
             <p>
               Transforming education through artificial intelligence and
               personalized learning experiences.
             </p>
-            <div className="social-icons">
-              <a href="#" aria-label="Facebook">
-                <i className="fab fa-facebook"></i>
-              </a>
-              <a href="#" aria-label="Twitter">
-                <i className="fab fa-twitter"></i>
-              </a>
-              <a href="#" aria-label="LinkedIn">
-                <i className="fab fa-linkedin"></i>
-              </a>
-              <a href="#" aria-label="Instagram">
-                <i className="fab fa-instagram"></i>
-              </a>
-            </div>
           </div>
           {footerSections.map((section, index) => (
             <div key={index} className="footer-section">
@@ -436,7 +403,7 @@ import "./Landing";
         </div>
         <div className="footer-bottom">
           <p>
-            &copy; 2025 LearnAI. All rights reserved. Powered by Advanced AI
+            &copy; 2025 AdaptiveLearnAI. All rights reserved. Powered by Adaptive AI
             Technology.
           </p>
         </div>

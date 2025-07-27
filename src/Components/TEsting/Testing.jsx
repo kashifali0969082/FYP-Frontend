@@ -100,22 +100,35 @@ const Dashboard = () => {
       return false;
     }
 
+    // Allow both single numbers (e.g., "6") and ranges (e.g., "2-5")
+    const singlePagePattern = /^\d+$/;
     const rangePattern = /^\d+-\d+$/;
-    if (!rangePattern.test(range.trim())) {
-      setTocError("Please enter a valid range format (e.g., 2-3)");
+    
+    if (!singlePagePattern.test(range.trim()) && !rangePattern.test(range.trim())) {
+      setTocError("Please enter a valid page number (e.g., 6) or range (e.g., 2-5)");
       return false;
     }
 
-    const [startPage, endPage] = range.trim().split("-").map(Number);
+    // If it's a range, validate the range logic
+    if (rangePattern.test(range.trim())) {
+      const [startPage, endPage] = range.trim().split("-").map(Number);
 
-    if (startPage >= endPage) {
-      setTocError("Start page must be less than end page");
-      return false;
-    }
+      if (startPage >= endPage) {
+        setTocError("Start page must be less than end page");
+        return false;
+      }
 
-    if (startPage <= 0 || endPage <= 0) {
-      setTocError("Page numbers must be positive");
-      return false;
+      if (startPage <= 0 || endPage <= 0) {
+        setTocError("Page numbers must be positive");
+        return false;
+      }
+    } else {
+      // If it's a single page, validate it's positive
+      const pageNumber = Number(range.trim());
+      if (pageNumber <= 0) {
+        setTocError("Page number must be positive");
+        return false;
+      }
     }
 
     return true;
@@ -169,11 +182,6 @@ const Dashboard = () => {
     setUploadProgress(100);
     setUploadSuccess(true);
     
-    // Brief delay to show success message
-    setTimeout(() => {
-      alert(`Upload successful: ${response.message}`);
-    }, 500);
-
     // Manually add the uploaded file to the state instead of API call
     const newFile = {
       id: response.file_id || Date.now().toString(), // Use response ID or timestamp as fallback
@@ -744,9 +752,12 @@ useEffect(() => {
           {/* Logo/Title */}
           <div className="p-4 md:p-6 border-b border-slate-700/50 flex items-center justify-between">
             {(!isSidebarCollapsed || isMobile) && (
-              <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              <button 
+                onClick={() => navigateToPage("home")}
+                className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent hover:from-blue-300 hover:to-purple-300 transition-all duration-200 cursor-pointer"
+              >
                 AdaptiveLearnAI
-              </h1>
+              </button>
             )}
             {!isMobile && (
               <button
@@ -766,149 +777,178 @@ useEffect(() => {
           <nav className="flex-1 p-3 md:p-4">
             <ul className="space-y-2">
               <li>
-                <button
-                  onClick={() => navigateToPage("home")}
-                  className={`flex items-center ${
-                    isSidebarCollapsed && !isMobile
-                      ? "justify-center"
-                      : "space-x-3"
-                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                    currentPage === "home"
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
-                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                  }`}
-                >
-                  <BookOpen size={20} />
-                  {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">Home</span>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigateToPage("home")}
+                    className={`flex items-center ${
+                      isSidebarCollapsed && !isMobile
+                        ? "justify-center"
+                        : "space-x-3"
+                    } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                      currentPage === "home"
+                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <BookOpen size={20} />
+                    {(!isSidebarCollapsed || isMobile) && (
+                      <span className="text-sm md:text-base">Home</span>
+                    )}
+                  </button>
+                  {/* Tooltip for collapsed sidebar */}
+                  {isSidebarCollapsed && !isMobile && (
+                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-slate-600">
+                      <span className="text-sm font-medium">Home</span>
+                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800"></div>
+                    </div>
                   )}
-                </button>
+                </div>
               </li>
               <li>
-                <button
-                  onClick={() => navigateToPage("study")}
-                  className={`flex items-center ${
-                    isSidebarCollapsed && !isMobile
-                      ? "justify-center"
-                      : "space-x-3"
-                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                    currentPage === "study"
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
-                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                  }`}
-                >
-                  <BookOpen size={20} />
-                  {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">Study Mode</span>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigateToPage("study")}
+                    className={`flex items-center ${
+                      isSidebarCollapsed && !isMobile
+                        ? "justify-center"
+                        : "space-x-3"
+                    } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                      currentPage === "study"
+                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <BookOpen size={20} />
+                    {(!isSidebarCollapsed || isMobile) && (
+                      <span className="text-sm md:text-base">Study Mode</span>
+                    )}
+                  </button>
+                  {/* Tooltip for collapsed sidebar */}
+                  {isSidebarCollapsed && !isMobile && (
+                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-slate-600">
+                      <span className="text-sm font-medium">Study Mode</span>
+                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800"></div>
+                    </div>
                   )}
-                </button>
+                </div>
               </li>
               <li>
-                <button
-                  onClick={() => navigateToPage("quiz-builder")}
-                  className={`flex items-center ${
-                    isSidebarCollapsed && !isMobile
-                      ? "justify-center"
-                      : "space-x-3"
-                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                    currentPage === "quiz-builder"
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
-                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                  }`}
-                >
-                  <Target size={20} />
-                  {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">Quiz Builder</span>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigateToPage("quiz-builder")}
+                    className={`flex items-center ${
+                      isSidebarCollapsed && !isMobile
+                        ? "justify-center"
+                        : "space-x-3"
+                    } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                      currentPage === "quiz-builder"
+                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <Target size={20} />
+                    {(!isSidebarCollapsed || isMobile) && (
+                      <span className="text-sm md:text-base">Quiz Builder</span>
+                    )}
+                  </button>
+                  {/* Tooltip for collapsed sidebar */}
+                  {isSidebarCollapsed && !isMobile && (
+                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-slate-600">
+                      <span className="text-sm font-medium">Quiz Builder</span>
+                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800"></div>
+                    </div>
                   )}
-                </button>
+                </div>
               </li>
               <li>
-                <button
-                  onClick={() => navigateToPage("quiz-history")}
-                  className={`flex items-center ${
-                    isSidebarCollapsed && !isMobile
-                      ? "justify-center"
-                      : "space-x-3"
-                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                    currentPage === "quiz-history"
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
-                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                  }`}
-                >
-                  <History size={20} />
-                  {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">Quiz History</span>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigateToPage("quiz-history")}
+                    className={`flex items-center ${
+                      isSidebarCollapsed && !isMobile
+                        ? "justify-center"
+                        : "space-x-3"
+                    } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                      currentPage === "quiz-history"
+                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <History size={20} />
+                    {(!isSidebarCollapsed || isMobile) && (
+                      <span className="text-sm md:text-base">Quiz History</span>
+                    )}
+                  </button>
+                  {/* Tooltip for collapsed sidebar */}
+                  {isSidebarCollapsed && !isMobile && (
+                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-slate-600">
+                      <span className="text-sm font-medium">Quiz History</span>
+                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800"></div>
+                    </div>
                   )}
-                </button>
+                </div>
               </li>
               <li>
-                <button
-                  onClick={() => navigateToPage("files")}
-                  className={`flex items-center ${
-                    isSidebarCollapsed && !isMobile
-                      ? "justify-center"
-                      : "space-x-3"
-                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                    currentPage === "files"
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
-                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                  }`}
-                >
-                  <Files size={20} />
-                  {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">Library</span>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigateToPage("files")}
+                    className={`flex items-center ${
+                      isSidebarCollapsed && !isMobile
+                        ? "justify-center"
+                        : "space-x-3"
+                    } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                      currentPage === "files"
+                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <Files size={20} />
+                    {(!isSidebarCollapsed || isMobile) && (
+                      <span className="text-sm md:text-base">Library</span>
+                    )}
+                  </button>
+                  {/* Tooltip for collapsed sidebar */}
+                  {isSidebarCollapsed && !isMobile && (
+                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-slate-600">
+                      <span className="text-sm font-medium">Library</span>
+                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800"></div>
+                    </div>
                   )}
-                </button>
+                </div>
               </li>
               <li>
-                <button
-                  onClick={() => navigateToPage("leaderboard")}
-                  className={`flex items-center ${
-                    isSidebarCollapsed && !isMobile
-                      ? "justify-center"
-                      : "space-x-3"
-                  } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                    currentPage === "leaderboard"
-                      ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
-                      : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                  }`}
-                >
-                  <Trophy size={20} />
-                  {(!isSidebarCollapsed || isMobile) && (
-                    <span className="text-sm md:text-base">Leaderboard</span>
+                <div className="relative group">
+                  <button
+                    onClick={() => navigateToPage("leaderboard")}
+                    className={`flex items-center ${
+                      isSidebarCollapsed && !isMobile
+                        ? "justify-center"
+                        : "space-x-3"
+                    } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
+                      currentPage === "leaderboard"
+                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <Trophy size={20} />
+                    {(!isSidebarCollapsed || isMobile) && (
+                      <span className="text-sm md:text-base">Leaderboard</span>
+                    )}
+                  </button>
+                  {/* Tooltip for collapsed sidebar */}
+                  {isSidebarCollapsed && !isMobile && (
+                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-slate-600">
+                      <span className="text-sm font-medium">Leaderboard</span>
+                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800"></div>
+                    </div>
                   )}
-                </button>
+                </div>
               </li>
             </ul>
           </nav>
 
           {/* Bottom Section */}
           <div className="p-3 md:p-4 border-t border-slate-700/50">
-            {/* Dark/Light Mode Toggle */}
-            {(!isSidebarCollapsed || isMobile) && (
-              <div className="flex items-center justify-between mb-4 md:mb-6">
-                <span className="text-xs md:text-sm font-medium text-slate-300">
-                  Theme
-                </span>
-                <button
-                  onClick={toggleDarkMode}
-                  className={`relative inline-flex h-5 w-9 md:h-6 md:w-11 items-center rounded-full transition-colors ${
-                    isDarkMode
-                      ? "bg-gradient-to-r from-blue-500 to-purple-500"
-                      : "bg-slate-600"
-                  }`}
-                  
-                >
-                  <span
-                    className={`inline-block h-3 w-3 md:h-4 md:w-4 transform rounded-full bg-white transition-transform ${
-                      isDarkMode
-                        ? "translate-x-5 md:translate-x-6"
-                        : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
-            )}
 
             {/* Profile */}
             <div
@@ -995,6 +1035,7 @@ useEffect(() => {
             isMobileSidebarOpen={isMobileSidebarOpen}
             isSidebarCollapsed={isSidebarCollapsed}
             isMobile={isMobile}
+            onNavigateHome={() => navigateToPage("home")}
           />
           <div className="flex-1 p-4 md:p-8">
             {currentPage === "home" && (
@@ -1137,7 +1178,7 @@ useEffect(() => {
                       </span>
                     </div>
                     <p className="text-xs md:text-sm mt-1 text-slate-400">
-                      .pdf , docx , .txt
+                      PDF, DOCX, TXT files only
                     </p>
                   </button>
                 </div>
@@ -1151,7 +1192,7 @@ useEffect(() => {
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g., 2-5"
+                    placeholder="e.g 6 or 2-5"
                     value={tocPageRange}
                     onChange={handleTocChange}
                     disabled={isUploading}
@@ -1167,142 +1208,131 @@ useEffect(() => {
                     </p>
                   )}
                   <p className="text-xs text-slate-500 mt-1">
-                    Enter the page range where the table of contents is located
-                    (e.g., 2-5)
+                    Enter a single page number (e.g., 6) or page range (e.g., 2-5) where the table of contents is located
                   </p>
                 </div>
               )}
 
-              {/* File Upload Area */}
-              <div
-                className={`border-2 border-dashed rounded-lg md:rounded-xl p-6 md:p-8 text-center transition-colors ${
-                  isUploading
-                    ? "cursor-not-allowed opacity-50"
-                    : "cursor-pointer"
-                } ${
+              {/* File Upload Area / Upload Progress - Consistent sizing */}
+              <div className={`border-2 border-dashed rounded-lg md:rounded-xl p-6 md:p-8 text-center transition-all duration-300 min-h-[140px] flex flex-col justify-center ${
+                !isUploading ? (
                   selectedFile
                     ? "border-green-500 bg-green-500/10"
                     : selectedFileType
-                    ? "border-slate-600 hover:border-slate-500"
-                    : "border-slate-700 cursor-not-allowed"
-                }`}
-                onClick={
-                  selectedFileType && !isUploading ? handleClick : undefined
-                }
-              >
-                <Upload
-                  size={
-                    typeof window !== "undefined" && window.innerWidth < 768
-                      ? 24
-                      : 32
-                  }
-                  className={`mx-auto mb-3 ${
-                    selectedFile ? "text-green-400" : "text-slate-400"
-                  }`}
-                />
-                <p className="text-xs md:text-sm text-slate-400">
-                  {selectedFile
-                    ? `Selected: ${selectedFile.name}`
-                    : selectedFileType
-                    ? "Drop your file here or click to browse"
-                    : "Please select a file type first"}
-                </p>
-
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  disabled={!selectedFileType || isUploading}
-                />
-              </div>
-
-              {/* Upload Progress Indicator */}
-              {isUploading && (
-                <div className={`border-2 border-dashed rounded-lg md:rounded-xl p-6 md:p-8 text-center transition-all duration-500 ${
+                    ? "border-slate-600 hover:border-slate-500 bg-slate-700/30 hover:bg-slate-700/50"
+                    : "border-slate-600 bg-slate-700/20 cursor-not-allowed"
+                ) : (
                   uploadSuccess 
                     ? "border-green-500 bg-green-500/10" 
                     : "border-blue-500 bg-blue-500/10"
-                }`}>
-                  <div className="mb-4">
-                    <div className="w-16 h-16 mx-auto mb-3 relative">
-                      {/* Circular Progress */}
-                      <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 64 64">
-                        <circle
-                          cx="32"
-                          cy="32"
-                          r="28"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                          className="text-slate-600"
-                        />
-                        <circle
-                          cx="32"
-                          cy="32"
-                          r="28"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                          strokeDasharray={`${2 * Math.PI * 28}`}
-                          strokeDashoffset={`${2 * Math.PI * 28 * (1 - uploadProgress / 100)}`}
-                          className={`transition-all duration-300 ${
-                            uploadSuccess ? "text-green-400" : "text-blue-400"
-                          }`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        {uploadSuccess ? (
-                          <div className="text-green-400 animate-bounce">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                        ) : (
-                          <span className="text-lg font-bold text-blue-400">{uploadProgress}%</span>
-                        )}
+                )
+              }`}>
+                {!isUploading ? (
+                  /* File Drop Area */
+                  <div
+                    className="transition-colors cursor-pointer"
+                    onClick={selectedFileType ? handleClick : undefined}
+                  >
+                    <Upload
+                      size={
+                        typeof window !== "undefined" && window.innerWidth < 768
+                          ? 24
+                          : 32
+                      }
+                      className={`mx-auto mb-3 ${
+                        selectedFile ? "text-green-400" : "text-slate-400"
+                      }`}
+                    />
+                    <p className="text-xs md:text-sm text-slate-400">
+                      {selectedFile
+                        ? `Selected: ${selectedFile.name}`
+                        : selectedFileType
+                        ? "Drop your file here or click to browse"
+                        : "Please select a file type first"}
+                    </p>
+
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden"
+                      disabled={!selectedFileType}
+                    />
+                  </div>
+                ) : (
+                  /* Upload Progress Indicator */
+                  <div className="transition-all duration-500">
+                    <div className="mb-4">
+                      <div className="w-16 h-16 mx-auto mb-3 relative">
+                        {/* Circular Progress */}
+                        <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 64 64">
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r="28"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                            className="text-slate-600"
+                          />
+                          <circle
+                            cx="32"
+                            cy="32"
+                            r="28"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                            strokeDasharray={`${2 * Math.PI * 28}`}
+                            strokeDashoffset={`${2 * Math.PI * 28 * (1 - uploadProgress / 100)}`}
+                            className={`transition-all duration-300 ${
+                              uploadSuccess ? "text-green-400" : "text-blue-400"
+                            }`}
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          {uploadSuccess ? (
+                            <div className="text-green-400 animate-bounce">
+                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          ) : (
+                            <span className="text-lg font-bold text-blue-400">{uploadProgress}%</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    {uploadSuccess ? (
-                      <div className="text-green-400 animate-bounce">
-                        <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                    ) : (
-                      <Upload size={24} className="mx-auto text-blue-400 animate-bounce" />
-                    )}
+                    
+                    <div className={`font-medium mb-2 ${
+                      uploadSuccess ? "text-green-400" : "text-white"
+                    }`}>
+                      {uploadStatus || "Uploading..."}
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-full bg-slate-700 rounded-full h-2 mb-3">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ease-out ${
+                          uploadSuccess 
+                            ? "bg-gradient-to-r from-green-500 to-green-400" 
+                            : "bg-gradient-to-r from-blue-500 to-purple-600"
+                        }`}
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
+                    
+                    <p className="text-xs text-slate-400">
+                      {uploadSuccess 
+                        ? "File uploaded successfully!" 
+                        : selectedFile 
+                        ? `Uploading ${selectedFile.name}` 
+                        : "Processing file..."
+                      }
+                    </p>
                   </div>
-                  
-                  <div className={`font-medium mb-2 ${
-                    uploadSuccess ? "text-green-400" : "text-white"
-                  }`}>
-                    {uploadStatus || "Uploading..."}
-                  </div>
-                  
-                  {/* Progress Bar */}
-                  <div className="w-full bg-slate-700 rounded-full h-2 mb-3">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ease-out ${
-                        uploadSuccess 
-                          ? "bg-gradient-to-r from-green-500 to-green-400" 
-                          : "bg-gradient-to-r from-blue-500 to-purple-600"
-                      }`}
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
-                  </div>
-                  
-                  <p className="text-xs text-slate-400">
-                    {uploadSuccess 
-                      ? "File uploaded successfully!" 
-                      : selectedFile 
-                      ? `Uploading ${selectedFile.name}` 
-                      : "Processing file..."
-                    }
-                  </p>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4">

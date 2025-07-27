@@ -1,10 +1,28 @@
 import { Menu } from "lucide-react";
-export const MobileHeader = () => {
-     const toggleMobileSidebar = ({isMobile,setIsMobileSidebarOpen,setIsSidebarCollapsed,isMobileSidebarOpen,isSidebarCollapsed}) => {
+
+export const MobileHeader = ({ 
+  isMobile, 
+  setIsMobileSidebarOpen, 
+  setIsSidebarCollapsed, 
+  isMobileSidebarOpen, 
+  isSidebarCollapsed,
+  onNavigateHome
+}) => {
+  const toggleMobileSidebar = () => {
     if (isMobile) {
       setIsMobileSidebarOpen(!isMobileSidebarOpen);
     } else {
       setIsSidebarCollapsed(!isSidebarCollapsed);
+    }
+  };
+
+  const goToHomePage = () => {
+    // Use the navigation function passed from parent to go to home tab
+    if (onNavigateHome) {
+      onNavigateHome();
+    } else {
+      // Fallback to landing page if no navigation function provided
+      window.location.href = '/';
     }
   };
 
@@ -16,9 +34,12 @@ export const MobileHeader = () => {
       >
         <Menu size={20} />
       </button>
-      <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+      <button
+        onClick={goToHomePage}
+        className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent hover:from-blue-300 hover:to-purple-300 transition-all duration-200 cursor-pointer"
+      >
         AdaptiveLearnAI
-      </h1>
+      </button>
       <div className="w-8" /> {/* Spacer for center alignment */}
     </div>
   );

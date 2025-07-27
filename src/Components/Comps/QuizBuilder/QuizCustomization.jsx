@@ -13,6 +13,8 @@ import {
   Download,
   FileText
 } from 'lucide-react';
+import { quizgenerateapi } from '../../apiclient/QuizGeneratorapi';
+import { FileUpload } from '../../apiclient/Filesapi';
 
 export const QuizCustomization = ({ 
   selectedDocument, 
@@ -62,7 +64,7 @@ export const QuizCustomization = ({
       return newConfig;
     });
   };
-
+ 
   return (
     <div className="space-y-8">
       {/* Header with Breadcrumb */}

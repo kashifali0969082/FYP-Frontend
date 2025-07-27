@@ -65,13 +65,13 @@ const LeaderboardPreview = ({
 
   return (
     <div className="relative group">
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl md:rounded-2xl blur-lg opacity-20"></div>
-      <div className="relative bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl md:rounded-2xl p-4 md:p-6">
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg md:rounded-xl xl:rounded-2xl blur-lg opacity-20"></div>
+      <div className="relative bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg md:rounded-xl xl:rounded-2xl p-3 md:p-4 xl:p-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg md:rounded-xl flex items-center justify-center">
-              <Trophy size={isMobile ? 20 : 24} className="text-white" />
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <div className="flex items-center space-x-2 md:space-x-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 xl:w-12 xl:h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg xl:rounded-xl flex items-center justify-center">
+              <Trophy size={isMobile ? 16 : 20} className="text-white" />
             </div>
             <div>
               <h3 className="font-semibold text-white text-sm md:text-base">Top Streaks</h3>
@@ -82,22 +82,22 @@ const LeaderboardPreview = ({
             onClick={handleViewFull}
             className="text-purple-400 hover:text-purple-300 transition-colors"
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={16} />
           </button>
         </div>
 
         {/* Top 3 Users */}
-        <div className="space-y-3">
+        <div className="space-y-2 md:space-y-3">
           {leaderboardData.top_users.slice(0, 3).map((user, index) => (
             <div
               key={index}
-              className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${
+              className={`flex items-center justify-between p-2 md:p-3 rounded-lg transition-all duration-200 ${
                 user.is_you
                   ? 'bg-blue-500/20 border border-blue-500/30'
                   : 'bg-slate-700/30 hover:bg-slate-700/50'
               }`}
             >
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 md:space-x-3">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                   user.rank === 1 ? 'bg-yellow-400/20' :
                   user.rank === 2 ? 'bg-slate-300/20' :
@@ -124,19 +124,19 @@ const LeaderboardPreview = ({
 
         {/* Your Position (if not in top 3) */}
         {leaderboardData.your_position?.show_gap && (
-          <div className="mt-4 pt-3 border-t border-slate-600/50">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-500/20">
+          <div className="mt-3 md:mt-4 pt-3 border-t border-slate-600/50">
+            <div className="flex items-center justify-between p-2 md:p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+              <div className="flex items-center space-x-2 md:space-x-3">
+                <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg flex items-center justify-center bg-blue-500/20">
                   <span className="text-xs font-bold text-blue-400">#{leaderboardData.your_position.rank}</span>
                 </div>
                 <div>
-                  <p className="font-medium text-sm text-blue-300">Your Position</p>
+                  <p className="font-medium text-xs md:text-sm text-blue-300">Your Position</p>
                 </div>
               </div>
               <div className="flex items-center space-x-1">
-                <Flame className={`w-4 h-4 ${getStreakColor(leaderboardData.your_position.current_streak)}`} />
-                <span className={`font-bold text-sm ${getStreakColor(leaderboardData.your_position.current_streak)}`}>
+                <Flame className={`w-3 h-3 md:w-4 md:h-4 ${getStreakColor(leaderboardData.your_position.current_streak)}`} />
+                <span className={`font-bold text-xs md:text-sm ${getStreakColor(leaderboardData.your_position.current_streak)}`}>
                   {leaderboardData.your_position.current_streak}
                 </span>
               </div>
@@ -147,9 +147,9 @@ const LeaderboardPreview = ({
         {/* View Full Button */}
         <button
           onClick={handleViewFull}
-          className="w-full mt-4 py-2 px-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-medium rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 flex items-center justify-center space-x-2"
+          className="w-full mt-3 md:mt-4 py-2 px-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs md:text-sm font-medium rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 flex items-center justify-center space-x-2"
         >
-          <Trophy size={16} />
+          <Trophy size={14} />
           <span>View Full Leaderboard</span>
         </button>
       </div>

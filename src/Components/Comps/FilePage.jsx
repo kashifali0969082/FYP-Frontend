@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 import {
   Search,
   Filter,
@@ -118,80 +121,69 @@ export const FilesPage = ({
     ];
     
     try {
-      // Simulate progressive loading
-      for (let i = 0; i < loadingStages.length; i++) {
-        setLoadingStage(loadingStages[i]);
-        await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400));
+      // Progressive loading simulation
+      let stageIndex = 0;
+      const stageInterval = setInterval(() => {
+        if (stageIndex < loadingStages.length) {
+          setLoadingStage(loadingStages[stageIndex]);
+          stageIndex++;
+        }
+      }, 600);
+      
+      // Make actual API call to the backend
+      const response = await fetch("https://api.adaptivelearnai.xyz/library/search", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          // Add auth header if needed
+          ...(document.cookie.includes('access_token') && {
+            'Authorization': `Bearer ${document.cookie.split('access_token=')[1]?.split(';')[0]}`
+          })
+        },
+        body: JSON.stringify({ 
+          query: aiQuery.trim()
+        }),
+      });
+      
+      clearInterval(stageInterval);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      // TODO: Replace with actual API endpoint
-      const useDummyResponse = true; // Set to false when backend is ready
+      const data = await response.json();
+      console.log("🔍 Library search response:", data);
       
-      if (useDummyResponse) {
-        // Dummy response for demo
-        const dummyResponses = {
-          "machine learning": {
-            answer: "Machine Learning is a subset of artificial intelligence that enables computers to learn and make decisions from data without being explicitly programmed. It involves algorithms that can identify patterns, make predictions, and improve their performance over time through experience. The main types include supervised learning (learning from labeled data), unsupervised learning (finding patterns in unlabeled data), and reinforcement learning (learning through trial and error).",
-            sources: ["Introduction to ML", "AI Fundamentals", "Data Science Handbook"],
-            references: [
-              { id: "doc_001", title: "Introduction to ML", topic: "Supervised Learning", type: "Book" },
-              { id: "doc_002", title: "AI Fundamentals", topic: "Neural Networks", type: "Notes" },
-              { id: "doc_003", title: "Data Science Handbook", topic: "Algorithm Types", type: "Presentation" }
-            ]
-          },
-          "algorithms": {
-            answer: "Algorithms are step-by-step procedures or formulas for solving problems. In computer science, they're fundamental building blocks that define how to process data efficiently. Common algorithm types include sorting (like quicksort, mergesort), searching (binary search, linear search), and graph algorithms (Dijkstra's, BFS, DFS). The efficiency of algorithms is measured using Big O notation, which describes how runtime or space requirements grow with input size.",
-            sources: ["Algorithm Design Manual", "Computer Science Fundamentals", "Data Structures Guide"],
-            references: [
-              { id: "doc_004", title: "Algorithm Design Manual", topic: "Sorting Algorithms", type: "Book" },
-              { id: "doc_005", title: "Computer Science Fundamentals", topic: "Big O Notation", type: "Notes" },
-              { id: "doc_006", title: "Data Structures Guide", topic: "Graph Algorithms", type: "Presentation" }
-            ]
-          }
-        };
-        
-        // Find matching dummy response
-        const queryLower = aiQuery.toLowerCase();
-        const matchedResponse = Object.keys(dummyResponses).find(key => 
-          queryLower.includes(key)
-        );
-        
-        const response = matchedResponse 
-          ? dummyResponses[matchedResponse]
-          : {
-              answer: `I found some relevant information about "${aiQuery}" in your library. Based on your documents, this topic appears across multiple sources with various perspectives and detailed explanations. The content suggests comprehensive coverage of the subject matter with practical examples and theoretical foundations.`,
-              sources: ["Study Notes Collection", "Research Papers", "Course Materials"],
-              references: [
-                { id: "doc_007", title: "Study Notes Collection", topic: "General Overview", type: "Notes" },
-                { id: "doc_008", title: "Research Papers", topic: "Advanced Topics", type: "Book" },
-                { id: "doc_009", title: "Course Materials", topic: "Practical Examples", type: "Presentation" }
-              ]
-            };
-        
-        setAIAnswer(response.answer);
-        setAISources(response.sources);
-        setAIReferences(response.references);
-      } else {
-        // Real API call
-        const res = await fetch("/api/global-qa", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: aiQuery }),
-        });
-        const data = await res.json();
-        setAIAnswer(data.answer);
-        setAISources(data.sources || []);
-        setAIReferences(data.references || []);
-      }
+      // Update state with API response
+      setAIAnswer(data.answer || "No answer found for your query.");
+      setAISources(data.sources || []);
+      setAIReferences(data.references || []);
       
     } catch (err) {
-      console.error("Failed to fetch AI response:", err);
-      setAIAnswer("Sorry, I couldn't process your query at the moment. Please check your connection and try again.");
+      console.error("❌ Library search failed:", err);
+      
+      // Enhanced error handling with specific error messages
+      let errorMessage = "Sorry, I couldn't process your query at the moment. ";
+      
+      if (err.message.includes('Failed to fetch') || err.message.includes('Network Error')) {
+        errorMessage += "Please check your internet connection and try again.";
+      } else if (err.message.includes('401')) {
+        errorMessage += "Authentication failed. Please log in again.";
+      } else if (err.message.includes('404')) {
+        errorMessage += "Library search service is not available.";
+      } else if (err.message.includes('500')) {
+        errorMessage += "Server error occurred. Please try again later.";
+      } else {
+        errorMessage += "Please try again or contact support if the issue persists.";
+      }
+      
+      setAIAnswer(errorMessage);
       setAISources([]);
       setAIReferences([]);
+    } finally {
+      setIsAILoading(false);
+      setLoadingStage("");
     }
-    setIsAILoading(false);
-    setLoadingStage("");
   };
 
   const handleMicClick = async () => {
@@ -376,13 +368,13 @@ export const FilesPage = ({
   };
 
   const GridView = ({ files }) => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
       {files.map((file) => {
         const IconComponent = file.icon;
         return (
           <div
             key={file.id}
-            className="group relative bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 hover:bg-slate-800/70 transition-all duration-300 border border-slate-700/50"
+            className="group relative bg-slate-800/50 backdrop-blur-sm rounded-lg md:rounded-xl p-3 md:p-4 hover:bg-slate-800/70 transition-all duration-300 border border-slate-700/50 overflow-hidden"
           >
             {/* Selection checkbox */}
             <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -410,8 +402,12 @@ export const FilesPage = ({
 
             {/* File info */}
             <div className="text-center mb-4">
-              <h3 className="font-medium text-white text-sm truncate mb-1">
-                {file.title || file.name}
+              <h3 className="font-medium text-white text-xs md:text-sm truncate mb-1 px-2">
+                {(() => {
+                  const fileName = file.title || file.name;
+                  const maxLength = isMobile ? 15 : 25;
+                  return fileName.length > maxLength ? `${fileName.substring(0, maxLength)}...` : fileName;
+                })()}
               </h3>
               <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
                 <span className="flex items-center gap-1">
@@ -435,14 +431,14 @@ export const FilesPage = ({
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-3 rounded-lg text-xs font-medium transition-all">
+            <div className="flex gap-1 md:gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-1.5 md:py-2 px-2 md:px-3 rounded-lg text-xs font-medium transition-all">
                 <Play className="w-3 h-3 inline mr-1" />
-                Study
+                <span className="hidden sm:inline">Study</span>
               </button>
               <button 
                 onClick={() => handleDeleteClick(file)}
-                className="p-2 bg-red-600/50 hover:bg-red-600 text-red-300 hover:text-white rounded-lg transition-colors"
+                className="p-1.5 md:p-2 bg-red-600/50 hover:bg-red-600 text-red-300 hover:text-white rounded-lg transition-colors flex-shrink-0"
               >
                 <Trash2 className="w-3 h-3" />
               </button>
@@ -454,17 +450,17 @@ export const FilesPage = ({
   );
 
   const ListView = ({ files }) => (
-    <div className="space-y-3">
+    <div className="space-y-2 md:space-y-3">
       {files.map((file) => {
         const IconComponent = file.icon;
         return (
           <div
             key={file.id}
-            className="group bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 hover:bg-slate-800/70 transition-all duration-300 border border-slate-700/50"
+            className="group bg-slate-800/50 backdrop-blur-sm rounded-lg md:rounded-xl p-3 md:p-4 hover:bg-slate-800/70 transition-all duration-300 border border-slate-700/50 overflow-hidden"
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4 min-w-0">
               {/* Selection checkbox */}
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                 <input
                   type="checkbox"
                   checked={selectedFiles.includes(file.id)}
@@ -474,26 +470,30 @@ export const FilesPage = ({
               </div>
 
               {/* File icon */}
-              <div className={`w-12 h-12 ${file.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                <IconComponent className="w-6 h-6 text-white" />
+              <div className={`w-10 h-10 md:w-12 md:h-12 ${file.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                <IconComponent className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
 
               {/* File info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-medium text-white text-sm truncate">
-                    {file.title || file.name}
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="flex items-center gap-2 mb-1 min-w-0">
+                  <h3 className="font-medium text-white text-xs md:text-sm truncate max-w-[150px] md:max-w-none">
+                    {(() => {
+                      const fileName = file.title || file.name;
+                      const maxLength = isMobile ? 20 : 35;
+                      return fileName.length > maxLength ? `${fileName.substring(0, maxLength)}...` : fileName;
+                    })()}
                   </h3>
                   {file.isFavorite && (
                     <Star className="w-4 h-4 text-yellow-400 fill-current flex-shrink-0" />
                   )}
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-gray-400">
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 truncate">
                     <Calendar className="w-3 h-3 flex-shrink-0" />
                     {new Date(file.uploadDate).toLocaleDateString()}
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 truncate">
                     <HardDrive className="w-3 h-3 flex-shrink-0" />
                     {file.size || "Unknown size"}
                   </span>
@@ -516,14 +516,14 @@ export const FilesPage = ({
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2 px-3 rounded-lg text-xs font-medium transition-all">
+              <div className="flex gap-1 md:gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-1.5 md:py-2 px-2 md:px-3 rounded-lg text-xs font-medium transition-all">
                   <Play className="w-3 h-3 inline mr-1" />
-                  Study
+                  <span className="hidden sm:inline">Study</span>
                 </button>
                 <button 
                   onClick={() => handleDeleteClick(file)}
-                  className="p-2 bg-red-600/50 hover:bg-red-600 text-red-300 hover:text-white rounded-lg transition-colors"
+                  className="p-1.5 md:p-2 bg-red-600/50 hover:bg-red-600 text-red-300 hover:text-white rounded-lg transition-colors"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
@@ -547,13 +547,13 @@ export const FilesPage = ({
   );
 
   return (
-    <div className="min-h-screen p-4 sm:p-6">
+    <div className="min-h-screen p-3 md:p-4 xl:p-6">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 md:mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 md:mb-4 gap-3 sm:gap-0">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Library</h1>
-            <p className="text-slate-400">
+            <h1 className="text-xl md:text-2xl xl:text-3xl font-bold text-white mb-1 md:mb-2">Library</h1>
+            <p className="text-sm md:text-base text-slate-400">
               Manage and organize your learning materials ({filteredFiles.length} files)
             </p>
           </div>
@@ -561,15 +561,19 @@ export const FilesPage = ({
             {/* AI Query toggle */}
             <button
               onClick={() => setShowAIQuery(!showAIQuery)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+              className={`relative flex items-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-lg transition-all duration-300 overflow-hidden text-sm md:text-base ${
                 showAIQuery 
-                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white" 
-                  : "bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/50"
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25" 
+                  : "bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/50 hover:shadow-lg hover:shadow-blue-500/15 hover:border-blue-500/30"
               }`}
               title="Ask My Library"
             >
-              <Brain className="w-4 h-4" />
-              <span className="hidden sm:inline text-sm font-medium">Ask My Library</span>
+              {/* Animated gradient overlay when not active */}
+              {!showAIQuery && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent -translate-x-full animate-[shimmer_2s_ease-in-out_infinite] pointer-events-none"></div>
+              )}
+              <Brain className="w-4 h-4 md:w-5 md:h-5 relative z-10" />
+              <span className="hidden sm:inline font-medium relative z-10">Ask My Library</span>
             </button>
             
             {/* View toggle */}
@@ -638,17 +642,17 @@ export const FilesPage = ({
               <button
                 onClick={handleAISubmit}
                 disabled={!aiQuery.trim() || isAILoading}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-slate-600 disabled:to-slate-600 disabled:opacity-50 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+                className="px-3 md:px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-slate-600 disabled:to-slate-600 disabled:opacity-50 text-white rounded-lg font-medium transition-all flex items-center gap-2"
               >
                 {isAILoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Ask
+                    <span className="hidden md:inline">Ask</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    Ask
+                    <span className="hidden md:inline">Ask</span>
                   </>
                 )}
               </button>
@@ -656,61 +660,175 @@ export const FilesPage = ({
 
             {/* AI Response */}
             {(aiAnswer || isAILoading) && (
-              <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/30">
+              <div className="bg-slate-800/30 rounded-lg p-3 md:p-4 border border-slate-700/30 overflow-hidden">
                 {isAILoading ? (
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 text-slate-400">
                       <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
-                      <span className="font-medium">{loadingStage || "Processing..."}</span>
+                      <span className="font-medium text-xs md:text-sm truncate">{loadingStage || "Processing..."}</span>
                     </div>
                     <div className="w-full bg-slate-700/30 rounded-full h-1">
                       <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-1 rounded-full animate-pulse" style={{width: '60%'}}></div>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="text-white text-sm leading-relaxed">
-                      {aiAnswer}
+                  <div className="space-y-4 overflow-hidden">
+                    <div className="text-white text-xs md:text-sm leading-relaxed prose prose-invert max-w-none overflow-hidden">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeSanitize]}
+                        components={{
+                          // Custom styling for markdown elements
+                          h1: ({children}) => <h1 className="text-2xl font-bold text-white mt-6 mb-4">{children}</h1>,
+                          h2: ({children}) => <h2 className="text-xl font-semibold text-white mt-5 mb-3">{children}</h2>,
+                          h3: ({children}) => <h3 className="text-lg font-semibold text-white mt-4 mb-2">{children}</h3>,
+                          p: ({children}) => {
+                            // Simple document name highlighting
+                            const highlightSources = (text) => {
+                              if (typeof text !== 'string') return text;
+                              
+                              // Simple patterns for document references
+                              const patterns = [
+                                /("([^"]+\.(?:pdf|pptx?|docx?|txt))")/gi,
+                                /(Lecture\s+[\d\-]+[\w\-]*)/gi,
+                                /(Introduction[_\s]to[_\s][\w\-]+)/gi
+                              ];
+                              
+                              let highlightedText = text;
+                              patterns.forEach(pattern => {
+                                highlightedText = highlightedText.replace(pattern, (match) => {
+                                  return `<span class="font-bold italic text-blue-300">${match}</span>`;
+                                });
+                              });
+                              
+                              return highlightedText;
+                            };
+                            
+                            if (typeof children === 'string') {
+                              return (
+                                <p 
+                                  className="text-slate-200 mb-3 leading-relaxed break-words" 
+                                  dangerouslySetInnerHTML={{ __html: highlightSources(children) }}
+                                />
+                              );
+                            }
+                            
+                            return <p className="text-slate-200 mb-3 leading-relaxed break-words">{children}</p>;
+                          },
+                          strong: ({children}) => <strong className="font-semibold text-blue-200">{children}</strong>,
+                          em: ({children}) => <em className="italic text-blue-100">{children}</em>,
+                          code: ({inline, children, className, ...props}) => 
+                            inline ? (
+                              <code className="bg-slate-800/70 text-green-300 px-1.5 py-0.5 rounded text-xs md:text-sm font-mono break-all">
+                                {children}
+                              </code>
+                            ) : (
+                              <code 
+                                className="bg-slate-900/50 text-green-300 text-xs md:text-sm font-mono block p-3 md:p-4 rounded-lg border border-slate-700/50 my-3 overflow-x-auto whitespace-pre max-w-full"
+                                {...props}
+                              >
+                                {children}
+                              </code>
+                            ),
+                          pre: ({children}) => children,
+                          ul: ({children}) => <ul className="list-disc list-inside space-y-1 my-2 text-slate-200 break-words">{children}</ul>,
+                          ol: ({children}) => <ol className="list-decimal list-inside space-y-1 my-2 text-slate-200 break-words">{children}</ol>,
+                          li: ({children}) => <li className="mb-1 break-words">{children}</li>,
+                          a: ({href, children}) => (
+                            <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline break-all">
+                              {children}
+                            </a>
+                          ),
+                          blockquote: ({children}) => (
+                            <blockquote className="border-l-4 border-blue-500/50 pl-4 italic text-slate-300 my-3 break-words">{children}</blockquote>
+                          ),
+                          table: ({children}) => (
+                            <div className="overflow-x-auto my-3 max-w-full">
+                              <table className="min-w-full border border-slate-700/50 rounded-lg text-xs md:text-sm">{children}</table>
+                            </div>
+                          ),
+                          th: ({children}) => (
+                            <th className="border border-slate-700/50 px-2 md:px-3 py-2 bg-slate-800/50 text-white font-semibold text-left text-xs md:text-sm">{children}</th>
+                          ),
+                          td: ({children}) => (
+                            <td className="border border-slate-700/50 px-2 md:px-3 py-2 text-slate-200 text-xs md:text-sm break-words">{children}</td>
+                          ),
+                        }}
+                      >
+                        {aiAnswer}
+                      </ReactMarkdown>
                     </div>
                     
                     {/* Document References with clickable links */}
                     {aiReferences.length > 0 && (
-                      <div className="space-y-2">
-                        <span className="font-medium text-slate-300 text-sm">Referenced Documents:</span>
-                        <div className="flex flex-wrap gap-2">
-                          {aiReferences.map((ref, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => handleDocumentReference(ref)}
-                              className="group inline-flex items-center gap-2 px-3 py-2 bg-blue-900/30 hover:bg-blue-900/50 border border-blue-500/30 hover:border-blue-400/50 rounded-lg text-blue-300 hover:text-blue-200 transition-all text-xs cursor-pointer"
-                            >
-                              <div className="flex items-center gap-1">
-                                {ref.type === 'Book' && <BookOpen className="w-3 h-3" />}
-                                {ref.type === 'Notes' && <StickyNote className="w-3 h-3" />}
-                                {ref.type === 'Presentation' && <Presentation className="w-3 h-3" />}
-                                <span className="font-medium">{ref.title}</span>
-                              </div>
-                              <div className="text-blue-400/70">
-                                • {ref.topic}
-                              </div>
-                              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </button>
-                          ))}
+                      <div className="space-y-2 overflow-hidden">
+                        <span className="font-medium text-slate-300 text-xs md:text-sm">Referenced Documents:</span>
+                        <div className="flex flex-wrap gap-1 md:gap-2 overflow-hidden">
+                          {aiReferences.map((ref, idx) => {
+                            // Use same colors as file type pills
+                            const getRefTypeStyles = (type) => {
+                              switch (type) {
+                                case "Book":
+                                  return "bg-blue-500/20 hover:bg-blue-500/30 border-blue-400/30 hover:border-blue-400/50 text-blue-400 hover:text-blue-300";
+                                case "Presentation":
+                                  return "bg-green-500/20 hover:bg-green-500/30 border-green-400/30 hover:border-green-400/50 text-green-400 hover:text-green-300";
+                                case "Notes":
+                                  return "bg-purple-500/20 hover:bg-purple-500/30 border-purple-400/30 hover:border-purple-400/50 text-purple-400 hover:text-purple-300";
+                                default:
+                                  return "bg-gray-500/20 hover:bg-gray-500/30 border-gray-400/30 hover:border-gray-400/50 text-gray-400 hover:text-gray-300";
+                              }
+                            };
+                            
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => handleDocumentReference(ref)}
+                                className={`group inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 border rounded-lg transition-all text-xs cursor-pointer min-w-0 max-w-full ${getRefTypeStyles(ref.type)}`}
+                              >
+                                <div className="flex items-center gap-1 min-w-0 flex-shrink">
+                                  {ref.type === 'Book' && <BookOpen className="w-3 h-3 flex-shrink-0" />}
+                                  {ref.type === 'Notes' && <StickyNote className="w-3 h-3 flex-shrink-0" />}
+                                  {ref.type === 'Presentation' && <Presentation className="w-3 h-3 flex-shrink-0" />}
+                                  <span className="font-medium truncate min-w-0">
+                                    {(() => {
+                                      const title = ref.title;
+                                      const maxLength = isMobile ? 15 : 25;
+                                      return title.length > maxLength ? `${title.substring(0, maxLength)}...` : title;
+                                    })()}
+                                  </span>
+                                </div>
+                                <div className="opacity-70 truncate min-w-0 hidden sm:block">
+                                  • {(() => {
+                                    const topic = ref.topic;
+                                    const maxLength = isMobile ? 10 : 20;
+                                    return topic.length > maxLength ? `${topic.substring(0, maxLength)}...` : topic;
+                                  })()}
+                                </div>
+                                <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 hidden md:block" />
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
                     
                     {/* Legacy sources (if no references) */}
                     {aiSources.length > 0 && aiReferences.length === 0 && (
-                      <div className="text-xs text-slate-400">
+                      <div className="text-xs text-slate-400 overflow-hidden">
                         <span className="font-medium text-slate-300">Sources: </span>
-                        <div className="flex flex-wrap gap-2 mt-1">
+                        <div className="flex flex-wrap gap-1 md:gap-2 mt-1 overflow-hidden">
                           {aiSources.map((source, idx) => (
                             <span
                               key={idx}
-                              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-900/30 border border-blue-500/30 rounded-full text-blue-300"
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-900/30 border border-blue-500/30 rounded-full text-blue-300 text-xs max-w-full min-w-0"
                             >
-                              📄 {source}
+                              <span className="flex-shrink-0">📄</span>
+                              <span className="truncate min-w-0">
+                                {(() => {
+                                  const maxLength = isMobile ? 20 : 30;
+                                  return source.length > maxLength ? `${source.substring(0, maxLength)}...` : source;
+                                })()}
+                              </span>
                             </span>
                           ))}
                         </div>
@@ -897,24 +1015,52 @@ export const FilesPage = ({
 
       {/* Bulk Delete Confirmation Modal */}
       {isBulkDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg">
-            <p className="mb-4">Are you sure you want to delete {selectedFiles.length} selected file{selectedFiles.length !== 1 ? 's' : ''}?</p>
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={cancelBulkDelete}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                disabled={isBulkDeleting}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmBulkDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                disabled={isBulkDeleting}
-              >
-                {isBulkDeleting ? "Deleting..." : "Delete"}
-              </button>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-xl md:rounded-2xl p-6 md:p-8 w-full max-w-md mx-4">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-xl flex items-center justify-center">
+                <Trash2 size={32} className="text-red-400" />
+              </div>
+              
+              <h3 className="text-lg md:text-xl font-semibold text-white mb-2">
+                Delete Files?
+              </h3>
+              
+              <p className="text-slate-300 mb-2">
+                Are you sure you want to delete <span className="font-medium text-white">{selectedFiles.length} selected file{selectedFiles.length !== 1 ? 's' : ''}</span>?
+              </p>
+              
+              <p className="text-sm text-red-400 mb-6">
+                This will permanently delete the selected files and all associated data including study progress, MCQs, and notes. This action cannot be undone.
+              </p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={cancelBulkDelete}
+                  disabled={isBulkDeleting}
+                  className={`flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors ${
+                    isBulkDeleting ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBulkDelete}
+                  disabled={isBulkDeleting}
+                  className={`flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                    isBulkDeleting ? "opacity-75 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {isBulkDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    "Delete"
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
