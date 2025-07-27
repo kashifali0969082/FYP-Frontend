@@ -64,7 +64,7 @@ export const QuizCustomization = ({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-h-[80vh] overflow-y-auto px-2 md:px-0" style={{scrollbarWidth: 'thin'}}>
       {/* Header with Breadcrumb */}
       <div className="flex items-center justify-between">
         <div>
