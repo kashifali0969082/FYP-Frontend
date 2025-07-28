@@ -153,7 +153,7 @@ setPageInput((Number(pageInput) - 1).toString());
   const goToNextPage = () => {
     setPageNumber((prev) => Math.min(prev + 1, numPages));
     lastPageNumber()
-    setPageInput((Number(pageInput)+ 1).toString());
+    setPageInput((Number(pageInput)+git 1).toString());
 
   };
 
