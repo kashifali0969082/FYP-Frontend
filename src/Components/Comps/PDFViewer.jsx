@@ -1,3 +1,4 @@
+import { getAuthToken } from "../../utils/auth";
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   ChevronLeft,
@@ -66,6 +67,20 @@ const availableTools = [
       "text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950",
   },
 ];
+// If you use a custom API client, import it here
+// import { apiclient } from "../apiclient/Apis";
+
+// Dynamic token getter for API calls
+const getHeaders = () => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication token not available");
+  }
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+};
 
 export const PDFViewer = ({
   currentPage,
@@ -104,19 +119,15 @@ const [pageInput, setPageInput] = useState((currentPage ?? 1).toString());
     try {
       console.log("api is called", id, type);
       let lower = type.toLowerCase();
-
       const response = await axios.get(
         `https://api.adaptivelearnai.xyz/study-mode/documents/${id}/stream`,
         {
-          headers: {
-            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMGRjMjAyYS1jNDg3LTQyOTItOTJkYi05ZTU0MGUzOTdlN2IiLCJlbWFpbCI6Imthc2hpZmFsaTA5NjkwODJAZ21haWwuY29tIiwibmFtZSI6Ikthc2hpZiBBbGkiLCJwcm9maWxlX3BpYyI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0tZQWRWNUZZYnNKZnFWZkNnd0dwN3ZUVTlKdENOTUtxaHQ3YnFEbVM4ZGF6enc2SkdaPXM5Ni1jIiwiZXhwIjoxNzU0MTU2NDc1fQ.pJmDnXmqXhSNeqJ9AWwfVfQ7rDO5KfrgrqKrHd_KvWg`,
-          },
+          headers: getHeaders(),
           responseType: "blob",
           params: { document_type: lower },
         }
       );
       console.log("response is", response.data);
-
       const blobUrl = URL.createObjectURL(response.data);
       setPdfUrl(blobUrl);
     } catch (error) {
@@ -133,12 +144,9 @@ const [pageInput, setPageInput] = useState((currentPage ?? 1).toString());
           document_type: lower,
           page_number: pageNumber,
         },
-         {
-      headers: {
-        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMGRjMjAyYS1jNDg3LTQyOTItOTJkYi05ZTU0MGUzOTdlN2IiLCJlbWFpbCI6Imthc2hpZmFsaTA5NjkwODJAZ21haWwuY29tIiwibmFtZSI6Ikthc2hpZiBBbGkiLCJwcm9maWxlX3BpYyI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0tZQWRWNUZZYnNKZnFWZkNnd0dwN3ZUVTlKdENOTUtxaHQ3YnFEbVM4ZGF6enc2SkdaPXM5Ni1jIiwiZXhwIjoxNzU0MTU2NDc1fQ.pJmDnXmqXhSNeqJ9AWwfVfQ7rDO5KfrgrqKrHd_KvWg `, // replace apikey with your actual token
-        "Content-Type": "application/json",
-      },
-    }
+        {
+          headers: getHeaders(),
+        }
       );
     } catch (error) {
       console.log("error while getting the api ", error);
