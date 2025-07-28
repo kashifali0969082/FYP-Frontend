@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-import { url } from "../export";
-import invoke from "./Api";
-=======
 import { apiclient } from "../Components/apiclient/Apis";
 import { getAuthToken } from "../utils/auth";
->>>>>>> 4d397b47d1beb52580961f1f7da3a1d2b1bae661
 import QueryString from "qs";
 
 // Dynamic token getter for API calls
@@ -51,12 +46,10 @@ export const StreamDocument = async (document_id, document_type) => {
 
   const query = QueryString.stringify({ document_type: document_type.toLowerCase() });
 
-  const data = await invoke({
+  const data = await apiclient({
     url: `/study-mode/documents/${document_id}/stream?${query}`,
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${apikey}`,
-    },
+    headers: getHeaders(),
     responseType: "blob",
   });
 
@@ -74,11 +67,11 @@ export const UpdateLastPosition = async (
     page_number,
   };
 
-  const data = await invoke({
+  const data = await apiclient({
     url: `/study-mode/documents/${document_id}/last-position`,
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apikey}`,
+      ...getHeaders(),
       "Content-Type": "application/json",
     },
     data: payload,
