@@ -167,6 +167,11 @@ setPageInput((Number(pageInput) - 1).toString());
   };
 
   const goToPage = () => {
+    // Wait for PDF to be loaded before allowing navigation
+    if (!pdfUrl || numPages === 0) {
+      // PDF not loaded yet, don't show alert
+      return;
+    }
     const target = parseInt(pageInput, 10);
     if (!isNaN(target) && target >= 1 && target <= numPages) {
       setPageNumber(target);
@@ -176,7 +181,7 @@ setPageInput((Number(pageInput) - 1).toString());
   };
   useEffect(() => {
     goToPage();
-  }, [pageInput]);
+  }, [pageInput, pdfUrl, numPages]);
   const handleZoomIn = () => {
     setZoom(Math.min(zoom + 0.1, 2.0));
     toast.success(`Zoom: ${Math.round((zoom + 0.1) * 100)}%`);
