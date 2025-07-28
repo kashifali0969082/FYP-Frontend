@@ -76,13 +76,12 @@ const MessageComponent = ({ message, selectedModelInfo, onOpenToolMessage, onLoa
     try {
       await navigator.clipboard.writeText(content);
       setCopiedStates(prev => ({ ...prev, [messageId]: true }));
-      toast.success('Message copied!');
       
       setTimeout(() => {
         setCopiedStates(prev => ({ ...prev, [messageId]: false }));
       }, 2000);
     } catch (error) {
-      toast.error('Failed to copy message');
+      console.error('Failed to copy message:', error);
     }
   };
 
@@ -104,7 +103,7 @@ const MessageComponent = ({ message, selectedModelInfo, onOpenToolMessage, onLoa
       try {
         await onLoadToolResponse(message.toolResponse.toolResponseId, message.toolResponse.type);
       } catch (error) {
-        toast.error('Failed to load tool response');
+        console.error('Failed to load tool response:', error);
       } finally {
         setIsLoadingTool(false);
       }
@@ -233,7 +232,6 @@ export const ToolPanel = forwardRef(({
       const toolName = getToolDisplayName(toolType);
       const toolMessage = `Generate ${toolName.toLowerCase()} from the selected text: "${text}"`;
       handleSendMessage(toolMessage, true, { text, context });
-      toast.info(`Generating ${toolName.toLowerCase()} from selected text...`);
     }
   }));
 
@@ -242,7 +240,6 @@ export const ToolPanel = forwardRef(({
     // Set the context and input for the chat
     setContextText({ text: selectedText, context });
     setInputValue(`Please explain: "${selectedText}"`);
-    toast.success('Selected text added to chat!');
   };
 
   // Load tool response from API
@@ -378,7 +375,7 @@ export const ToolPanel = forwardRef(({
   const startRecording = async () => {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        toast.error('Audio recording not supported.');
+        console.error('Audio recording not supported.');
         return;
       }
 
@@ -392,19 +389,75 @@ export const ToolPanel = forwardRef(({
         }
       };
 
-      mediaRecorder.onstop = () => {
-        setTimeout(() => {
-          const transcribedText = "Can you explain the key concepts in this section?";
-          setInputValue(prev => prev + (prev ? '\n' : '') + transcribedText);
-          toast.success('Audio transcribed!');
-        }, 1000);
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: "audio/webm" });
+        const formData = new FormData();
+        formData.append("file", audioBlob, "query.webm");
+
+        console.log("🎤 Sending audio to transcribe endpoint:");
+        console.log("- Blob size:", audioBlob.size, "bytes");
+        console.log("- Blob type:", audioBlob.type);
+        console.log("- FormData:", formData);
+
+        try {
+          // Use the same domain as other API calls
+          const res = await fetch("https://api.adaptivelearnai.xyz/transcribe", {
+            method: "POST",
+            body: formData,
+          });
+          
+          console.log("📡 Transcribe response status:", res.status);
+          console.log("📡 Transcribe response headers:", res.headers);
+          
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          
+          const data = await res.json();
+          console.log("📝 Transcription response:", data);
+          const transcribedText = data.transcript || data.transcription || data.text || "";
+          
+          if (transcribedText.trim()) {
+            setInputValue(prev => prev + (prev ? '\n' : '') + transcribedText);
+          }
+        } catch (err) {
+          console.error("❌ Transcription failed:", err);
+          console.error("❌ Error details:", {
+            message: err.message,
+            stack: err.stack
+          });
+          
+          // Fallback: Try with relative path
+          try {
+            console.log("🔄 Trying fallback endpoint...");
+            const fallbackRes = await fetch("/transcribe", {
+              method: "POST",
+              body: formData,
+            });
+            
+            if (fallbackRes.ok) {
+              const fallbackData = await fallbackRes.json();
+              console.log("✅ Fallback transcription success:", fallbackData);
+              const transcribedText = fallbackData.transcript || fallbackData.transcription || fallbackData.text || "";
+              
+              if (transcribedText.trim()) {
+                setInputValue(prev => prev + (prev ? '\n' : '') + transcribedText);
+              }
+            } else {
+              throw new Error(`Fallback failed with status: ${fallbackRes.status}`);
+            }
+          } catch (fallbackErr) {
+            console.error("❌ Fallback also failed:", fallbackErr);
+            setInputValue(prev => prev + (prev ? ' ' : '') + "[Voice input failed - please type your query]");
+          }
+        }
         
+        // Clean up
         stream.getTracks().forEach(track => track.stop());
       };
 
       mediaRecorder.onerror = (event) => {
         console.error('MediaRecorder error:', event);
-        toast.error('Recording error occurred.');
         setIsRecording(false);
         if (recordingTimerRef.current) {
           clearInterval(recordingTimerRef.current);
@@ -420,10 +473,8 @@ export const ToolPanel = forwardRef(({
         setRecordingTime(prev => prev + 1);
       }, 1000);
 
-      toast.success('Recording started...');
     } catch (error) {
       console.error('Recording error:', error);
-      toast.error('Failed to start recording.');
     }
   };
 
@@ -437,8 +488,6 @@ export const ToolPanel = forwardRef(({
           clearInterval(recordingTimerRef.current);
           recordingTimerRef.current = null;
         }
-        
-        toast.info('Processing audio...');
       }
     } catch (error) {
       console.error('Stop recording error:', error);
@@ -685,7 +734,7 @@ export const ToolPanel = forwardRef(({
 
       // Do NOT auto-open tool overlay - just show in chat
     } catch (error) {
-      toast.error('Failed to send message');
+      console.error('Failed to send message:', error);
     } finally {
       setIsLoading(false);
     }
@@ -694,7 +743,6 @@ export const ToolPanel = forwardRef(({
   const handleToolUse = (tool) => {
     const toolMessage = `Generate a ${tool.name.toLowerCase()} based on the current content on page ${currentPage}`;
     handleSendMessage(toolMessage, true);
-    toast.info(`Generating ${tool.name.toLowerCase()}...`);
   };
 
   const handleOpenToolMessage = (toolResponse) => {
@@ -857,7 +905,7 @@ export const ToolPanel = forwardRef(({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={contextText ? "Ask about the selected text..." : "Ask a question..."}
-            className="resize-none text-xs"
+            className="resize-none text-xs bg-slate-100 text-slate-800 placeholder:text-slate-500 border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"
             rows={2}
             onKeyDown={handleKeyDown}
           />
