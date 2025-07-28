@@ -43,10 +43,10 @@ export default function StudyMode() {
   const [response, setresponse] = useState();
   // Apply dark theme by default
   useEffect(() => {
-    Stusyinit();
+    Studyinit();
   }, [id]);
 
-  const Stusyinit = async () => {
+  const Studyinit = async () => {
     try {
       let resp = await StudyModeInit({
         document_id: id,

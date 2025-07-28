@@ -40,13 +40,15 @@ export const HomePage = ({
   isLeaderboardLoading = false
 }) => {
     // No local state needed - use props from parent to eliminate duplicate API calls
-    
+  const navigate = useNavigate();
+
     // Streak update hook
     const { triggerStreakUpdate, isModalOpen, streakData: streakUpdateData, closeModal } = useStreakUpdate();
     
     const openInStudyMode = async (file) => {
-    console.log("📚 Opening file in study mode:", file);
-    
+    console.log("📚 Opening file in study mode:", file.type,file.id);
+        navigate('/StudyMode', { state: { type: file.type, id: file.id } });
+
     setCurrentPage("study");
     if (isMobile) {
       setIsMobileSidebarOpen(false);
@@ -266,7 +268,7 @@ console.log("Display name will be:", userData?.name || username)
                             className="flex items-center space-x-1 px-2 md:px-3 xl:px-4 py-1.5 md:py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/25"
                           >
                             <Play size={10} className="md:w-3 md:h-3" />
-                            <span className="text-xs xl:text-sm hidden sm:inline">Study</span>
+                            <span className="text-xs xl:text-sm  sm:inline">Study</span>
                           </button>
                           <button 
                             onClick={() => handleDeleteClick(file)}

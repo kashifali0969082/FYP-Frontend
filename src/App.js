@@ -5,17 +5,20 @@ import LandingPage from "./Components/Landing/Landing";
 import ErrorComponent from "./Components/Landing/ErrorComponent";
 import Dashboard from "./Components/TEsting/Testing";
 import StudyMode from "./Components/PdfViewer/viewer";
-import PdfRenderer from "./Components/Comps/pdftest";
 import LearningProfileForm from "./Components/TEsting/LearningProfileForm";
 import { AuthProvider } from "./Components/Security/Authcontext";
+import { pdfjs } from 'react-pdf';
 
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/pdf" element={<PdfRenderer />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/StudyMode" element={<StudyMode />} />
           <Route path="/form" element={<LearningProfileForm />} />
