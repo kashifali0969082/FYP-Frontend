@@ -181,9 +181,38 @@ const Dashboard = () => {
     setUploadProgress(100);
     setUploadSuccess(true);
     
+    // Log the full response to see what the backend actually returns
+    console.log("📤 Upload response:", response);
+    
+    // Extract document ID based on document type from the nested metadata
+    let documentId = null;
+    
+    if (fileData.document_type === 'book' && response.book_metadata) {
+      documentId = response.book_metadata.book_id;
+      console.log("📚 Found book ID:", documentId);
+    } else if ((fileData.document_type === 'slides' || fileData.document_type === 'presentation') && response.presentation_metadata) {
+      documentId = response.presentation_metadata.presentation_id;
+      console.log("🎯 Found presentation ID:", documentId);
+    } else if (fileData.document_type === 'notes' && response.note_metadata) {
+      documentId = response.note_metadata.note_id;
+      console.log("📝 Found note ID:", documentId);
+    }
+    
+    if (!documentId) {
+      console.error("❌ No document ID found in upload response:", response);
+      console.error("❌ Document type:", fileData.document_type);
+      alert("Upload failed: Server did not return a document ID. Please try again or contact support.");
+      setUploadStatus("Upload failed!");
+      setUploadProgress(0);
+      setUploadSuccess(false);
+      throw new Error("No document ID returned from server");
+    }
+    
+    console.log("✅ Using upload ID:", documentId);
+    
     // Manually add the uploaded file to the state instead of API call
     const newFile = {
-      id: response.file_id || Date.now().toString(), // Use response ID or timestamp as fallback
+      id: documentId,
       name: fileData.file.name,
       uploadDate: new Date().toISOString().split('T')[0],
       type: fileData.document_type === 'book' ? 'Book' : 
@@ -260,13 +289,36 @@ const Dashboard = () => {
       fileTypes.forEach(({ data, type, icon, fileType }) => {
         if (data && Array.isArray(data) && data.length > 0) {
           console.log(`📄 Processing ${data.length} ${fileType}(s)`);
+          console.log(`📄 Sample ${fileType} object:`, data[0]); // Log first item to see structure
           
           data.forEach((item, index) => {
-            const fileName = item.title || item.original_filename || item.file_name || 
-                           item.filename || item.name || `${type}_${item.id || index}`;
+            console.log(`📄 ${fileType} item ${index}:`, item); // Log each item to see ID field
+            
+            // All document types use 'id' field in list responses
+            const documentId = item.id;
+            
+            if (!documentId) {
+              console.error(`❌ No ID found for ${fileType}:`, item);
+              return; // Skip items without any ID
+            }
+            
+            console.log(`✅ Using ID for ${fileType}:`, documentId);
+            
+            // Extract filename based on document type
+            let fileName;
+            if (fileType === 'book') {
+              fileName = item.title || item.file_name;
+            } else if (fileType === 'presentation') {
+              fileName = item.original_filename;
+            } else if (fileType === 'notes') {
+              fileName = item.title;
+            }
+            
+            // Fallback filename if none found
+            fileName = fileName || `${type}_${index}`;
             
             transformedFiles.push({
-              id: item.id || `${fileType}_${index}`,
+              id: documentId,
               name: fileName,
               uploadDate: item.created_at ? item.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
               type,
@@ -497,11 +549,17 @@ const Dashboard = () => {
   };
 
   const openInStudyMode = (file) => {
-    setCurrentPage("study");
+    console.log("📚 Opening file in study mode:", file.type, file.id);
+    
+    // Log the file object to debug
+    console.log("📚 Full file object:", file);
+    
+    navigate('/StudyMode', { state: { type: file.type, id: file.id } });
+    
+    // Close mobile sidebar if open
     if (isMobile) {
       setIsMobileSidebarOpen(false);
     }
-    console.log("Opening file in study mode:", file);
   };
 
   const navigateToPage = (page) => {
@@ -807,34 +865,6 @@ useEffect(() => {
               <li>
                 <div className="relative group">
                   <button
-                    onClick={() => navigateToPage("study")}
-                    className={`flex items-center ${
-                      isSidebarCollapsed && !isMobile
-                        ? "justify-center"
-                        : "space-x-3"
-                    } px-3 md:px-4 py-3 rounded-lg md:rounded-xl w-full text-left transition-all duration-300 ${
-                      currentPage === "study"
-                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30"
-                        : "text-slate-300 hover:text-white hover:bg-slate-700/50"
-                    }`}
-                  >
-                    <BookOpen size={20} />
-                    {(!isSidebarCollapsed || isMobile) && (
-                      <span className="text-sm md:text-base">Study Mode</span>
-                    )}
-                  </button>
-                  {/* Tooltip for collapsed sidebar */}
-                  {isSidebarCollapsed && !isMobile && (
-                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-slate-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 border border-slate-600">
-                      <span className="text-sm font-medium">Study Mode</span>
-                      <div className="absolute right-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-slate-800"></div>
-                    </div>
-                  )}
-                </div>
-              </li>
-              <li>
-                <div className="relative group">
-                  <button
                     onClick={() => navigateToPage("quiz-builder")}
                     className={`flex items-center ${
                       isSidebarCollapsed && !isMobile
@@ -1061,6 +1091,8 @@ useEffect(() => {
                 // Pass leaderboard data to avoid duplicate API calls
                 leaderboardData={leaderboardData}
                 isLeaderboardLoading={isLeaderboardLoading}
+                // Pass openInStudyMode function with UUID validation
+                openInStudyMode={openInStudyMode}
               />
             )}
             {/* {currentPage === "study" && <StudyModePage isMobile={isMobile} />} */}

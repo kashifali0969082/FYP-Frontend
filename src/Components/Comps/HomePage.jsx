@@ -37,7 +37,9 @@ export const HomePage = ({
   streakData,
   isStreakLoading = false,
   leaderboardData,
-  isLeaderboardLoading = false
+  isLeaderboardLoading = false,
+  // Add openInStudyMode as a prop from parent to use the UUID-validated version
+  openInStudyMode
 }) => {
     // No local state needed - use props from parent to eliminate duplicate API calls
   const navigate = useNavigate();
@@ -45,85 +47,17 @@ export const HomePage = ({
     // Streak update hook
     const { triggerStreakUpdate, isModalOpen, streakData: streakUpdateData, closeModal } = useStreakUpdate();
     
-    const openInStudyMode = async (file) => {
-    console.log("📚 Opening file in study mode:", file.type,file.id);
-        navigate('/StudyMode', { state: { type: file.type, id: file.id } });
+    // Use openInStudyMode from parent props (with UUID validation) instead of local function
+    const handleStudyModeClick = async (file) => {
+      // Trigger streak update when opening file in study mode
+      await triggerStreakUpdate();
+      
+      // Use the parent's openInStudyMode function (has UUID validation)
+      if (openInStudyMode) {
+        openInStudyMode(file);
+      }
+    };
 
-    setCurrentPage("study");
-    if (isMobile) {
-      setIsMobileSidebarOpen(false);
-    }
-    
-    // Trigger streak update when opening file in study mode
-    await triggerStreakUpdate();
-  };
-  
-  //   APIs - ALL DATA NOW COMES FROM PARENT TO ELIMINATE DUPLICATE CALLS
-  // No useEffect needed - all data is passed as props from Testing.jsx
-  // This eliminates duplicate streakapi() and leaderboard API calls
-
-// User API function - REMOVED to eliminate duplicate API calls
-// User data is now extracted from JWT token instead of API calls for better performance
-// This eliminates any need for userapi() calls as all user info is in the token
-
-// const [username,setusername] = useState('')   // this method is for testing purpose 
-//  useEffect(() => {
-//   const hardcodedToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZmE2YWQ4Zi0zNTgyLTQzZmItOWEwYy02YTI5NzJkNGMyYWIiLCJlbWFpbCI6ImYyMDIxMDY1MTEyQGdtYWlsLmNvbSIsIm5hbWUiOiJIYXJyaXMgaWpheiIsInByb2ZpbGVfcGljIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSVBQaWRoUERlLVR2bDAzakx2THplT1N6OGgwSWE2X2gzR0lCU2pFeTVscGFqSFpnPXM5Ni1jIiwiZXhwIjoxNzUzNDc2MTM0fQ.KbkiS5vQn2zaSTUP_3cxLtkrzVkCePEhmicgYSfjH9k";
-
-//     if (hardcodedToken) {
-//       // Save token to cookie
-//       Cookies.set("access_token", hardcodedToken, { expires: 7 });
-
-//       try {
-//         const decoded = jwtDecode(hardcodedToken);
-//         setusername(decoded.name); // Use decoded.email if you want email
-//       } catch (err) {
-//         console.error("Token decode error:", err);
-//       }
-//     } else {
-//       // Already stored token in cookie
-//       const savedToken = Cookies.get("access_token");
-//       if (savedToken) {
-//         try {
-//           const decoded = jwtDecode(savedToken);
-//           setusername(decoded.name);
-//         } catch (err) {
-//           console.error("Decode error from cookie:", err);
-//         }
-//       }
-//     }
-//   }, []);
-
-  // useEffect(() => {
- 
-  //   const urlParams = new URLSearchParams(window.location.search);
-  //   const tokenFromURL = urlParams.get("token");
-
-  //   if (tokenFromURL) {
-  //     Cookies.set("access_token", tokenFromURL, { expires: 7 });
-
-  //     try {
-  //       const decoded = jwtDecode(tokenFromURL);
-  //       setusername(decoded.name); // or decoded.email
-  //     } catch (err) {
-  //       console.error("Token decode error:", err);
-  //     }
-
-    
-  //     window.history.replaceState({}, document.title, "/");  // optional
-  //   } else {
-     
-  //     const savedToken = Cookies.get("access_token");
-  //     if (savedToken) {
-  //       try {
-  //         const decoded = jwtDecode(savedToken);
-  //         setusername(decoded.name);
-  //       } catch (err) {
-  //         console.error("Decode error from cookie:", err);
-  //       }
-  //     }
-  //   }
-  // }, []);
 const {username} = useContext(AuthContext)
 console.log("username from context:", username)
 console.log("Current userData:", userData)
@@ -264,7 +198,7 @@ console.log("Display name will be:", userData?.name || username)
                         </div>
                         <div className="flex items-center space-x-1 md:space-x-2 xl:space-x-3 flex-shrink-0">
                           <button 
-                            onClick={() => openInStudyMode(file)}
+                            onClick={() => handleStudyModeClick(file)}
                             className="flex items-center space-x-1 px-2 md:px-3 xl:px-4 py-1.5 md:py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/25"
                           >
                             <Play size={10} className="md:w-3 md:h-3" />
