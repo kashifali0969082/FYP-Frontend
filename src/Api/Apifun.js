@@ -1,65 +1,40 @@
+<<<<<<< HEAD
 import { url } from "../export";
 import invoke from "./Api";
+=======
+import { apiclient } from "../Components/apiclient/Apis";
+import { getAuthToken } from "../utils/auth";
+>>>>>>> 4d397b47d1beb52580961f1f7da3a1d2b1bae661
 import QueryString from "qs";
-const apikey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMGRjMjAyYS1jNDg3LTQyOTItOTJkYi05ZTU0MGUzOTdlN2IiLCJlbWFpbCI6Imthc2hpZmFsaTA5NjkwODJAZ21haWwuY29tIiwibmFtZSI6Ikthc2hpZiBBbGkiLCJwcm9maWxlX3BpYyI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0tZQWRWNUZZYnNKZnFWZkNnd0dwN3ZUVTlKdENOTUtxaHQ3YnFEbVM4ZGF6enc2SkdaPXM5Ni1jIiwiZXhwIjoxNzU0MTU2NDc1fQ.pJmDnXmqXhSNeqJ9AWwfVfQ7rDO5KfrgrqKrHd_KvWg";
-export const ServerCheck = async () => {
-  const data = await invoke({
-    url: "/",
-    method: "GET",
-    headers: {
-      apikey,
-    },
-  });
-  return data;
-};
-export const GetAllBooks = async () => {
-  const data = await invoke({
-    url: "/file/books",
-    method: "GET",
 
-    headers: { Authorization: `Bearer ${apikey}` },
-  });
-  return data;
-};
-export const GetAllSlides = async () => {
-  const data = await invoke({
-    url: "/file/slides",
-    method: "GET",
-
-    headers: { Authorization: `Bearer ${apikey}` },
-  });
-  return data;
-};
-export const FileUpload = async (uploadedfile) => {
-  const data = await invoke({
-    url: "/file/upload",
-    method: "POST",
-
-    headers: { Authorization: `Bearer ${apikey}` },
-    data: uploadedfile,
-  });
-  return data;
+// Dynamic token getter for API calls
+const getHeaders = () => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication token not available");
+  }
+  return {
+    Authorization: `Bearer ${token}`,
+  };
 };
 
 export const deleteDocument = async (type, id) => {
-  const data = await invoke({
+  const data = await apiclient({
     url: `/file/delete/${type}/${id}`,
     method: "DELETE",
-    headers: { Authorization: `Bearer ${apikey}` },
+    headers: getHeaders(),
   });
   return data;
 };
 
-//study mode
-
+// Study mode init
 export const StudyModeInit = async (RrquiredData) => {
   const queryString = QueryString.stringify(RrquiredData);
 
-  const data = await invoke({
+  const data = await apiclient({
     url: `/study-mode/init?${queryString}`,
     method: "GET",
-    headers: { Authorization: `Bearer ${apikey}` },
+    headers: getHeaders(),
   });
 
   return data;
