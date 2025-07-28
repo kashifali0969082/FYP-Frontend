@@ -94,7 +94,8 @@ export const PDFViewer = ({
 }) => {
   const [zoom, setZoom] = useState(1.0);
   const [isDarkMode, setIsDarkMode] = useState(true);
-const [pageInput, setPageInput] = useState((currentPage ?? 1).toString());
+const safeCurrentPage = typeof currentPage === "number" && !isNaN(currentPage) ? currentPage : 1;
+const [pageInput, setPageInput] = useState(safeCurrentPage.toString());
   const [textSelection, setTextSelection] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [hoveredTool, setHoveredTool] = useState(null);
@@ -213,9 +214,10 @@ setPageInput((Number(pageInput) - 1).toString());
     }
   };
 
-  React.useEffect(() => {
-    setPageInput(currentPage.toString());
-  }, [currentPage]);
+React.useEffect(() => {
+  const safeCurrentPage = typeof currentPage === "number" && !isNaN(currentPage) ? currentPage : 1;
+  setPageInput(safeCurrentPage.toString());
+}, [currentPage]);
 
   // Handle text selection
   const handleTextSelection = useCallback(() => {
