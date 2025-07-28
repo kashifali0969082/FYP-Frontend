@@ -1,61 +1,115 @@
-import React, { useEffect, useRef, useState } from "react";
-import { GlobalWorkerOptions, getDocument, version } from "pdfjs-dist";
-import { StreamDocument } from "../../Api/Apifun";
-// Set the worker source for PDF.js using jsDelivr CDN (usually more reliable)
-GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`;
+import { useEffect, useState } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import axios from "axios";
+export const PdfViewer = () => {
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [numPages, setNumPages] = useState(0);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [inputPage, setInputPage] = useState("");
 
-const PdfRenderer = () => {
-  const canvasRef = useRef(null);
-  const [loading, setLoading] = useState(true);
+  const onDocumentLoadSuccess = ({ numPages }) => {
+    setNumPages(numPages);
+    setPageNumber(1);
+  };
+
+  const fetchPdf = async () => {
+    try {
+      const response = await axios.get(
+        "https://api.adaptivelearnai.xyz/study-mode/documents/44cf5b66-5e6b-4753-a9b2-f7de48e9de1b/stream",
+        {
+          headers: {
+            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMGRjMjAyYS1jNDg3LTQyOTItOTJkYi05ZTU0MGUzOTdlN2IiLCJlbWFpbCI6Imthc2hpZmFsaTA5NjkwODJAZ21haWwuY29tIiwibmFtZSI6Ikthc2hpZiBBbGkiLCJwcm9maWxlX3BpYyI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0tZQWRWNUZZYnNKZnFWZkNnd0dwN3ZUVTlKdENOTUtxaHQ3YnFEbVM4ZGF6enc2SkdaPXM5Ni1jIiwiZXhwIjoxNzU0MTU2NDc1fQ.pJmDnXmqXhSNeqJ9AWwfVfQ7rDO5KfrgrqKrHd_KvWg`,
+          },
+          responseType: "blob",
+          params: { document_type: "book" },
+        }
+      );
+
+      const blobUrl = URL.createObjectURL(response.data);
+      setPdfUrl(blobUrl);
+    } catch (error) {
+      console.error("Failed to load PDF:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchAndRenderPDF = async () => {
-      try {
-        setLoading(true);
+    fetchPdf();
 
-        // Replace this with your actual StreamDocument function call
-        const response = await StreamDocument({
-          document_id: "44cf5b66-5e6b-4753-a9b2-f7de48e9de1b",
-          document_type: "book",
-        });
-
-        // Check if the request was successful
-        if (response.status !== 200) {
-          throw new Error(`Failed to fetch PDF: ${response.statusText}`);
-        }
-
-        // The response.data already contains the ArrayBuffer
-        const arrayBuffer = response.data;
-        const pdf = await getDocument({ data: arrayBuffer }).promise;
-        const page = await pdf.getPage(1);
-        const viewport = page.getViewport({ scale: 1.5 });
-
-        const canvas = canvasRef.current;
-        const context = canvas.getContext("2d");
-
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        await page.render({
-          canvasContext: context,
-          viewport,
-        }).promise;
-      } catch (err) {
-        console.error("Error rendering PDF:", err);
-      } finally {
-        setLoading(false);
-      }
+    return () => {
+      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     };
-
-    fetchAndRenderPDF();
   }, []);
 
+  const goToPrevPage = () => {
+    setPageNumber((prev) => Math.max(prev - 1, 1));
+  };
+
+  const goToNextPage = () => {
+    setPageNumber((prev) => Math.min(prev + 1, numPages));
+  };
+
+  const goToPage = () => {
+    const target = parseInt(inputPage, 10);
+    if (!isNaN(target) && target >= 1 && target <= numPages) {
+      setPageNumber(target);
+    } else {
+      alert("Invalid page number");
+    }
+  };
+
   return (
-    <div style={{ textAlign: "center", padding: "1rem" }}>
-      {loading && <p>Loading PDF...</p>}
-      <canvas ref={canvasRef} style={{ border: "1px solid #ccc" }} />
+    <div
+      style={{
+        backgroundColor: "#000",
+        color: "#fff",
+        padding: "1rem",
+        minHeight: "100vh",
+      }}
+    >
+      {pdfUrl ? (
+        <>
+          <Document file={pdfUrl} onLoadSuccess={onDocumentLoadSuccess}>
+            <Page
+              pageNumber={pageNumber}
+              renderAnnotationLayer={false}
+              renderTextLayer={true}
+            />
+          </Document>
+
+          <div
+            style={{
+              marginTop: "1rem",
+              display: "flex",
+              gap: "1rem",
+              alignItems: "center",
+            }}
+          >
+            <button onClick={goToPrevPage} disabled={pageNumber <= 1}>
+              Previous
+            </button>
+
+            <span>
+              Page {pageNumber} of {numPages}
+            </span>
+
+            <button onClick={goToNextPage} disabled={pageNumber >= numPages}>
+              Next
+            </button>
+
+            <input
+              type="number"
+              placeholder="Page #"
+              value={inputPage}
+              onChange={(e) => setInputPage(e.target.value)}
+              style={{ width: "80px", padding: "4px" }}
+            />
+
+            <button onClick={goToPage}>Go</button>
+          </div>
+        </>
+      ) : (
+        <p>Loading PDF...</p>
+      )}
     </div>
   );
 };
-
-export default PdfRenderer;

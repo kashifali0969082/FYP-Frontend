@@ -1,3 +1,4 @@
+import { url } from "../export";
 import invoke from "./Api";
 import QueryString from "qs";
 const apikey =
@@ -47,7 +48,7 @@ export const deleteDocument = async (type, id) => {
     method: "DELETE",
     headers: { Authorization: `Bearer ${apikey}` },
   });
-  return data
+  return data;
 };
 
 //study mode
@@ -64,17 +65,48 @@ export const StudyModeInit = async (RrquiredData) => {
   return data;
 };
 
-export const StreamDocument = async ({ document_id, document_type }) => {
-  const url = `/study-mode/documents/${document_id}/stream?document_type=${document_type}`;
+export const StreamDocument = async (document_id, document_type) => {
+  if (!document_id || typeof document_id !== 'string') {
+    throw new Error(`Invalid document_id: ${document_id}`);
+  }
+
+  if (!document_type || typeof document_type !== 'string') {
+    throw new Error(`Invalid document_type: ${document_type}`);
+  }
+
+  const query = QueryString.stringify({ document_type: document_type.toLowerCase() });
 
   const data = await invoke({
-    url,
+    url: `/study-mode/documents/${document_id}/stream?${query}`,
     method: "GET",
     headers: {
       Authorization: `Bearer ${apikey}`,
-      Accept: "application/json",
     },
-        responseType: "arraybuffer", 
+    responseType: "blob",
+  });
+
+  return data;
+};
+
+
+export const UpdateLastPosition = async (
+  document_id,
+  document_type,
+  page_number
+) => {
+  const payload = {
+    document_type,
+    page_number,
+  };
+
+  const data = await invoke({
+    url: `/study-mode/documents/${document_id}/last-position`,
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apikey}`,
+      "Content-Type": "application/json",
+    },
+    data: payload,
   });
 
   return data;

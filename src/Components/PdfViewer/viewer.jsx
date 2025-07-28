@@ -4,7 +4,19 @@ import { PDFViewer } from "../Comps/PDFViewer";
 import { ToolPanel } from "../Comps/ToolPanel";
 import { Toaster } from "../Comps/sonner";
 import { Button } from "../Comps/button";
-import { ArrowLeft, BookOpen, EyeOff, Sparkles, Zap, Brain, Target, Menu, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  EyeOff,
+  Sparkles,
+  Zap,
+  Brain,
+  Target,
+  Menu,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { StreamDocument, StudyModeInit } from "../../Api/Apifun";
 import { useLocation } from "react-router-dom";
@@ -26,8 +38,9 @@ export default function StudyMode() {
   const location = useLocation();
   const { type, id } = location.state || {};
   const [minemockData, setminemockdata] = useState();
- const [pdfData, setPdfData] = useState(null);
+  const [pdfData, setPdfData] = useState(null);
   const [numPages, setNumPages] = useState(null);
+  const [response, setresponse] = useState();
   // Apply dark theme by default
   useEffect(() => {
     Stusyinit();
@@ -44,14 +57,16 @@ export default function StudyMode() {
         document_id: id,
         document_type: type.toLowerCase(),
       });
- const byteArray = new Uint8Array(resp2.data);
-        setPdfData(byteArray);
+      const respon = await StreamDocument(id, type);
+      setresponse(respon);
+      const byteArray = new Uint8Array(resp2.data);
+      setPdfData(byteArray);
       console.log("init ", resp2);
     } catch (error) {
       console.log("error while initalizing study mode", error);
     }
   };
-  
+
   // Calculate total pages from TOC or default
   const totalPages = studyData?.data?.toc
     ? Math.max(
@@ -64,7 +79,8 @@ export default function StudyMode() {
     : 100;
 
   // Check if TOC is available
-  const hasTOC = studyData?.data.toc?.chapters && studyData.data.toc.chapters.length > 0;
+  const hasTOC =
+    studyData?.data.toc?.chapters && studyData.data.toc.chapters.length > 0;
 
   // Fixed TOC width in pixels (0 when no TOC or when PDF is hidden)
   const tocWidth = !hasTOC || isPDFHidden ? 0 : isTOCCollapsed ? 48 : 280;
@@ -363,7 +379,9 @@ export default function StudyMode() {
               Initializing AI Study Mode
             </h2>
             <div className="space-y-3">
-              <p className="text-slate-300 text-lg">Preparing your learning environment...</p>
+              <p className="text-slate-300 text-lg">
+                Preparing your learning environment...
+              </p>
               <div className="flex items-center justify-center space-x-2 text-sm text-slate-400">
                 <Sparkles className="w-4 h-4 animate-pulse" />
                 <span>Analyzing document structure</span>
@@ -387,7 +405,7 @@ export default function StudyMode() {
                 <span>Chat Session</span>
               </div>
             </div>
-            
+
             {/* Loading bar */}
             <div className="w-64 h-1 bg-slate-700 rounded-full overflow-hidden mx-auto">
               <div className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-pulse"></div>
@@ -461,9 +479,13 @@ export default function StudyMode() {
                           </p>
                           <div className="flex items-center gap-2">
                             <div className="w-24 h-2 bg-slate-700 rounded-full overflow-hidden shadow-inner">
-                              <div 
+                              <div
                                 className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 shadow-sm"
-                                style={{ width: `${Math.round((currentPage / totalPages) * 100)}%` }}
+                                style={{
+                                  width: `${Math.round(
+                                    (currentPage / totalPages) * 100
+                                  )}%`,
+                                }}
                               ></div>
                             </div>
                             <span className="text-xs text-slate-500 font-medium">
@@ -476,7 +498,9 @@ export default function StudyMode() {
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
                           <Zap className="w-4 h-4 text-purple-400" />
-                          <span className="text-sm text-purple-400 font-medium">Focus Mode Active</span>
+                          <span className="text-sm text-purple-400 font-medium">
+                            Focus Mode Active
+                          </span>
                         </div>
                       )}
                     </div>
@@ -494,7 +518,11 @@ export default function StudyMode() {
                 className="p-2 hover:bg-slate-700/50 text-slate-400 hover:text-white transition-all duration-200 rounded-lg"
                 title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
               >
-                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                {isFullscreen ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
               </Button>
 
               {/* Enhanced Hide/Show Document Button */}
@@ -562,6 +590,8 @@ export default function StudyMode() {
                     documentId={studyData.data.document.id}
                     fileName={studyData.data.document.file_name}
                     onTextHighlight={handleTextHighlight}
+                    type={type}
+                    id={id}
                   />
                 </div>
               </div>
@@ -582,6 +612,8 @@ export default function StudyMode() {
                   tocData={studyData.data.toc}
                   initialChatHistory={chatHistory}
                   onTextHighlight={handleTextHighlight}
+                  type={type}
+                  id={id}
                 />
               </div>
             </div>
@@ -601,6 +633,8 @@ export default function StudyMode() {
                     currentPage={currentPage}
                     onPageSelect={handlePageChange}
                     tocData={studyData.data.toc}
+                    type={type}
+                    id={id}
                   />
                 </div>
               </div>
@@ -622,6 +656,8 @@ export default function StudyMode() {
                     documentId={studyData.data.document.id}
                     fileName={studyData.data.document.file_name}
                     onTextHighlight={handleTextHighlight}
+                    type={type}
+                    id={id}
                   />
                 </div>
               </div>
@@ -631,8 +667,8 @@ export default function StudyMode() {
             {!isPDFHidden && (
               <div
                 className={`w-2 relative group cursor-col-resize transition-all duration-300 ${
-                  isResizing 
-                    ? "bg-gradient-to-b from-blue-500 to-purple-500 shadow-lg" 
+                  isResizing
+                    ? "bg-gradient-to-b from-blue-500 to-purple-500 shadow-lg"
                     : "bg-slate-700/30 hover:bg-gradient-to-b hover:from-blue-500/60 hover:to-purple-500/60"
                 }`}
                 onMouseDown={handleMouseDown}
@@ -676,19 +712,19 @@ export default function StudyMode() {
       </div>
 
       {/* Enhanced Toast Container */}
-      <Toaster 
-        position="bottom-right" 
-        toastOptions={{ 
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
           duration: 3000,
           style: {
-            background: 'rgba(30, 41, 59, 0.95)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(100, 116, 139, 0.3)',
-            color: '#ffffff',
-            borderRadius: '12px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-          }
-        }} 
+            background: "rgba(30, 41, 59, 0.95)",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(100, 116, 139, 0.3)",
+            color: "#ffffff",
+            borderRadius: "12px",
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+          },
+        }}
       />
 
       {/* Global Styles */}
@@ -752,30 +788,33 @@ export default function StudyMode() {
 
         /* Enhanced animations */
         @keyframes float {
-          0%, 100% { 
-            transform: translateY(0px) rotate(0deg); 
+          0%,
+          100% {
+            transform: translateY(0px) rotate(0deg);
           }
-          33% { 
-            transform: translateY(-15px) rotate(120deg); 
+          33% {
+            transform: translateY(-15px) rotate(120deg);
           }
-          66% { 
-            transform: translateY(8px) rotate(240deg); 
+          66% {
+            transform: translateY(8px) rotate(240deg);
           }
         }
 
         @keyframes pulse-glow {
-          0%, 100% { 
+          0%,
+          100% {
             box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
             transform: scale(1);
           }
-          50% { 
+          50% {
             box-shadow: 0 0 40px rgba(139, 92, 246, 0.8);
             transform: scale(1.05);
           }
         }
 
         @keyframes gradient-shift {
-          0%, 100% {
+          0%,
+          100% {
             background-position: 0% 50%;
           }
           50% {
@@ -816,8 +855,7 @@ export default function StudyMode() {
           background: rgba(30, 41, 59, 0.8);
           backdrop-filter: blur(20px);
           border: 1px solid rgba(100, 116, 139, 0.2);
-          box-shadow: 
-            0 8px 32px rgba(0, 0, 0, 0.3),
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
@@ -829,13 +867,18 @@ export default function StudyMode() {
         }
 
         .btn-gradient-hover::before {
-          content: '';
+          content: "";
           position: absolute;
           top: 0;
           left: -100%;
           width: 100%;
           height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.1),
+            transparent
+          );
           transition: left 0.5s ease;
         }
 
@@ -855,8 +898,7 @@ export default function StudyMode() {
 
         .focus-ring:focus-visible {
           outline: none;
-          box-shadow: 
-            0 0 0 3px rgba(59, 130, 246, 0.5),
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5),
             0 8px 25px rgba(0, 0, 0, 0.3);
           transform: translateY(-1px);
         }
@@ -874,13 +916,16 @@ export default function StudyMode() {
 
         /* Smooth transitions for all elements */
         * {
-          transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+          transition-property: color, background-color, border-color,
+            text-decoration-color, fill, stroke, opacity, box-shadow, transform,
+            filter, backdrop-filter;
           transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
           transition-duration: 150ms;
         }
 
         /* Height and overflow fixes */
-        html, body {
+        html,
+        body {
           height: 100%;
           overflow: hidden;
         }
@@ -908,7 +953,7 @@ export default function StudyMode() {
             width: 6px;
             height: 6px;
           }
-          
+
           .glass-panel {
             backdrop-filter: blur(16px);
           }

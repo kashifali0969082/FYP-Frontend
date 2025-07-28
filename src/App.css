@@ -11,9 +11,8 @@ body {
   color: #ffffff;
   line-height: 1.6;
   overflow-x: hidden;
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;  
+  scrollbar-width: none;  
 }
 
 body::-webkit-scrollbar {
@@ -21,9 +20,8 @@ body::-webkit-scrollbar {
 }
 
 html {
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;  
+  scrollbar-width: none;  
 }
 
 html::-webkit-scrollbar {
@@ -33,16 +31,14 @@ html::-webkit-scrollbar {
 .landing-page {
   min-height: 100vh;
   position: relative;
-  /* Hide scrollbar for this container as well */
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;  
+  scrollbar-width: none;  
 }
 
 .landing-page::-webkit-scrollbar {
   display: none;
 }
 
-/* Animated Background */
 .bg-animation {
   position: fixed;
   top: 0;
@@ -72,7 +68,6 @@ html::-webkit-scrollbar {
   66% { transform: translateY(10px) rotate(240deg); }
 }
 
-/* Header Styles */
 .header {
   position: fixed;
   top: 0;
@@ -155,13 +150,11 @@ html::-webkit-scrollbar {
   cursor: pointer;
 }
 
-/* Main Container */
 .landing-container {
   min-height: 100vh;
   padding-top: 80px;
 }
 
-/* Hero Section */
 .hero-section {
   min-height: 100vh;
   display: flex;
@@ -230,7 +223,6 @@ html::-webkit-scrollbar {
   box-shadow: 0 0 60px rgba(0, 212, 255, 0.3);
 }
 
-/* Google Sign In Button */
 .google-signin-btn {
   display: inline-flex;
   align-items: center;
@@ -258,7 +250,6 @@ html::-webkit-scrollbar {
   font-size: 1.3rem;
 }
 
-/* Features Section */
 .features-section {
   padding: 8rem 2rem;
   background: rgba(0, 0, 0, 0.3);
@@ -322,7 +313,6 @@ html::-webkit-scrollbar {
   line-height: 1.8;
 }
 
-/* Stats Section */
 .stats-section {
   padding: 6rem 2rem;
   background: linear-gradient(45deg, rgba(0, 212, 255, 0.1), rgba(255, 0, 110, 0.1));
@@ -356,7 +346,6 @@ html::-webkit-scrollbar {
   opacity: 0.8;
 }
 
-/* Footer */
 .footer {
   background: rgba(0, 0, 0, 0.8);
   padding: 4rem 2rem 2rem;
@@ -426,7 +415,6 @@ html::-webkit-scrollbar {
   opacity: 0.6;
 }
 
-/* Animations */
 @keyframes slideInLeft {
   from { opacity: 0; transform: translateX(-50px); }
   to { opacity: 1; transform: translateX(0); }
@@ -447,7 +435,6 @@ html::-webkit-scrollbar {
   50% { transform: scale(1.05); box-shadow: 0 0 80px rgba(0, 212, 255, 0.5); }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .nav-menu {
     position: absolute;
@@ -534,9 +521,7 @@ html::-webkit-scrollbar {
 
 
 
-/* StudyMode.css - Additional styles to ensure proper theming */
 
-/* Global body and html fixes for proper height */
 html, body {
   height: 100vh;
   overflow: hidden;
@@ -548,14 +533,12 @@ html, body {
   height: 100vh;
 }
 
-/* Ensure StudyMode takes full height */
 .study-mode-container {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
 }
 
-/* Custom Scrollbar Styles - Enhanced */
 .study-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(100, 116, 139, 0.5) rgba(30, 41, 59, 0.3);
@@ -587,7 +570,6 @@ html, body {
   background: rgba(30, 41, 59, 0.3);
 }
 
-/* Thin scrollbars for compact areas */
 .study-scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: rgba(100, 116, 139, 0.4) rgba(30, 41, 59, 0.2);
@@ -613,7 +595,6 @@ html, body {
   background: linear-gradient(180deg, #4f46e5, #9333ea);
 }
 
-/* Enhanced Background Gradients */
 .study-bg-primary {
   background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
 }
@@ -622,7 +603,6 @@ html, body {
   background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
 }
 
-/* Glassmorphism Effects */
 .glass-panel {
   background: rgba(30, 41, 59, 0.8);
   backdrop-filter: blur(20px);
@@ -644,7 +624,6 @@ html, body {
   border: 1px solid rgba(100, 116, 139, 0.25);
 }
 
-/* Enhanced Button Styles */
 .btn-gradient {
   background: linear-gradient(45deg, #3b82f6, #8b5cf6);
   border: none;
@@ -671,7 +650,6 @@ html, body {
   transform: translateY(-1px);
 }
 
-/* Animation Classes */
 @keyframes float {
   0%, 100% { 
     transform: translateY(0px) rotate(0deg); 
@@ -728,7 +706,6 @@ html, body {
   animation: shimmer 2s infinite;
 }
 
-/* Table of Contents Enhancements */
 .toc-container {
   background: rgba(30, 41, 59, 0.85);
   backdrop-filter: blur(20px);
@@ -757,7 +734,6 @@ html, body {
   margin-left: 0.5rem;
 }
 
-/* PDF Viewer Enhancements */
 .pdf-container {
   background: rgba(15, 23, 42, 0.8);
   backdrop-filter: blur(16px);
@@ -775,7 +751,6 @@ html, body {
   background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
 }
 
-/* Tool Panel Enhancements */
 .tool-panel {
   background: rgba(30, 41, 59, 0.8);
   backdrop-filter: blur(20px);
@@ -801,7 +776,6 @@ html, body {
   border-color: rgba(59, 130, 246, 0.3);
 }
 
-/* Loading States */
 .loading-container {
   background: linear-gradient(135deg, #0f172a, #1e293b);
   min-height: 100vh;
@@ -824,7 +798,6 @@ html, body {
   100% { transform: rotate(360deg); }
 }
 
-/* Text Selection Enhancement */
 .text-selection-popup {
   background: rgba(30, 41, 59, 0.95);
   backdrop-filter: blur(24px);
@@ -833,7 +806,6 @@ html, body {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
 }
 
-/* Enhanced Input Fields */
 .input-enhanced {
   background: rgba(30, 41, 59, 0.6);
   backdrop-filter: blur(16px);
@@ -848,7 +820,6 @@ html, body {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* Progress Bars */
 .progress-bar {
   background: linear-gradient(90deg, #3b82f6, #8b5cf6);
   border-radius: 9999px;
@@ -861,7 +832,6 @@ html, body {
   animation: gradient-shift 2s linear infinite;
 }
 
-/* Status Indicators */
 .status-indicator {
   width: 8px;
   height: 8px;
@@ -884,7 +854,6 @@ html, body {
   box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
 }
 
-/* Mobile Responsive Adjustments */
 @media (max-width: 1024px) {
   .study-scrollbar::-webkit-scrollbar {
     width: 6px;
@@ -923,7 +892,6 @@ html, body {
   }
 }
 
-/* Dark Mode Enhancements */
 .dark .study-scrollbar::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #3b82f6, #8b5cf6);
 }
@@ -933,7 +901,6 @@ html, body {
   border-color: rgba(100, 116, 139, 0.2);
 }
 
-/* High Contrast Mode */
 @media (prefers-contrast: high) {
   .glass-panel {
     background: rgba(0, 0, 0, 0.9);
@@ -949,7 +916,6 @@ html, body {
   }
 }
 
-/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -967,7 +933,6 @@ html, body {
   }
 }
 
-/* Print Styles */
 @media print {
   .glass-panel {
     background: white !important;
@@ -986,7 +951,6 @@ html, body {
   }
 }
 
-/* Utility Classes */
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -1018,4 +982,29 @@ html, body {
 
 .overflow-x-hidden {
   overflow-x: hidden;
+}
+
+
+/* Hide the PDF canvas */
+.react-pdf__Page__canvas {
+  display: none !important;
+}
+
+
+/* Style the text content layer */
+.react-pdf__Page__textContent {
+  background-color: #000;       
+  color: #fff !important;       
+  user-select: text;
+  padding: 1rem;
+  font-family: sans-serif;
+}
+
+/* Optional: style individual text items */
+.react-pdf__Page__textContent span {
+  color: #fff !important;
+}
+
+.react-pdf__Page__textContent{
+  width: 100% !important;
 }
