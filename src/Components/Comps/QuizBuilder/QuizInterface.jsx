@@ -151,6 +151,7 @@ export const QuizInterface = ({
         doc_name,
         score: scoreStr,
         accuracy,
+        time_taken: timeSpent, // Time in seconds
         quiz_data: JSON.stringify(quiz_data)
       };
       await fetch("https://api.adaptivelearnai.xyz/quiz-gen/quiz-history", {
