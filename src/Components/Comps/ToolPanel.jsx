@@ -8,6 +8,7 @@ import React, {
 import { ChatbotApi, listModels } from "../../Api/Apifun";
 import { toast } from "sonner";
 import axios from "axios";
+import mermaid from "mermaid";
 import {
   Send,
   Mic,
@@ -47,6 +48,7 @@ import {
 import { Badge } from "./ui/badge";
 import { ScrollArea } from "./ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
 import {
   Collapsible,
   CollapsibleContent,
@@ -330,7 +332,18 @@ const QuizRenderer = ({ questions }) => {
   };
 
   const getScore = () => {
-    return questions.filter(q => answers[q.id] === q.correct_answer).length;
+    return questions.filter(q => {
+      const userAnswer = answers[q.id];
+      const correctAnswer = q.correct_answer;
+      
+      if (q.question_type === 'short_answer') {
+        // Case-insensitive comparison for short answers
+        return userAnswer?.toLowerCase().trim() === correctAnswer?.toLowerCase().trim();
+      } else {
+        // Exact match for multiple choice
+        return userAnswer === correctAnswer;
+      }
+    }).length;
   };
 
   const getDifficultyColor = (difficulty) => {
@@ -359,7 +372,12 @@ const QuizRenderer = ({ questions }) => {
         <div className="space-y-2">
           {questions.map((question, index) => {
             const userAnswer = answers[question.id];
-            const isCorrect = userAnswer === question.correct_answer;
+            const correctAnswer = question.correct_answer;
+            
+            // Check if answer is correct based on question type
+            const isCorrect = question.question_type === 'short_answer'
+              ? userAnswer?.toLowerCase().trim() === correctAnswer?.toLowerCase().trim()
+              : userAnswer === correctAnswer;
             
             return (
               <Card key={question.id} className="p-3">
@@ -447,48 +465,78 @@ const QuizRenderer = ({ questions }) => {
             {currentQuestion.question}
           </h4>
 
-          {/* Options */}
+          {/* Answer Input - Multiple Choice or Short Answer */}
           <div className="space-y-2">
-            {currentQuestion.options.map((option, index) => {
-              const isSelected = answers[currentQuestion.id] === option;
-              const isCorrect = option === currentQuestion.correct_answer;
-              const showCorrect = isCurrentSubmitted && isCorrect;
-              const showIncorrect = isCurrentSubmitted && isSelected && !isCorrect;
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleAnswerSelect(currentQuestion.id, option)}
+            {currentQuestion.question_type === 'short_answer' ? (
+              /* Short Answer Input */
+              <div className="space-y-2">
+                <Input
+                  value={answers[currentQuestion.id] || ''}
+                  onChange={(e) => handleAnswerSelect(currentQuestion.id, e.target.value)}
+                  placeholder="Type your answer here..."
                   disabled={isCurrentSubmitted}
-                  className={`w-full text-left p-3 rounded-lg border transition-all text-sm ${
-                    showCorrect
-                      ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-950/50 dark:border-green-800"
-                      : showIncorrect
-                      ? "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/50 dark:border-red-800"
-                      : isSelected
-                      ? "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/50 dark:border-blue-800"
-                      : "bg-muted border-border hover:bg-accent"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-medium ${
-                      showCorrect
-                        ? "bg-green-500 border-green-500 text-white"
-                        : showIncorrect
-                        ? "bg-red-500 border-red-500 text-white"
-                        : isSelected
-                        ? "bg-blue-500 border-blue-500 text-white"
-                        : "border-muted-foreground"
+                  className="w-full"
+                />
+                {isCurrentSubmitted && (
+                  <div className="space-y-1">
+                    <div className={`text-xs p-2 rounded ${
+                      answers[currentQuestion.id]?.toLowerCase().trim() === currentQuestion.correct_answer?.toLowerCase().trim()
+                        ? "bg-green-50 text-green-700 border border-green-200"
+                        : "bg-red-50 text-red-700 border border-red-200"
                     }`}>
-                      {String.fromCharCode(65 + index)}
-                    </span>
-                    <span className="flex-1">{option}</span>
-                    {showCorrect && <CheckCircle className="w-4 h-4 text-green-500" />}
-                    {showIncorrect && <XCircle className="w-4 h-4 text-red-500" />}
+                      Your answer: {answers[currentQuestion.id] || "Not answered"}
+                    </div>
+                    {answers[currentQuestion.id]?.toLowerCase().trim() !== currentQuestion.correct_answer?.toLowerCase().trim() && (
+                      <div className="text-xs p-2 rounded bg-green-50 text-green-700 border border-green-200">
+                        Correct answer: {currentQuestion.correct_answer}
+                      </div>
+                    )}
                   </div>
-                </button>
-              );
-            })}
+                )}
+              </div>
+            ) : (
+              /* Multiple Choice Options */
+              currentQuestion.options?.map((option, index) => {
+                const isSelected = answers[currentQuestion.id] === option;
+                const isCorrect = option === currentQuestion.correct_answer;
+                const showCorrect = isCurrentSubmitted && isCorrect;
+                const showIncorrect = isCurrentSubmitted && isSelected && !isCorrect;
+
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswerSelect(currentQuestion.id, option)}
+                    disabled={isCurrentSubmitted}
+                    className={`w-full text-left p-3 rounded-lg border transition-all text-sm ${
+                      showCorrect
+                        ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-950/50 dark:border-green-800"
+                        : showIncorrect
+                        ? "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/50 dark:border-red-800"
+                        : isSelected
+                        ? "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/50 dark:border-blue-800"
+                        : "bg-muted border-border hover:bg-accent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-medium ${
+                        showCorrect
+                          ? "bg-green-500 border-green-500 text-white"
+                          : showIncorrect
+                          ? "bg-red-500 border-red-500 text-white"
+                          : isSelected
+                          ? "bg-blue-500 border-blue-500 text-white"
+                          : "border-muted-foreground"
+                      }`}>
+                        {String.fromCharCode(65 + index)}
+                      </span>
+                      <span className="flex-1">{option}</span>
+                      {showCorrect && <CheckCircle className="w-4 h-4 text-green-500" />}
+                      {showIncorrect && <XCircle className="w-4 h-4 text-red-500" />}
+                    </div>
+                  </button>
+                );
+              })
+            )}
           </div>
 
           {/* Explanation */}
@@ -568,6 +616,79 @@ const QuizRenderer = ({ questions }) => {
 // Diagram Component
 const DiagramRenderer = ({ diagrams }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isClient, setIsClient] = useState(false);
+  const [renderError, setRenderError] = useState(null);
+  const diagramRef = useRef(null);
+  
+  // Ensure we're on the client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Initialize Mermaid only on client side
+  useEffect(() => {
+    if (!isClient || typeof window === 'undefined') return;
+    
+    try {
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'default',
+        securityLevel: 'loose',
+        themeCSS: `
+          .node rect { fill: #f9f9f9; stroke: #333; stroke-width: 2px; }
+          .node text { fill: #333; }
+          .edgePath .path { stroke: #333; stroke-width: 2px; }
+          .edgeLabel { background-color: #e8e8e8; }
+        `
+      });
+    } catch (error) {
+      console.error('Mermaid initialization error:', error);
+      setRenderError('Failed to initialize diagram renderer');
+    }
+  }, [isClient]);
+
+  // Render diagram when content changes
+  useEffect(() => {
+    if (!isClient || !diagramRef.current || !diagrams || !diagrams[currentIndex] || typeof window === 'undefined') {
+      return;
+    }
+
+    const diagramDefinition = diagrams[currentIndex];
+    const diagramId = `diagram-${currentIndex}-${Date.now()}`;
+    
+    // Clear previous content
+    diagramRef.current.innerHTML = '';
+    setRenderError(null);
+    
+    // Add a small delay to ensure DOM is ready
+    const renderTimeout = setTimeout(() => {
+      try {
+        mermaid.render(diagramId, diagramDefinition)
+          .then((result) => {
+            if (diagramRef.current && result.svg) {
+              diagramRef.current.innerHTML = result.svg;
+            }
+          })
+          .catch((error) => {
+            console.error('Mermaid rendering error:', error);
+            setRenderError('Failed to render diagram');
+            // Fallback to text display
+            if (diagramRef.current) {
+              diagramRef.current.innerHTML = `<pre class="text-xs font-mono whitespace-pre-wrap text-gray-800 dark:text-gray-200 p-4 bg-gray-100 dark:bg-gray-800 rounded">${diagramDefinition}</pre>`;
+            }
+          });
+      } catch (error) {
+        console.error('Mermaid rendering error:', error);
+        setRenderError('Failed to render diagram');
+        // Fallback to text display
+        if (diagramRef.current) {
+          diagramRef.current.innerHTML = `<pre class="text-xs font-mono whitespace-pre-wrap text-gray-800 dark:text-gray-200 p-4 bg-gray-100 dark:bg-gray-800 rounded">${diagramDefinition}</pre>`;
+        }
+      }
+    }, 100);
+
+    return () => clearTimeout(renderTimeout);
+  }, [currentIndex, diagrams, isClient]);
   
   if (!Array.isArray(diagrams) || diagrams.length === 0) {
     return (
@@ -578,8 +699,32 @@ const DiagramRenderer = ({ diagrams }) => {
     );
   }
 
-  const currentDiagram = diagrams[currentIndex];
-  
+  // Show loading state while client-side hydration happens
+  if (!isClient) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Network className="w-5 h-5 text-cyan-500" />
+            <h3 className="font-semibold text-sm">Diagrams</h3>
+            {diagrams.length > 1 && (
+              <Badge variant="outline" className="text-xs">
+                {currentIndex + 1} of {diagrams.length}
+              </Badge>
+            )}
+          </div>
+        </div>
+        <Card className="p-4">
+          <div className="bg-white dark:bg-muted rounded-lg p-4 overflow-x-auto">
+            <div className="flex justify-center items-center min-h-[200px]">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -595,12 +740,23 @@ const DiagramRenderer = ({ diagrams }) => {
         </div>
       </div>
 
+      {/* Error Display */}
+      {renderError && (
+        <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <XCircle className="w-4 h-4 text-red-500" />
+            <span className="text-sm text-red-700 dark:text-red-300">{renderError}</span>
+          </div>
+        </div>
+      )}
+
       {/* Diagram Display */}
       <Card className="p-4">
         <div className="bg-white dark:bg-muted rounded-lg p-4 overflow-x-auto">
-          <pre className="text-xs font-mono whitespace-pre-wrap text-gray-800 dark:text-gray-200">
-            {currentDiagram}
-          </pre>
+          <div 
+            ref={diagramRef}
+            className="mermaid-diagram flex justify-center items-center min-h-[200px]"
+          />
         </div>
       </Card>
 
@@ -645,7 +801,7 @@ const DiagramRenderer = ({ diagrams }) => {
     </div>
   );
 };
-// Add CSS for 3D flip animation
+// Add CSS for 3D flip animation and Mermaid diagrams
 const FlipCardStyles = () => (
   <style>{`
     .transform-style-preserve-3d {
@@ -656,6 +812,45 @@ const FlipCardStyles = () => (
     }
     .rotate-y-180 {
       transform: rotateY(180deg);
+    }
+    
+    /* Mermaid diagram styles */
+    .mermaid-diagram svg {
+      max-width: 100%;
+      height: auto;
+    }
+    
+    .mermaid-diagram .node rect,
+    .mermaid-diagram .node circle,
+    .mermaid-diagram .node ellipse,
+    .mermaid-diagram .node polygon {
+      fill: #f9f9f9;
+      stroke: #333;
+      stroke-width: 1.5px;
+    }
+    
+    .mermaid-diagram .edgePath .path {
+      stroke: #333;
+      stroke-width: 1.5px;
+      fill: none;
+    }
+    
+    .mermaid-diagram .edgeLabel {
+      background-color: #e8e8e8;
+      text-align: center;
+    }
+    
+    .mermaid-diagram .cluster rect {
+      fill: #ffffde;
+      stroke: #aaaa33;
+      stroke-width: 1px;
+    }
+    
+    .mermaid-diagram .labelText {
+      fill: #333;
+      text-anchor: middle;
+      font-family: 'trebuchet ms', verdana, arial, sans-serif;
+      font-size: 14px;
     }
   `}</style>
 );
