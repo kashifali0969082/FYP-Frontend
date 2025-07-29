@@ -5,7 +5,10 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { ChatbotApi } from "../../Api/Apifun";
+import { ChatbotApi, listModels } from "../../Api/Apifun";
+import { toast } from "sonner";
+import axios from "axios";
+import mermaid from "mermaid";
 import {
   Send,
   Mic,
@@ -21,6 +24,17 @@ import {
   Gamepad2,
   Quote,
   X,
+  RotateCcw,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+  Eye,
+  EyeOff,
+  Zap,
+  BookOpen,
+  Target,
+  Trophy,
 } from "lucide-react";
 import { Button } from "./button";
 import { Textarea } from "./ui/textarea";
@@ -34,15 +48,1023 @@ import {
 import { Badge } from "./ui/badge";
 import { ScrollArea } from "./ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "./ui/collapsible";
 import { ToolOverlay } from "./ui/tooloverlay";
-import { toast } from "sonner";
-import axios from "axios";
-import { listModels } from "../../Api/Apifun";
+
+// Tool Panel Overlay Component
+const ToolPanelOverlay = ({ toolType, content, onClose }) => {
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-background border border-border rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-2">
+            {toolType === 'flashcard' && <Brain className="w-5 h-5 text-purple-500" />}
+            {toolType === 'quiz' && <HelpCircle className="w-5 h-5 text-green-500" />}
+            {toolType === 'diagram' && <Network className="w-5 h-5 text-cyan-500" />}
+            {toolType === 'game' && <Gamepad2 className="w-5 h-5 text-orange-500" />}
+            <h2 className="text-lg font-semibold">
+              {getToolDisplayName(toolType)}
+            </h2>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-8 w-8 p-0"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto p-4">
+          <div className="max-w-none">
+            {(!content || (Array.isArray(content) && content.length === 0)) ? (
+              <div className="text-center py-8">
+                <div className="text-muted-foreground">
+                  {toolType === 'flashcard' && <Brain className="w-16 h-16 mx-auto mb-4 text-purple-500/50" />}
+                  {toolType === 'quiz' && <HelpCircle className="w-16 h-16 mx-auto mb-4 text-green-500/50" />}
+                  {toolType === 'diagram' && <Network className="w-16 h-16 mx-auto mb-4 text-cyan-500/50" />}
+                  {toolType === 'game' && <Gamepad2 className="w-16 h-16 mx-auto mb-4 text-orange-500/50" />}
+                  <p className="text-lg font-medium mb-2">No content available</p>
+                  <p className="text-sm">The {getToolDisplayName(toolType).toLowerCase()} content is not ready yet.</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {toolType === 'flashcard' && Array.isArray(content) && (
+                  <FlashcardRenderer flashcards={content} />
+                )}
+                {toolType === 'quiz' && Array.isArray(content) && (
+                  <QuizRenderer questions={content} />
+                )}
+                {toolType === 'diagram' && Array.isArray(content) && (
+                  <DiagramRenderer diagrams={content} />
+                )}
+                {toolType === 'game' && (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <Gamepad2 className="w-16 h-16 mx-auto mb-4 text-orange-500" />
+                      <h3 className="text-lg font-bold mb-2">Learning Game</h3>
+                    </div>
+                    <div className="bg-muted rounded-lg p-4">
+                      <pre className="text-sm whitespace-pre-wrap font-mono">
+                        {Array.isArray(content) ? content.join('\n\n') : content}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+                {/* Fallback for other content */}
+                {!['flashcard', 'quiz', 'diagram', 'game'].includes(toolType) && (
+                  <div className="bg-muted rounded-lg p-4">
+                    <pre className="text-sm whitespace-pre-wrap font-mono">
+                      {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Flashcard Component
+const FlashcardRenderer = ({ flashcards }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [completedCards, setCompletedCards] = useState(new Set());
+
+  const currentCard = flashcards[currentIndex];
+  const totalCards = flashcards.length;
+
+  const nextCard = () => {
+    if (currentIndex < totalCards - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setIsFlipped(false);
+    }
+  };
+
+  const prevCard = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setIsFlipped(false);
+    }
+  };
+
+  const markCompleted = () => {
+    setCompletedCards(prev => new Set([...prev, currentCard.id]));
+    if (currentIndex < totalCards - 1) {
+      nextCard();
+    }
+  };
+
+  const getDifficultyColor = (difficulty) => {
+    if (difficulty <= 1) return "text-green-500 bg-green-500/10";
+    if (difficulty <= 2) return "text-yellow-500 bg-yellow-500/10";
+    return "text-red-500 bg-red-500/10";
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Brain className="w-5 h-5 text-purple-500" />
+          <h3 className="font-semibold text-sm">Flashcards</h3>
+          <Badge variant="outline" className="text-xs">
+            {currentIndex + 1} of {totalCards}
+          </Badge>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {completedCards.size}/{totalCards} completed
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="w-full bg-muted rounded-full h-1.5">
+        <div
+          className="bg-gradient-to-r from-purple-500 to-blue-500 h-1.5 rounded-full transition-all duration-300"
+          style={{ width: `${((currentIndex + 1) / totalCards) * 100}%` }}
+        />
+      </div>
+
+      {/* Flashcard */}
+      <div className="relative h-48">
+        <div
+          className={`absolute inset-0 w-full h-full transition-transform duration-500 transform-style-preserve-3d cursor-pointer ${
+            isFlipped ? "rotate-y-180" : ""
+          }`}
+          onClick={() => setIsFlipped(!isFlipped)}
+        >
+          {/* Front Side - Question */}
+          <div className="absolute inset-0 w-full h-full backface-hidden bg-purple-100 dark:bg-purple-900 border-2 border-purple-300 dark:border-purple-700 rounded-lg p-4 flex flex-col justify-center">
+            <div className="flex items-center justify-between mb-3">
+              <Badge className={`text-xs px-2 py-1 ${getDifficultyColor(currentCard.difficulty)}`}>
+                Level {currentCard.difficulty}
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                {currentCard.topic}
+              </Badge>
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-center mb-3 text-purple-900 dark:text-purple-100">
+                {currentCard.question}
+              </p>
+              <p className="text-xs text-purple-600 dark:text-purple-400">
+                Click to reveal answer
+              </p>
+            </div>
+          </div>
+
+          {/* Back Side - Answer */}
+          <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-green-100 dark:bg-green-900 border-2 border-green-300 dark:border-green-700 rounded-lg p-4 flex flex-col justify-center">
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-3">
+                <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
+                <span className="text-xs font-medium text-green-700 dark:text-green-300">
+                  Answer
+                </span>
+              </div>
+              <p className="text-sm text-center text-green-900 dark:text-green-100">
+                {currentCard.answer}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="flex items-center justify-between gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={prevCard}
+          disabled={currentIndex === 0}
+          className="flex items-center gap-1"
+        >
+          <ArrowLeft className="w-3 h-3" />
+          Previous
+        </Button>
+
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsFlipped(!isFlipped)}
+            className="flex items-center gap-1"
+          >
+            {isFlipped ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+            {isFlipped ? "Hide" : "Reveal"}
+          </Button>
+
+          {isFlipped && !completedCards.has(currentCard.id) && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={markCompleted}
+              className="flex items-center gap-1 bg-green-500 hover:bg-green-600"
+            >
+              <Check className="w-3 h-3" />
+              Got it!
+            </Button>
+          )}
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={nextCard}
+          disabled={currentIndex === totalCards - 1}
+          className="flex items-center gap-1"
+        >
+          Next
+          <ArrowRight className="w-3 h-3" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+// Quiz Component
+const QuizRenderer = ({ questions }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [showResults, setShowResults] = useState(false);
+  const [submitted, setSubmitted] = useState(new Set());
+
+  const currentQuestion = questions[currentIndex];
+  const totalQuestions = questions.length;
+  const isCurrentSubmitted = submitted.has(currentQuestion.id);
+
+  const handleAnswerSelect = (questionId, answer) => {
+    if (!isCurrentSubmitted) {
+      setAnswers(prev => ({ ...prev, [questionId]: answer }));
+    }
+  };
+
+  const submitAnswer = () => {
+    if (answers[currentQuestion.id]) {
+      setSubmitted(prev => new Set([...prev, currentQuestion.id]));
+    }
+  };
+
+  const nextQuestion = () => {
+    if (currentIndex < totalQuestions - 1) {
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      setShowResults(true);
+    }
+  };
+
+  const prevQuestion = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  const getScore = () => {
+    return questions.filter(q => {
+      const userAnswer = answers[q.id];
+      const correctAnswer = q.correct_answer;
+      
+      if (q.question_type === 'short_answer') {
+        // Case-insensitive comparison for short answers
+        return userAnswer?.toLowerCase().trim() === correctAnswer?.toLowerCase().trim();
+      } else {
+        // Exact match for multiple choice
+        return userAnswer === correctAnswer;
+      }
+    }).length;
+  };
+
+  const getDifficultyColor = (difficulty) => {
+    if (difficulty <= 1) return "text-green-500 bg-green-500/10";
+    if (difficulty <= 2) return "text-yellow-500 bg-yellow-500/10";
+    return "text-red-500 bg-red-500/10";
+  };
+
+  if (showResults) {
+    const score = getScore();
+    const percentage = Math.round((score / totalQuestions) * 100);
+
+    return (
+      <div className="space-y-4">
+        <div className="text-center py-6">
+          <Trophy className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
+          <h3 className="text-lg font-bold mb-2">Quiz Complete!</h3>
+          <div className="text-2xl font-bold text-primary mb-2">
+            {score}/{totalQuestions}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {percentage}% correct
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {questions.map((question, index) => {
+            const userAnswer = answers[question.id];
+            const correctAnswer = question.correct_answer;
+            
+            // Check if answer is correct based on question type
+            const isCorrect = question.question_type === 'short_answer'
+              ? userAnswer?.toLowerCase().trim() === correctAnswer?.toLowerCase().trim()
+              : userAnswer === correctAnswer;
+            
+            return (
+              <Card key={question.id} className="p-3">
+                <div className="flex items-start gap-3">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                    isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                  }`}>
+                    {isCorrect ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium mb-1">{question.question}</p>
+                    <div className="text-xs space-y-1">
+                      <div className={isCorrect ? "text-green-600" : "text-red-600"}>
+                        Your answer: {userAnswer || "Not answered"}
+                      </div>
+                      {!isCorrect && (
+                        <div className="text-green-600">
+                          Correct answer: {question.correct_answer}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        <Button
+          variant="outline"
+          onClick={() => {
+            setCurrentIndex(0);
+            setAnswers({});
+            setShowResults(false);
+            setSubmitted(new Set());
+          }}
+          className="w-full"
+        >
+          <RotateCcw className="w-4 h-4 mr-2" />
+          Retake Quiz
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <HelpCircle className="w-5 h-5 text-green-500" />
+          <h3 className="font-semibold text-sm">Quiz</h3>
+          <Badge variant="outline" className="text-xs">
+            {currentIndex + 1} of {totalQuestions}
+          </Badge>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {submitted.size}/{totalQuestions} answered
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="w-full bg-muted rounded-full h-1.5">
+        <div
+          className="bg-gradient-to-r from-green-500 to-blue-500 h-1.5 rounded-full transition-all duration-300"
+          style={{ width: `${((currentIndex + 1) / totalQuestions) * 100}%` }}
+        />
+      </div>
+
+      {/* Question */}
+      <Card className="p-4">
+        <div className="space-y-4">
+          {/* Question Header */}
+          <div className="flex items-center justify-between">
+            <Badge className={`text-xs px-2 py-1 ${getDifficultyColor(currentQuestion.difficulty)}`}>
+              Level {currentQuestion.difficulty}
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              {currentQuestion.topic}
+            </Badge>
+          </div>
+
+          {/* Question Text */}
+          <h4 className="font-medium text-sm leading-relaxed">
+            {currentQuestion.question}
+          </h4>
+
+          {/* Answer Input - Multiple Choice or Short Answer */}
+          <div className="space-y-2">
+            {currentQuestion.question_type === 'short_answer' ? (
+              /* Short Answer Input */
+              <div className="space-y-2">
+                <Input
+                  value={answers[currentQuestion.id] || ''}
+                  onChange={(e) => handleAnswerSelect(currentQuestion.id, e.target.value)}
+                  placeholder="Type your answer here..."
+                  disabled={isCurrentSubmitted}
+                  className="w-full"
+                />
+                {isCurrentSubmitted && (
+                  <div className="space-y-1">
+                    <div className={`text-xs p-2 rounded ${
+                      answers[currentQuestion.id]?.toLowerCase().trim() === currentQuestion.correct_answer?.toLowerCase().trim()
+                        ? "bg-green-50 text-green-700 border border-green-200"
+                        : "bg-red-50 text-red-700 border border-red-200"
+                    }`}>
+                      Your answer: {answers[currentQuestion.id] || "Not answered"}
+                    </div>
+                    {answers[currentQuestion.id]?.toLowerCase().trim() !== currentQuestion.correct_answer?.toLowerCase().trim() && (
+                      <div className="text-xs p-2 rounded bg-green-50 text-green-700 border border-green-200">
+                        Correct answer: {currentQuestion.correct_answer}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Multiple Choice Options */
+              currentQuestion.options?.map((option, index) => {
+                const isSelected = answers[currentQuestion.id] === option;
+                const isCorrect = option === currentQuestion.correct_answer;
+                const showCorrect = isCurrentSubmitted && isCorrect;
+                const showIncorrect = isCurrentSubmitted && isSelected && !isCorrect;
+
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswerSelect(currentQuestion.id, option)}
+                    disabled={isCurrentSubmitted}
+                    className={`w-full text-left p-3 rounded-lg border transition-all text-sm ${
+                      showCorrect
+                        ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-950/50 dark:border-green-800"
+                        : showIncorrect
+                        ? "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/50 dark:border-red-800"
+                        : isSelected
+                        ? "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/50 dark:border-blue-800"
+                        : "bg-muted border-border hover:bg-accent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-medium ${
+                        showCorrect
+                          ? "bg-green-500 border-green-500 text-white"
+                          : showIncorrect
+                          ? "bg-red-500 border-red-500 text-white"
+                          : isSelected
+                          ? "bg-blue-500 border-blue-500 text-white"
+                          : "border-muted-foreground"
+                      }`}>
+                        {String.fromCharCode(65 + index)}
+                      </span>
+                      <span className="flex-1">{option}</span>
+                      {showCorrect && <CheckCircle className="w-4 h-4 text-green-500" />}
+                      {showIncorrect && <XCircle className="w-4 h-4 text-red-500" />}
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+
+          {/* Explanation */}
+          {isCurrentSubmitted && currentQuestion.explanation && (
+            <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <Brain className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-blue-800 dark:text-blue-200 mb-1">Explanation</p>
+                  <p className="text-blue-700 dark:text-blue-300">{currentQuestion.explanation}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Controls */}
+      <div className="flex items-center justify-between gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={prevQuestion}
+          disabled={currentIndex === 0}
+          className="flex items-center gap-1"
+        >
+          <ArrowLeft className="w-3 h-3" />
+          Previous
+        </Button>
+
+        <div className="flex gap-2">
+          {!isCurrentSubmitted && answers[currentQuestion.id] && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={submitAnswer}
+              className="flex items-center gap-1"
+            >
+              <Check className="w-3 h-3" />
+              Submit
+            </Button>
+          )}
+
+          {isCurrentSubmitted && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={nextQuestion}
+              className="flex items-center gap-1"
+            >
+              {currentIndex === totalQuestions - 1 ? (
+                <>
+                  <Trophy className="w-3 h-3" />
+                  Results
+                </>
+              ) : (
+                <>
+                  Next
+                  <ArrowRight className="w-3 h-3" />
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+
+        <div className="text-xs text-muted-foreground">
+          {currentIndex === totalQuestions - 1 && submitted.size === totalQuestions
+            ? "Ready for results"
+            : `${totalQuestions - currentIndex - 1} remaining`
+          }
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Diagram Component
+const DiagramRenderer = ({ diagrams }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isClient, setIsClient] = useState(false);
+  const [renderError, setRenderError] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [showScrollHint, setShowScrollHint] = useState(false);
+  const diagramRef = useRef(null);
+  const containerRef = useRef(null);
+  
+  // Ensure we're on the client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Reset zoom when diagram changes
+  useEffect(() => {
+    setZoomLevel(1);
+  }, [currentIndex]);
+
+  // Check if content is scrollable
+  useEffect(() => {
+    const checkScrollable = () => {
+      if (containerRef.current) {
+        const { scrollWidth, scrollHeight, clientWidth, clientHeight } = containerRef.current;
+        const isScrollable = scrollWidth > clientWidth || scrollHeight > clientHeight;
+        setShowScrollHint(isScrollable);
+      }
+    };
+
+    const timer = setTimeout(checkScrollable, 500);
+    return () => clearTimeout(timer);
+  }, [currentIndex, zoomLevel]);
+
+  // Initialize Mermaid only on client side
+  useEffect(() => {
+    if (!isClient || typeof window === 'undefined') return;
+    
+    try {
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'default',
+        securityLevel: 'loose',
+        maxWidth: null,
+        flowchart: {
+          useMaxWidth: false,
+          htmlLabels: true,
+          padding: 20
+        },
+        sequence: {
+          useMaxWidth: false,
+          padding: 20
+        },
+        journey: {
+          useMaxWidth: false,
+          padding: 20
+        },
+        gantt: {
+          useMaxWidth: false,
+          padding: 20
+        },
+        graph: {
+          useMaxWidth: false,
+          padding: 20
+        },
+        themeCSS: `
+          .node rect { fill: #f9f9f9; stroke: #333; stroke-width: 2px; }
+          .node text { fill: #333; }
+          .edgePath .path { stroke: #333; stroke-width: 2px; }
+          .edgeLabel { background-color: #e8e8e8; }
+        `
+      });
+    } catch (error) {
+      console.error('Mermaid initialization error:', error);
+      setRenderError('Failed to initialize diagram renderer');
+    }
+  }, [isClient]);
+
+  // Render diagram when content changes
+  useEffect(() => {
+    if (!isClient || !diagramRef.current || !diagrams || !diagrams[currentIndex] || typeof window === 'undefined') {
+      return;
+    }
+
+    const diagramDefinition = diagrams[currentIndex];
+    const diagramId = `diagram-${currentIndex}-${Date.now()}`;
+    
+    // Clear previous content
+    diagramRef.current.innerHTML = '';
+    setRenderError(null);
+    
+    // Add a small delay to ensure DOM is ready
+    const renderTimeout = setTimeout(() => {
+      try {
+        mermaid.render(diagramId, diagramDefinition)
+          .then((result) => {
+            if (diagramRef.current && result.svg) {
+              diagramRef.current.innerHTML = result.svg;
+              
+              // Ensure the SVG is properly sized and visible
+              const svg = diagramRef.current.querySelector('svg');
+              if (svg) {
+                svg.style.maxWidth = 'none';
+                svg.style.width = 'auto';
+                svg.style.height = 'auto';
+                svg.style.display = 'block';
+                
+                // Force a reflow to ensure proper sizing
+                setTimeout(() => {
+                  if (containerRef.current) {
+                    const { scrollWidth, scrollHeight, clientWidth, clientHeight } = containerRef.current;
+                    const isScrollable = scrollWidth > clientWidth || scrollHeight > clientHeight;
+                    setShowScrollHint(isScrollable);
+                  }
+                }, 100);
+              }
+            }
+          })
+          .catch((error) => {
+            console.error('Mermaid rendering error:', error);
+            setRenderError('Failed to render diagram');
+            // Fallback to text display
+            if (diagramRef.current) {
+              diagramRef.current.innerHTML = `<pre class="text-xs font-mono whitespace-pre-wrap text-gray-800 dark:text-gray-200 p-4 bg-gray-100 dark:bg-gray-800 rounded">${diagramDefinition}</pre>`;
+            }
+          });
+      } catch (error) {
+        console.error('Mermaid rendering error:', error);
+        setRenderError('Failed to render diagram');
+        // Fallback to text display
+        if (diagramRef.current) {
+          diagramRef.current.innerHTML = `<pre class="text-xs font-mono whitespace-pre-wrap text-gray-800 dark:text-gray-200 p-4 bg-gray-100 dark:bg-gray-800 rounded">${diagramDefinition}</pre>`;
+        }
+      }
+    }, 200);
+
+    return () => clearTimeout(renderTimeout);
+  }, [currentIndex, diagrams, isClient]);
+  
+  if (!Array.isArray(diagrams) || diagrams.length === 0) {
+    return (
+      <div className="text-center py-6">
+        <Network className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">No diagrams available</p>
+      </div>
+    );
+  }
+
+  // Show loading state while client-side hydration happens
+  if (!isClient) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Network className="w-5 h-5 text-cyan-500" />
+            <h3 className="font-semibold text-sm">Diagrams</h3>
+            {diagrams.length > 1 && (
+              <Badge variant="outline" className="text-xs">
+                {currentIndex + 1} of {diagrams.length}
+              </Badge>
+            )}
+          </div>
+        </div>
+        <Card className="p-4">
+          <div className="bg-white dark:bg-muted rounded-lg p-4 overflow-x-auto">
+            <div className="flex justify-center items-center min-h-[200px]">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Network className="w-5 h-5 text-cyan-500" />
+          <h3 className="font-semibold text-sm">Diagrams</h3>
+          {diagrams.length > 1 && (
+            <Badge variant="outline" className="text-xs">
+              {currentIndex + 1} of {diagrams.length}
+            </Badge>
+          )}
+        </div>
+        
+        {/* Zoom Controls */}
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setZoomLevel(prev => Math.max(0.5, prev - 0.1))}
+            className="h-6 w-6 p-0 text-xs"
+            title="Zoom Out"
+          >
+            -
+          </Button>
+          <span className="text-xs text-muted-foreground min-w-[3rem] text-center">
+            {Math.round(zoomLevel * 100)}%
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))}
+            className="h-6 w-6 p-0 text-xs"
+            title="Zoom In"
+          >
+            +
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setZoomLevel(1)}
+            className="h-6 px-2 text-xs"
+            title="Reset Zoom"
+          >
+            Reset
+          </Button>
+        </div>
+      </div>
+
+      {/* Error Display */}
+      {renderError && (
+        <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <XCircle className="w-4 h-4 text-red-500" />
+            <span className="text-sm text-red-700 dark:text-red-300">{renderError}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Diagram Display */}
+      <Card className="p-0 relative">
+        <div 
+          ref={containerRef}
+          className="diagram-container"
+        >
+          <div 
+            ref={diagramRef}
+            className="mermaid-diagram"
+            style={{ 
+              transform: `scale(${zoomLevel})`,
+              transformOrigin: 'center top',
+              transition: 'transform 0.2s ease'
+            }}
+          />
+        </div>
+        
+        {/* Scroll Hint */}
+        {showScrollHint && (
+          <div className="absolute bottom-4 right-4 bg-black/70 text-white text-xs px-2 py-1 rounded opacity-70 pointer-events-none z-10">
+            Scroll to explore
+          </div>
+        )}
+      </Card>
+
+      {/* Navigation for multiple diagrams */}
+      {diagrams.length > 1 && (
+        <div className="flex items-center justify-between gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
+            disabled={currentIndex === 0}
+            className="flex items-center gap-1"
+          >
+            <ArrowLeft className="w-3 h-3" />
+            Previous
+          </Button>
+
+          <div className="flex gap-1">
+            {diagrams.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index)}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  index === currentIndex ? "bg-cyan-500" : "bg-muted-foreground/30"
+                }`}
+              />
+            ))}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentIndex(Math.min(diagrams.length - 1, currentIndex + 1))}
+            disabled={currentIndex === diagrams.length - 1}
+            className="flex items-center gap-1"
+          >
+            Next
+            <ArrowRight className="w-3 h-3" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
+// Add CSS for 3D flip animation and Mermaid diagrams
+const FlipCardStyles = () => (
+  <style>{`
+    .transform-style-preserve-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+    
+    /* Mermaid diagram styles */
+    .mermaid-diagram {
+      display: block;
+      width: auto;
+      height: auto;
+      min-height: 200px;
+      min-width: fit-content;
+      overflow: visible;
+      transform-origin: center top;
+      position: relative;
+      background: transparent;
+    }
+    
+    .mermaid-diagram svg {
+      max-width: none !important;
+      width: auto !important;
+      height: auto !important;
+      display: block;
+      margin: 0 auto;
+    }
+    
+    .mermaid-diagram .node rect,
+    .mermaid-diagram .node circle,
+    .mermaid-diagram .node ellipse,
+    .mermaid-diagram .node polygon {
+      fill: #f9f9f9;
+      stroke: #333;
+      stroke-width: 1.5px;
+    }
+    
+    .mermaid-diagram .edgePath .path {
+      stroke: #333;
+      stroke-width: 1.5px;
+      fill: none;
+    }
+    
+    .mermaid-diagram .edgeLabel {
+      background-color: #e8e8e8;
+      text-align: center;
+    }
+    
+    .mermaid-diagram .cluster rect {
+      fill: #ffffde;
+      stroke: #aaaa33;
+      stroke-width: 1px;
+    }
+    
+    .mermaid-diagram .labelText {
+      fill: #333;
+      text-anchor: middle;
+      font-family: 'trebuchet ms', verdana, arial, sans-serif;
+      font-size: 14px;
+    }
+    
+    /* Container scrolling */
+    .diagram-container {
+      overflow: auto;
+      max-height: 70vh;
+      width: 100%;
+      min-width: 0;
+      min-height: 200px;
+      scrollbar-width: thin;
+      scrollbar-color: #888 #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      position: relative;
+      background: #fff;
+      display: block;
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+    }
+    
+    .dark .diagram-container {
+      background: #1a1a1a;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .diagram-container::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+    
+    .diagram-container::-webkit-scrollbar-track {
+      background: #f8f9fa;
+      border-radius: 6px;
+      margin: 2px;
+    }
+    
+    .diagram-container::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #aaa, #888);
+      border-radius: 6px;
+      border: 2px solid #f8f9fa;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .diagram-container::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #888, #666);
+    }
+    
+    .diagram-container::-webkit-scrollbar-thumb:active {
+      background: linear-gradient(180deg, #666, #444);
+    }
+    
+    .diagram-container::-webkit-scrollbar-corner {
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+    
+    /* Dark mode scrollbar */
+    .dark .diagram-container::-webkit-scrollbar-track {
+      background: #2a2a2a;
+    }
+    
+    .dark .diagram-container::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #555, #333);
+      border-color: #2a2a2a;
+    }
+    
+    .dark .diagram-container::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #666, #444);
+    }
+    
+    .dark .diagram-container::-webkit-scrollbar-corner {
+      background: #2a2a2a;
+    }
+    
+    /* Ensure proper scaling for different screen sizes */
+    @media (max-width: 768px) {
+      .mermaid-diagram svg {
+        max-width: none !important;
+      }
+      
+      .diagram-container {
+        max-height: 60vh;
+      }
+    }
+  `}</style>
+);
+
 // const availableModels = [
 //   { id: 'd50a33ce-2462-4a5a-9aa7-efc2d1749745', name: 'GPT-4', provider: 'OpenAI' },
 //   { id: 'claude-3-opus', name: 'Claude', provider: 'Anthropic' },
@@ -153,6 +1175,13 @@ const MessageComponent = ({
       } finally {
         setIsLoadingTool(false);
       }
+    } else {
+      // Fallback: Open with empty content to show loading state or placeholder
+      onOpenToolMessage({
+        type: message.toolResponse.type,
+        content: [],
+        toolResponseId: null
+      });
     }
   };
 
@@ -160,31 +1189,35 @@ const MessageComponent = ({
     <div
       className={`flex ${
         message.sender === "user" ? "justify-end" : "justify-start"
-      } mb-3`}
+      } mb-4`}
     >
       <div
-        className={`max-w-[85%] rounded-lg p-2 ${
+        className={`max-w-[85%] rounded-xl p-3 shadow-sm border ${
           message.sender === "user"
-            ? "bg-primary text-primary-foreground"
-            : "bg-muted"
+            ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-500/20"
+            : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700"
         }`}
       >
         {/* Highlighted text context */}
         {message.highlightedText && (
           <div
-            className={`mb-2 p-2 rounded border-l-2 ${
+            className={`mb-3 p-3 rounded-lg border-l-4 ${
               message.sender === "user"
-                ? "bg-primary-foreground/10 border-l-primary-foreground/30"
-                : "bg-accent/50 border-l-accent-foreground/30"
+                ? "bg-white/10 border-l-white/30 backdrop-blur-sm"
+                : "bg-blue-50 dark:bg-blue-950/30 border-l-blue-400 dark:border-l-blue-500"
             }`}
           >
             <div className="flex items-start gap-2">
-              <Quote className="w-3 h-3 mt-0.5 opacity-70" />
-              <div className="flex-1">
-                <p className="text-xs opacity-90 mb-1">
+              <Quote className="w-4 h-4 mt-0.5 opacity-70 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className={`text-xs font-medium mb-1 ${
+                  message.sender === "user" ? "text-white/90" : "text-blue-700 dark:text-blue-300"
+                }`}>
                   Selected from document:
                 </p>
-                <p className="text-xs italic">
+                <p className={`text-xs italic leading-relaxed ${
+                  message.sender === "user" ? "text-white/80" : "text-gray-600 dark:text-gray-400"
+                }`}>
                   "{message.highlightedText.text}"
                 </p>
               </div>
@@ -192,62 +1225,168 @@ const MessageComponent = ({
           </div>
         )}
 
-        <div className="flex items-start justify-between gap-2">
-          <div className="text-sm whitespace-pre-wrap flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="text-sm whitespace-pre-wrap flex-1 leading-relaxed">
             {message.content}
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => handleCopy(message.content, message.id)}
-            className={`h-5 w-5 p-0 flex-shrink-0 ${
+            className={`h-6 w-6 p-0 flex-shrink-0 rounded-md transition-all ${
               message.sender === "user"
-                ? "hover:bg-primary-foreground/20"
-                : "hover:bg-accent"
+                ? "hover:bg-white/20 text-white/70 hover:text-white"
+                : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >
             {copiedStates[message.id] ? (
-              <Check className="w-3 h-3" />
+              <Check className="w-3.5 h-3.5" />
             ) : (
-              <Copy className="w-3 h-3" />
+              <Copy className="w-3.5 h-3.5" />
             )}
           </Button>
         </div>
 
         {message.toolResponse && (
-          <div className="mt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleOpenTool}
-              disabled={isLoadingTool}
-              className="text-xs gap-1 h-5 px-2"
-            >
-              {isLoadingTool ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <ExternalLink className="w-3 h-3" />
+          <div className="mt-4 space-y-3">
+            {/* Tool response buttons */}
+            <div className="flex gap-2 flex-wrap">
+              {message.toolResponse.type === 'flashcard' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenTool}
+                  disabled={isLoadingTool}
+                  className={`text-xs gap-2 h-8 px-3 rounded-lg border-2 transition-all ${
+                    message.sender === "user" 
+                      ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50" 
+                      : "border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-950/30"
+                  }`}
+                >
+                  {isLoadingTool ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Brain className="w-3.5 h-3.5" />
+                  )}
+                  Open Flashcards
+                </Button>
               )}
-              {getToolButtonText(message.toolResponse.type)}
-            </Button>
+              {message.toolResponse.type === 'quiz' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenTool}
+                  disabled={isLoadingTool}
+                  className={`text-xs gap-2 h-8 px-3 rounded-lg border-2 transition-all ${
+                    message.sender === "user" 
+                      ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50" 
+                      : "border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-950/30"
+                  }`}
+                >
+                  {isLoadingTool ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  )}
+                  Open Quiz
+                </Button>
+              )}
+              {message.toolResponse.type === 'diagram' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenTool}
+                  disabled={isLoadingTool}
+                  className={`text-xs gap-2 h-8 px-3 rounded-lg border-2 transition-all ${
+                    message.sender === "user" 
+                      ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50" 
+                      : "border-cyan-200 text-cyan-700 hover:bg-cyan-50 hover:border-cyan-300 dark:border-cyan-700 dark:text-cyan-300 dark:hover:bg-cyan-950/30"
+                  }`}
+                >
+                  {isLoadingTool ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Network className="w-3.5 h-3.5" />
+                  )}
+                  Open Diagram
+                </Button>
+              )}
+              {message.toolResponse.type === 'game' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenTool}
+                  disabled={isLoadingTool}
+                  className={`text-xs gap-2 h-8 px-3 rounded-lg border-2 transition-all ${
+                    message.sender === "user" 
+                      ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50" 
+                      : "border-orange-200 text-orange-700 hover:bg-orange-50 hover:border-orange-300 dark:border-orange-700 dark:text-orange-300 dark:hover:bg-orange-950/30"
+                  }`}
+                >
+                  {isLoadingTool ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Gamepad2 className="w-3.5 h-3.5" />
+                  )}
+                  Open Game
+                </Button>
+              )}
+            </div>
+            
+            {/* Tool info badge */}
+            <div className="flex items-center gap-2">
+              <Badge 
+                variant="secondary" 
+                className={`text-xs font-medium ${
+                  message.sender === "user" 
+                    ? "bg-white/20 text-white border-white/30" 
+                    : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                }`}
+              >
+                {getToolDisplayName(message.toolResponse.type)} Generated
+              </Badge>
+              {message.toolResponse.content && Array.isArray(message.toolResponse.content) && (
+                <span className={`text-xs ${
+                  message.sender === "user" ? "text-white/70" : "text-gray-500 dark:text-gray-400"
+                }`}>
+                  {message.toolResponse.content.length} items
+                </span>
+              )}
+            </div>
           </div>
         )}
 
-        <div className="flex items-center justify-between mt-1 text-xs opacity-70">
-          <span>
+        <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/10 dark:border-gray-700/50">
+          <span className={`text-xs ${
+            message.sender === "user" ? "text-white/60" : "text-gray-500 dark:text-gray-400"
+          }`}>
             {message.timestamp.toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             })}
           </span>
           {message.sender === "ai" && message.model && selectedModelInfo && (
-            <Badge variant="secondary" className="text-xs h-4">
+            <Badge 
+              variant="secondary" 
+              className={`text-xs h-5 px-2 ${
+                message.sender === "user" 
+                  ? "bg-white/20 text-white border-white/30" 
+                  : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+              }`}
+            >
               {selectedModelInfo.name}
             </Badge>
           )}
         </div>
         {message.toolUsed && (
-          <Badge variant="outline" className="text-xs mt-1 h-4">
+          <Badge 
+            variant="outline" 
+            className={`text-xs mt-2 h-5 ${
+              message.sender === "user" 
+                ? "border-white/30 text-white" 
+                : "border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-400"
+            }`}
+          >
             📊 {message.toolUsed}
           </Badge>
         )}
@@ -338,18 +1477,9 @@ export const ToolPanel = forwardRef(
     // Load tool response from API
     const loadToolResponse = async (toolResponseId, toolType) => {
       try {
-        // Mock API response based on provided structure
-        const mockToolResponse = {
-          id: toolResponseId,
-          tool_type: toolType,
-          response: [
-            "graph TD\n    Blockchain  -->  A[Decentralized Network]\n    A  -->  B[Nodes  Peers]\n    B  -->  C[Transactions Verified]\n    C  -->  D[Blocks Created]\n    D  -->  E[Blockchain Updated]",
-            "graph TD\n    Transaction  -->  A[Verified by Nodes]\n    A  -->  B[Encrypted  Linked]\n    B  -->  C[Block Created]\n    C  -->  D[Block Hashed]\n    D  -->  E[Blockchain Updated]",
-            "graph TD\n    Data  -->  A[Encrypted]\n    A  -->  B[Distributed Ledger]\n    B  -->  C[Decentralized Network]\n    C  -->  D[Consensus Mechanism]\n    D  -->  E[Validated Transactions]",
-          ],
-          created_at: "2025-07-18T00:18:56.906161+00:00",
-          response_text: null,
-        };
+        // TODO: Replace with actual API call
+        const response = await fetch(`/api/tool-responses/${toolResponseId}`);
+        const toolResponse = await response.json();
 
         // Update the message with the loaded tool response
         setMessages((prev) =>
@@ -359,7 +1489,7 @@ export const ToolPanel = forwardRef(
                 ...msg,
                 toolResponse: {
                   ...msg.toolResponse,
-                  content: mockToolResponse.response,
+                  content: toolResponse.response || [],
                 },
               };
             }
@@ -370,7 +1500,7 @@ export const ToolPanel = forwardRef(
         // Open the tool overlay with the loaded content
         setActiveOverlay({
           type: toolType,
-          content: mockToolResponse.response,
+          content: toolResponse.response || [],
           toolResponseId,
         });
       } catch (error) {
@@ -390,7 +1520,7 @@ export const ToolPanel = forwardRef(
               if (msg.tool_response_id && msg.tool_type) {
                 toolResponse = {
                   type: msg.tool_type,
-                  content: [], // Will be loaded on demand
+                  content: msg.tool_response || [], // Use tool_response if available, otherwise load on demand
                   toolResponseId: msg.tool_response_id,
                 };
               }
@@ -408,17 +1538,8 @@ export const ToolPanel = forwardRef(
           );
           setMessages(convertedMessages);
         } else {
-          // Default welcome message if no history
-          setMessages([
-            {
-              id: "1",
-              content:
-                "Hello! I'm here to help you study. Ask me questions, use the tools to generate flashcards, quizzes, diagrams, or games, or highlight any text in the document to instantly access all learning tools.",
-              sender: "ai",
-              timestamp: new Date(),
-              model: availableModels[0].id,
-            },
-          ]);
+          // Start with empty chat
+          setMessages([]);
         }
       };
 
@@ -931,7 +2052,11 @@ if (!type) {
     };
 
     const handleOpenToolMessage = (toolResponse) => {
-      setActiveOverlay(toolResponse);
+      setActiveOverlay({
+        type: toolResponse.type,
+        content: toolResponse.content,
+        toolResponseId: toolResponse.toolResponseId
+      });
     };
 
     const selectedModelInfo = availableModels.find(
@@ -951,31 +2076,30 @@ if (!type) {
     };
 
     return (
-      <div className="w-full h-full bg-card flex flex-col relative overflow-hidden">
+      <>
+        <div className="w-full h-full bg-card flex flex-col relative overflow-hidden">
         {/* Tool Overlay */}
         {activeOverlay && (
-          <ToolOverlay
+          <ToolPanelOverlay
             toolType={activeOverlay.type}
             content={activeOverlay.content}
             onClose={() => setActiveOverlay(null)}
-            onMinimize={() => setActiveOverlay(null)}
-            onTextHighlight={handleToolTextHighlight}
           />
         )}
 
         {/* Compact Toolbar */}
-        <div className="p-2 border-b space-y-2 flex-shrink-0 bg-card ">
-          {/* Model Selector - No label text */}
+        <div className="p-3 border-b border-gray-200 dark:border-gray-700 space-y-3 flex-shrink-0 bg-white dark:bg-gray-800">
+          {/* Model Selector */}
           <Select value={selectedModel} onValueChange={setSelectedModel}>
-            <SelectTrigger className="h-7 text-xs">
+            <SelectTrigger className="h-9 text-sm bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-slate-800/90 backdrop-blur-xl"> 
+            <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"> 
               {availableModels.map((model) => (
-                <SelectItem className="bg-slate-800/90 backdrop-blur-xl" key={model.id} value={model.id}>
+                <SelectItem className="hover:bg-gray-100 dark:hover:bg-gray-700" key={model.id} value={model.id}>
                   <div className="flex flex-col items-start">
-                    <span className="text-xs">{model.name}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-sm font-medium">{model.name}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       {model.provider}
                     </span>
                   </div>
@@ -984,8 +2108,8 @@ if (!type) {
             </SelectContent>
           </Select>
 
-          {/* Tools in 2 columns with hover colors */}
-          <div className="grid grid-cols-2 gap-1">
+          {/* Tools in 2 columns with improved styling */}
+          <div className="grid grid-cols-2 gap-2">
             {availableTools.map((tool) => (
               <Button
                 key={tool.id}
@@ -993,7 +2117,7 @@ if (!type) {
                 size="sm"
                 onClick={() => handleToolUse(tool)}
                 disabled={isLoading}
-                className={`justify-start gap-1 h-7 text-xs px-2 transition-colors ${tool.color}`}
+                className={`justify-start gap-2 h-9 text-sm px-3 rounded-lg border-2 transition-all ${tool.color}`}
                 title={tool.description}
               >
                 {tool.icon}
@@ -1043,24 +2167,53 @@ if (!type) {
         )}
 
         {/* Chat Messages */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden bg-gray-50 dark:bg-gray-900">
           <ScrollArea className="h-full">
-            <div ref={chatContainerRef} className="p-2 space-y-0">
-              {messages.map((message) => (
-                <MessageComponent
-                  key={message.id}
-                  message={message}
-                  selectedModelInfo={selectedModelInfo}
-                  onOpenToolMessage={handleOpenToolMessage}
-                  onLoadToolResponse={loadToolResponse}
-                />
-              ))}
+            <div ref={chatContainerRef} className="p-4 space-y-0">
+              {messages.length === 0 && !isLoading ? (
+                <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mb-4">
+                    <Brain className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    Start a conversation
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 max-w-sm leading-relaxed">
+                    Ask questions, generate learning tools, or highlight text in the document to get started with your AI study assistant.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
+                      💭 Ask questions
+                    </span>
+                    <span className="px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs font-medium">
+                      🎯 Generate tools
+                    </span>
+                    <span className="px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-medium">
+                      ✨ Highlight text
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                messages.map((message) => (
+                  <MessageComponent
+                    key={message.id}
+                    message={message}
+                    selectedModelInfo={selectedModelInfo}
+                    onOpenToolMessage={handleOpenToolMessage}
+                    onLoadToolResponse={loadToolResponse}
+                  />
+                ))
+              )}
 
               {isLoading && (
-                <div className="flex justify-start mb-3">
-                  <div className="bg-muted rounded-lg p-2 flex items-center gap-2">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    <span className="text-xs">Thinking...</span>
+                <div className="flex justify-start mb-4">
+                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex items-center gap-3 shadow-sm">
+                    <div className="flex space-x-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                    </div>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">AI is thinking...</span>
                   </div>
                 </div>
               )}
@@ -1071,51 +2224,53 @@ if (!type) {
         </div>
 
         {/* Chat Input with Context and Mic Button */}
-        <div className="p-2 border-t flex-shrink-0 bg-card">
+        <div className="p-3 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 bg-white dark:bg-gray-800">
           {/* Context Display */}
           {contextText && (
-            <div className="mb-2 p-2 bg-accent/30 rounded border-l-2 border-l-accent-foreground/30">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Quote className="w-3 h-3 opacity-70" />
-                    <span className="text-xs text-muted-foreground">
+            <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Quote className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
                       Selected text:
                     </span>
                   </div>
-                  <p className="text-xs italic">"{contextText.text}"</p>
+                  <p className="text-sm italic text-blue-700 dark:text-blue-300 leading-relaxed">
+                    "{contextText.text}"
+                  </p>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleClearContext}
-                  className="h-5 w-5 p-0"
+                  className="h-7 w-7 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-200 dark:hover:bg-blue-900/50"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
             </div>
           )}
 
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             <Textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder={
                 contextText
                   ? "Ask about the selected text..."
-                  : "Ask a question..."
+                  : "Type your message here..."
               }
-              className="resize-none text-xs bg-slate-100 text-slate-800 placeholder:text-slate-500 border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"
+              className="resize-none text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl px-4 py-3 leading-relaxed"
               rows={2}
               onKeyDown={handleKeyDown}
             />
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-2">
               <Button
                 variant={isRecording ? "destructive" : "outline"}
                 size="sm"
                 onClick={toggleRecording}
-                className="h-8 w-8 p-0"
+                className="h-10 w-10 p-0 rounded-xl"
                 disabled={isLoading}
                 title={
                   isRecording
@@ -1124,27 +2279,34 @@ if (!type) {
                 }
               >
                 {isRecording ? (
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                  <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
                 ) : (
-                  <Mic className="w-3 h-3" />
+                  <Mic className="w-4 h-4" />
                 )}
               </Button>
               <Button
                 onClick={() => handleSendMessage()}
                 disabled={!inputValue.trim() || isLoading}
                 size="sm"
-                className="h-8 w-8 p-0"
+                className="h-10 w-10 p-0 rounded-xl bg-blue-500 hover:bg-blue-600 text-white"
               >
-                <Send className="w-3 h-3" />
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </Button>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Enter to send • Shift+Enter for new line • Highlight text to access
-            all learning tools instantly
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
+            Press <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Enter</kbd> to send • 
+            <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs mx-1">Shift+Enter</kbd> for new line • 
+            Highlight text to access all learning tools instantly
           </p>
         </div>
       </div>
+      <FlipCardStyles />
+      </>
     );
   }
 );
