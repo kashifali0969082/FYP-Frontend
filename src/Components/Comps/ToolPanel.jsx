@@ -618,12 +618,34 @@ const DiagramRenderer = ({ diagrams }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isClient, setIsClient] = useState(false);
   const [renderError, setRenderError] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [showScrollHint, setShowScrollHint] = useState(false);
   const diagramRef = useRef(null);
+  const containerRef = useRef(null);
   
   // Ensure we're on the client side
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Reset zoom when diagram changes
+  useEffect(() => {
+    setZoomLevel(1);
+  }, [currentIndex]);
+
+  // Check if content is scrollable
+  useEffect(() => {
+    const checkScrollable = () => {
+      if (containerRef.current) {
+        const { scrollWidth, scrollHeight, clientWidth, clientHeight } = containerRef.current;
+        const isScrollable = scrollWidth > clientWidth || scrollHeight > clientHeight;
+        setShowScrollHint(isScrollable);
+      }
+    };
+
+    const timer = setTimeout(checkScrollable, 500);
+    return () => clearTimeout(timer);
+  }, [currentIndex, zoomLevel]);
 
   // Initialize Mermaid only on client side
   useEffect(() => {
@@ -634,6 +656,28 @@ const DiagramRenderer = ({ diagrams }) => {
         startOnLoad: false,
         theme: 'default',
         securityLevel: 'loose',
+        maxWidth: null,
+        flowchart: {
+          useMaxWidth: false,
+          htmlLabels: true,
+          padding: 20
+        },
+        sequence: {
+          useMaxWidth: false,
+          padding: 20
+        },
+        journey: {
+          useMaxWidth: false,
+          padding: 20
+        },
+        gantt: {
+          useMaxWidth: false,
+          padding: 20
+        },
+        graph: {
+          useMaxWidth: false,
+          padding: 20
+        },
         themeCSS: `
           .node rect { fill: #f9f9f9; stroke: #333; stroke-width: 2px; }
           .node text { fill: #333; }
@@ -667,6 +711,24 @@ const DiagramRenderer = ({ diagrams }) => {
           .then((result) => {
             if (diagramRef.current && result.svg) {
               diagramRef.current.innerHTML = result.svg;
+              
+              // Ensure the SVG is properly sized and visible
+              const svg = diagramRef.current.querySelector('svg');
+              if (svg) {
+                svg.style.maxWidth = 'none';
+                svg.style.width = 'auto';
+                svg.style.height = 'auto';
+                svg.style.display = 'block';
+                
+                // Force a reflow to ensure proper sizing
+                setTimeout(() => {
+                  if (containerRef.current) {
+                    const { scrollWidth, scrollHeight, clientWidth, clientHeight } = containerRef.current;
+                    const isScrollable = scrollWidth > clientWidth || scrollHeight > clientHeight;
+                    setShowScrollHint(isScrollable);
+                  }
+                }, 100);
+              }
             }
           })
           .catch((error) => {
@@ -685,7 +747,7 @@ const DiagramRenderer = ({ diagrams }) => {
           diagramRef.current.innerHTML = `<pre class="text-xs font-mono whitespace-pre-wrap text-gray-800 dark:text-gray-200 p-4 bg-gray-100 dark:bg-gray-800 rounded">${diagramDefinition}</pre>`;
         }
       }
-    }, 100);
+    }, 200);
 
     return () => clearTimeout(renderTimeout);
   }, [currentIndex, diagrams, isClient]);
@@ -738,6 +800,40 @@ const DiagramRenderer = ({ diagrams }) => {
             </Badge>
           )}
         </div>
+        
+        {/* Zoom Controls */}
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setZoomLevel(prev => Math.max(0.5, prev - 0.1))}
+            className="h-6 w-6 p-0 text-xs"
+            title="Zoom Out"
+          >
+            -
+          </Button>
+          <span className="text-xs text-muted-foreground min-w-[3rem] text-center">
+            {Math.round(zoomLevel * 100)}%
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))}
+            className="h-6 w-6 p-0 text-xs"
+            title="Zoom In"
+          >
+            +
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setZoomLevel(1)}
+            className="h-6 px-2 text-xs"
+            title="Reset Zoom"
+          >
+            Reset
+          </Button>
+        </div>
       </div>
 
       {/* Error Display */}
@@ -751,13 +847,28 @@ const DiagramRenderer = ({ diagrams }) => {
       )}
 
       {/* Diagram Display */}
-      <Card className="p-4">
-        <div className="bg-white dark:bg-muted rounded-lg p-4 overflow-x-auto">
+      <Card className="p-0 relative">
+        <div 
+          ref={containerRef}
+          className="diagram-container"
+        >
           <div 
             ref={diagramRef}
-            className="mermaid-diagram flex justify-center items-center min-h-[200px]"
+            className="mermaid-diagram"
+            style={{ 
+              transform: `scale(${zoomLevel})`,
+              transformOrigin: 'center top',
+              transition: 'transform 0.2s ease'
+            }}
           />
         </div>
+        
+        {/* Scroll Hint */}
+        {showScrollHint && (
+          <div className="absolute bottom-4 right-4 bg-black/70 text-white text-xs px-2 py-1 rounded opacity-70 pointer-events-none z-10">
+            Scroll to explore
+          </div>
+        )}
       </Card>
 
       {/* Navigation for multiple diagrams */}
@@ -815,9 +926,24 @@ const FlipCardStyles = () => (
     }
     
     /* Mermaid diagram styles */
-    .mermaid-diagram svg {
-      max-width: 100%;
+    .mermaid-diagram {
+      display: block;
+      width: auto;
       height: auto;
+      min-height: 200px;
+      min-width: fit-content;
+      overflow: visible;
+      transform-origin: center top;
+      position: relative;
+      background: transparent;
+    }
+    
+    .mermaid-diagram svg {
+      max-width: none !important;
+      width: auto !important;
+      height: auto !important;
+      display: block;
+      margin: 0 auto;
     }
     
     .mermaid-diagram .node rect,
@@ -851,6 +977,90 @@ const FlipCardStyles = () => (
       text-anchor: middle;
       font-family: 'trebuchet ms', verdana, arial, sans-serif;
       font-size: 14px;
+    }
+    
+    /* Container scrolling */
+    .diagram-container {
+      overflow: auto;
+      max-height: 70vh;
+      width: 100%;
+      min-width: 0;
+      min-height: 200px;
+      scrollbar-width: thin;
+      scrollbar-color: #888 #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      position: relative;
+      background: #fff;
+      display: block;
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+    }
+    
+    .dark .diagram-container {
+      background: #1a1a1a;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .diagram-container::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+    
+    .diagram-container::-webkit-scrollbar-track {
+      background: #f8f9fa;
+      border-radius: 6px;
+      margin: 2px;
+    }
+    
+    .diagram-container::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #aaa, #888);
+      border-radius: 6px;
+      border: 2px solid #f8f9fa;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .diagram-container::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #888, #666);
+    }
+    
+    .diagram-container::-webkit-scrollbar-thumb:active {
+      background: linear-gradient(180deg, #666, #444);
+    }
+    
+    .diagram-container::-webkit-scrollbar-corner {
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+    
+    /* Dark mode scrollbar */
+    .dark .diagram-container::-webkit-scrollbar-track {
+      background: #2a2a2a;
+    }
+    
+    .dark .diagram-container::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #555, #333);
+      border-color: #2a2a2a;
+    }
+    
+    .dark .diagram-container::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #666, #444);
+    }
+    
+    .dark .diagram-container::-webkit-scrollbar-corner {
+      background: #2a2a2a;
+    }
+    
+    /* Ensure proper scaling for different screen sizes */
+    @media (max-width: 768px) {
+      .mermaid-diagram svg {
+        max-width: none !important;
+      }
+      
+      .diagram-container {
+        max-height: 60vh;
+      }
     }
   `}</style>
 );
