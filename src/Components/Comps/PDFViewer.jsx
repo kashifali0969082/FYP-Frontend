@@ -95,8 +95,9 @@ export const PDFViewer = ({
 }) => {
   const [zoom, setZoom] = useState(1.0);
   const [isDarkMode, setIsDarkMode] = useState(true);
-const safeCurrentPage = typeof currentPage === "number" && !isNaN(currentPage) ? currentPage : 1;
-const [pageInput, setPageInput] = useState(safeCurrentPage.toString());
+  const safeCurrentPage =
+    typeof currentPage === "number" && !isNaN(currentPage) ? currentPage : 1;
+  const [pageInput, setPageInput] = useState(safeCurrentPage.toString());
   const [textSelection, setTextSelection] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [hoveredTool, setHoveredTool] = useState(null);
@@ -107,10 +108,10 @@ const [pageInput, setPageInput] = useState(safeCurrentPage.toString());
   const [pdfUrl, setPdfUrl] = useState(null);
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
-useEffect(()=>{
-setFinalizedPage(pageNumber)
-},[pageNumber])
-  console.log("pdf Viewer function is calling", id, type,pageNumber);
+  useEffect(() => {
+    setFinalizedPage(pageNumber);
+  }, [pageNumber]);
+  console.log("pdf Viewer function is calling", id, type, pageNumber);
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
     setPageNumber(1);
@@ -158,15 +159,14 @@ setFinalizedPage(pageNumber)
   };
   const goToPrevPage = () => {
     setPageNumber((prev) => Math.max(prev - 1, 1));
-    lastPageNumber()
-setPageInput((Number(pageInput) - 1).toString());
+    lastPageNumber();
+    setPageInput((Number(pageInput) - 1).toString());
   };
 
   const goToNextPage = () => {
     setPageNumber((prev) => Math.min(prev + 1, numPages));
     lastPageNumber();
     setPageInput((Number(pageInput) + 1).toString());
-
   };
 
   const goToPage = () => {
@@ -222,10 +222,11 @@ setPageInput((Number(pageInput) - 1).toString());
     }
   };
 
-React.useEffect(() => {
-  const safeCurrentPage = typeof currentPage === "number" && !isNaN(currentPage) ? currentPage : 1;
-  setPageInput(safeCurrentPage.toString());
-}, [currentPage]);
+  React.useEffect(() => {
+    const safeCurrentPage =
+      typeof currentPage === "number" && !isNaN(currentPage) ? currentPage : 1;
+    setPageInput(safeCurrentPage.toString());
+  }, [currentPage]);
 
   // Handle text selection
   const handleTextSelection = useCallback(() => {
@@ -660,13 +661,17 @@ React.useEffect(() => {
               lineHeight: 1.6,
             }}
           >
-            <div className="p-6 lg:p-8 h-full overflow-auto study-scrollbar">
+            <div className="p-6 lg:p-8 h-full overflow-auto study-scrollbar ">
               <div
                 style={{
-                  backgroundColor: "#000",
-                  color: "#fff",
+                  backgroundColor: "#ffffff",
+                  color: "rgb(0, 0, 0)",
                   padding: "1rem",
                   minHeight: "100vh",
+                  overflowY: "scroll",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
                 }}
               >
                 {pdfUrl ? (
@@ -679,234 +684,18 @@ React.useEffect(() => {
                         pageNumber={pageNumber}
                         renderAnnotationLayer={false}
                         renderTextLayer={true}
+                          scale={1.5}
                       />
                     </Document>
 
-                    {/* <div
-                      style={{
-                        marginTop: "1rem",
-                        display: "flex",
-                        gap: "1rem",
-                        alignItems: "center",
-                      }}
-                    >
-                      <button onClick={goToPrevPage} disabled={pageNumber <= 1}>
-                        Previous
-                      </button>
-
-                      <span>
-                        Page {pageNumber} of {numPages}
-                      </span>
-
-                      <button
-                        onClick={goToNextPage}
-                        disabled={pageNumber >= numPages}
-                      >
-                        Next
-                      </button>
-
-                      <input
-                        type="number"
-                        placeholder="Page #"
-                        value={inputPage}
-                        onChange={(e) => setInputPage(e.target.value)}
-                        style={{ width: "80px", padding: "4px" }}
-                      />
-
-                      <button onClick={goToPage}>Go</button>
-                    </div> */}
+                  
                   </>
                 ) : (
                   <p>Loading PDF...</p>
                 )}
               </div>
             </div>
-            {/* <div className="flex items-center gap-4 mb-6 pb-4 border-b border-slate-700/30">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <FileText className="w-6 h-6 text-white" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-xl font-semibold mb-1 truncate text-white">{fileName}</h1>
-                  <div className="flex items-center gap-4 text-sm text-slate-400">
-                    <span>Page {currentPage} of {totalPages}</span>
-                    <span>•</span>
-                    <span>Chapter {pageContent.chapter}</span>
-                    <span>•</span>
-                    <span>{Math.round((currentPage / totalPages) * 100)}% complete</span>
-                  </div>
-                </div>
-              </div>
 
-              <div className="space-y-6 user-select-text">
-                <div className="border-b border-slate-700/30 pb-4">
-                  <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    Chapter {pageContent.chapter}: {pageContent.topic}
-                  </h1>
-                  <p className="text-slate-400 text-lg">Section {pageContent.section} - Introduction and Fundamentals</p>
-                </div>
-                
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-semibold text-white">Overview</h2>
-                  <div className="prose prose-lg prose-invert max-w-none">
-                    <p className="leading-relaxed text-slate-300">
-                      This section introduces the fundamental concepts of {pageContent.topic.toLowerCase()}. 
-                      Understanding these principles is essential for developing efficient algorithms and 
-                      solving complex computational problems in computer science. Algorithm analysis provides 
-                      the mathematical foundation for understanding how programs behave under different conditions.
-                    </p>
-                    
-                    <p className="leading-relaxed text-slate-300">
-                      The concepts covered in this chapter build upon previous knowledge and provide 
-                      the foundation for more advanced topics. Students should focus on understanding 
-                      both the theoretical aspects and practical applications. Performance analysis is crucial 
-                      for writing efficient code that scales well with larger input sizes.
-                    </p>
-                  </div>
-                  
-                  <h3 className="text-xl font-semibold text-white mt-6">Key Concepts</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {pageContent.concepts.map((concept, index) => (
-                      <div key={index} className="flex items-center space-x-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700/30">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                        <span className="text-slate-300">{concept}</span>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className={`mt-8 p-4 rounded-xl border ${
-                    isDarkMode 
-                      ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-800/50' 
-                      : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
-                  }`}>
-                    <h4 className="flex items-center gap-2 mb-3 text-lg font-semibold">
-                      <span className="text-2xl">💡</span>
-                      Study Tip
-                    </h4>
-                    <p className="text-sm leading-relaxed text-slate-300">
-                      Practice implementing these concepts in your preferred programming language. 
-                      Use the study tools on the right to create flashcards and quizzes for better retention. 
-                      Work through the exercises at the end of each section to reinforce your understanding.
-                      <strong className="text-blue-400"> Try highlighting any text in this document to access all learning tools instantly!</strong>
-                    </p>
-                  </div>
-
-                  <div className="mt-8 space-y-4">
-                    <h3 className="text-xl font-semibold text-white">Algorithm Analysis in Detail</h3>
-                    <div className="prose prose-lg prose-invert max-w-none space-y-4">
-                      <p className="leading-relaxed text-slate-300">
-                        Algorithm analysis is the theoretical study of computer program performance and resource usage. 
-                        It involves mathematical techniques to describe the running time of an algorithm as a function 
-                        of its input size. This analysis helps us predict how the algorithm will perform on large datasets 
-                        and compare different algorithmic approaches.
-                      </p>
-                      
-                      <p className="leading-relaxed text-slate-300">
-                        The most common complexity measures are time complexity and space complexity. Time complexity 
-                        describes how the running time increases with input size, while space complexity describes 
-                        how memory usage grows. Both are typically expressed using Big O notation, which provides 
-                        an upper bound on the growth rate.
-                      </p>
-
-                      <h4 className="text-lg font-semibold text-white mt-6">Common Time Complexities</h4>
-                      <div className="space-y-3">
-                        {[
-                          { notation: "O(1)", name: "Constant Time", desc: "Operations that take the same amount of time regardless of input size, such as array indexing or hash table lookups." },
-                          { notation: "O(log n)", name: "Logarithmic Time", desc: "Algorithms that divide the problem in half at each step, like binary search or balanced tree operations." },
-                          { notation: "O(n)", name: "Linear Time", desc: "Algorithms that examine each element once, such as linear search or finding the maximum element in an unsorted array." },
-                          { notation: "O(n log n)", name: "Linearithmic Time", desc: "Efficient sorting algorithms like merge sort and heap sort fall into this category." },
-                          { notation: "O(n²)", name: "Quadratic Time", desc: "Algorithms with nested loops over the input, such as bubble sort or simple matrix multiplication." }
-                        ].map((complexity, index) => (
-                          <div key={index} className="p-4 bg-slate-800/40 rounded-lg border border-slate-700/30">
-                            <div className="flex items-start space-x-3">
-                              <code className="bg-slate-700/50 text-blue-400 px-2 py-1 rounded text-sm font-mono">{complexity.notation}</code>
-                              <div>
-                                <h5 className="font-semibold text-white">{complexity.name}:</h5>
-                                <p className="text-sm text-slate-400 leading-relaxed">{complexity.desc}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className={`mt-6 p-4 rounded-xl border ${
-                    isDarkMode 
-                      ? 'bg-slate-800/60 border-slate-700/50' 
-                      : 'bg-gray-50 border-gray-300'
-                  }`}>
-                    <h4 className="mb-3 font-semibold text-white flex items-center gap-2">
-                      <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center">
-                        <span className="text-white text-xs">{ }</span>
-                      </div>
-                      Algorithm Example: Binary Search
-                    </h4>
-                    <pre className="whitespace-pre-wrap overflow-auto text-sm bg-slate-900/50 p-4 rounded-lg border border-slate-700/30 text-slate-300 font-mono">
-{`function binarySearch(arr, target) {
-  let left = 0;
-  let right = arr.length - 1;
-  
-  while (left <= right) {
-    let mid = Math.floor((left + right) / 2);
-    
-    if (arr[mid] === target) {
-      return mid; // Found target at index mid
-    } else if (arr[mid] < target) {
-      left = mid + 1; // Search right half
-    } else {
-      right = mid - 1; // Search left half
-    }
-  }
-  
-  return -1; // Target not found
-}
-
-// Time Complexity: O(log n)
-// Space Complexity: O(1)`}
-                    </pre>
-                  </div>
-
-                  <div className="mt-8">
-                    <h3 className="text-xl font-semibold text-white mb-4">Practice Exercises</h3>
-                    <div className="space-y-3">
-                      {[
-                        "Implement the basic binary search algorithm and analyze its time complexity step by step. Explain why it's O(log n).",
-                        "Compare linear search vs binary search performance. When would you use each approach?",
-                        "Apply the concept to solve a real-world problem: design an efficient algorithm to find a specific record in a large sorted database."
-                      ].map((exercise, index) => (
-                        <div key={index} className={`p-4 rounded-lg border ${
-                          isDarkMode 
-                            ? 'bg-slate-800/40 border-slate-700/30' 
-                            : 'bg-gray-50 border-gray-200'
-                        }`}>
-                          <div className="flex items-start space-x-3">
-                            <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                              {index + 1}
-                            </div>
-                            <p className="text-sm text-slate-300 leading-relaxed">
-                              <strong className="text-white">Exercise {currentPage}.{index + 1}:</strong> {exercise}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-                <div className="mt-12 pt-6 border-t border-slate-700/30 text-center">
-                <div className="flex items-center justify-center space-x-6 text-sm text-slate-500">
-                  <span className="flex items-center space-x-1">
-                    <FileText className="w-4 h-4" />
-                    <span>Introduction to Algorithms</span>
-                  </span>
-                  <span>•</span>
-                  <span>Page {currentPage}</span>
-                  <span>•</span>
-                  <span className="text-blue-400">Highlight text to access learning tools</span>
-                </div>
-              </div>
-            </div> */}
           </div>
         </div>
       </div>
