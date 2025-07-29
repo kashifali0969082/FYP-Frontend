@@ -1477,18 +1477,9 @@ export const ToolPanel = forwardRef(
     // Load tool response from API
     const loadToolResponse = async (toolResponseId, toolType) => {
       try {
-        // Mock API response based on provided structure
-        const mockToolResponse = {
-          id: toolResponseId,
-          tool_type: toolType,
-          response: [
-            "graph TD\n    Blockchain  -->  A[Decentralized Network]\n    A  -->  B[Nodes  Peers]\n    B  -->  C[Transactions Verified]\n    C  -->  D[Blocks Created]\n    D  -->  E[Blockchain Updated]",
-            "graph TD\n    Transaction  -->  A[Verified by Nodes]\n    A  -->  B[Encrypted  Linked]\n    B  -->  C[Block Created]\n    C  -->  D[Block Hashed]\n    D  -->  E[Blockchain Updated]",
-            "graph TD\n    Data  -->  A[Encrypted]\n    A  -->  B[Distributed Ledger]\n    B  -->  C[Decentralized Network]\n    C  -->  D[Consensus Mechanism]\n    D  -->  E[Validated Transactions]",
-          ],
-          created_at: "2025-07-18T00:18:56.906161+00:00",
-          response_text: null,
-        };
+        // TODO: Replace with actual API call
+        const response = await fetch(`/api/tool-responses/${toolResponseId}`);
+        const toolResponse = await response.json();
 
         // Update the message with the loaded tool response
         setMessages((prev) =>
@@ -1498,7 +1489,7 @@ export const ToolPanel = forwardRef(
                 ...msg,
                 toolResponse: {
                   ...msg.toolResponse,
-                  content: mockToolResponse.response,
+                  content: toolResponse.response || [],
                 },
               };
             }
@@ -1509,7 +1500,7 @@ export const ToolPanel = forwardRef(
         // Open the tool overlay with the loaded content
         setActiveOverlay({
           type: toolType,
-          content: mockToolResponse.response,
+          content: toolResponse.response || [],
           toolResponseId,
         });
       } catch (error) {
@@ -2217,7 +2208,7 @@ if (!type) {
               {isLoading && (
                 <div className="flex justify-start mb-4">
                   <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex items-center gap-3 shadow-sm">
-                    <div className="flex space-x-1">
+                    <div className="flex space-x-2">
                       <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
                       <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
