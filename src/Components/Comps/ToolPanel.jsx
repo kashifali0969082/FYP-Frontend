@@ -5,7 +5,9 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { ChatbotApi } from "../../Api/Apifun";
+import { ChatbotApi, listModels } from "../../Api/Apifun";
+import { toast } from "sonner";
+import axios from "axios";
 import {
   Send,
   Mic,
@@ -21,6 +23,17 @@ import {
   Gamepad2,
   Quote,
   X,
+  RotateCcw,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+  Eye,
+  EyeOff,
+  Zap,
+  BookOpen,
+  Target,
+  Trophy,
 } from "lucide-react";
 import { Button } from "./button";
 import { Textarea } from "./ui/textarea";
@@ -40,9 +53,613 @@ import {
   CollapsibleTrigger,
 } from "./ui/collapsible";
 import { ToolOverlay } from "./ui/tooloverlay";
-import { toast } from "sonner";
-import axios from "axios";
-import { listModels } from "../../Api/Apifun";
+
+// Tool Panel Overlay Component
+const ToolPanelOverlay = ({ toolType, content, onClose }) => {
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-background border border-border rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-2">
+            {toolType === 'flashcard' && <Brain className="w-5 h-5 text-purple-500" />}
+            {toolType === 'quiz' && <HelpCircle className="w-5 h-5 text-green-500" />}
+            {toolType === 'diagram' && <Network className="w-5 h-5 text-cyan-500" />}
+            {toolType === 'game' && <Gamepad2 className="w-5 h-5 text-orange-500" />}
+            <h2 className="text-lg font-semibold">
+              {getToolDisplayName(toolType)}
+            </h2>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-8 w-8 p-0"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto p-4">
+          <div className="max-w-none">
+            {(!content || (Array.isArray(content) && content.length === 0)) ? (
+              <div className="text-center py-8">
+                <div className="text-muted-foreground">
+                  {toolType === 'flashcard' && <Brain className="w-16 h-16 mx-auto mb-4 text-purple-500/50" />}
+                  {toolType === 'quiz' && <HelpCircle className="w-16 h-16 mx-auto mb-4 text-green-500/50" />}
+                  {toolType === 'diagram' && <Network className="w-16 h-16 mx-auto mb-4 text-cyan-500/50" />}
+                  {toolType === 'game' && <Gamepad2 className="w-16 h-16 mx-auto mb-4 text-orange-500/50" />}
+                  <p className="text-lg font-medium mb-2">No content available</p>
+                  <p className="text-sm">The {getToolDisplayName(toolType).toLowerCase()} content is not ready yet.</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {toolType === 'flashcard' && Array.isArray(content) && (
+                  <FlashcardRenderer flashcards={content} />
+                )}
+                {toolType === 'quiz' && Array.isArray(content) && (
+                  <QuizRenderer questions={content} />
+                )}
+                {toolType === 'diagram' && Array.isArray(content) && (
+                  <DiagramRenderer diagrams={content} />
+                )}
+                {toolType === 'game' && (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <Gamepad2 className="w-16 h-16 mx-auto mb-4 text-orange-500" />
+                      <h3 className="text-lg font-bold mb-2">Learning Game</h3>
+                    </div>
+                    <div className="bg-muted rounded-lg p-4">
+                      <pre className="text-sm whitespace-pre-wrap font-mono">
+                        {Array.isArray(content) ? content.join('\n\n') : content}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+                {/* Fallback for other content */}
+                {!['flashcard', 'quiz', 'diagram', 'game'].includes(toolType) && (
+                  <div className="bg-muted rounded-lg p-4">
+                    <pre className="text-sm whitespace-pre-wrap font-mono">
+                      {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Flashcard Component
+const FlashcardRenderer = ({ flashcards }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [completedCards, setCompletedCards] = useState(new Set());
+
+  const currentCard = flashcards[currentIndex];
+  const totalCards = flashcards.length;
+
+  const nextCard = () => {
+    if (currentIndex < totalCards - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setIsFlipped(false);
+    }
+  };
+
+  const prevCard = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setIsFlipped(false);
+    }
+  };
+
+  const markCompleted = () => {
+    setCompletedCards(prev => new Set([...prev, currentCard.id]));
+    if (currentIndex < totalCards - 1) {
+      nextCard();
+    }
+  };
+
+  const getDifficultyColor = (difficulty) => {
+    if (difficulty <= 1) return "text-green-500 bg-green-500/10";
+    if (difficulty <= 2) return "text-yellow-500 bg-yellow-500/10";
+    return "text-red-500 bg-red-500/10";
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Brain className="w-5 h-5 text-purple-500" />
+          <h3 className="font-semibold text-sm">Flashcards</h3>
+          <Badge variant="outline" className="text-xs">
+            {currentIndex + 1} of {totalCards}
+          </Badge>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {completedCards.size}/{totalCards} completed
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="w-full bg-muted rounded-full h-1.5">
+        <div
+          className="bg-gradient-to-r from-purple-500 to-blue-500 h-1.5 rounded-full transition-all duration-300"
+          style={{ width: `${((currentIndex + 1) / totalCards) * 100}%` }}
+        />
+      </div>
+
+      {/* Flashcard */}
+      <div className="relative h-48">
+        <div
+          className={`absolute inset-0 w-full h-full transition-transform duration-500 transform-style-preserve-3d cursor-pointer ${
+            isFlipped ? "rotate-y-180" : ""
+          }`}
+          onClick={() => setIsFlipped(!isFlipped)}
+        >
+          {/* Front Side - Question */}
+          <div className="absolute inset-0 w-full h-full backface-hidden bg-purple-100 dark:bg-purple-900 border-2 border-purple-300 dark:border-purple-700 rounded-lg p-4 flex flex-col justify-center">
+            <div className="flex items-center justify-between mb-3">
+              <Badge className={`text-xs px-2 py-1 ${getDifficultyColor(currentCard.difficulty)}`}>
+                Level {currentCard.difficulty}
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                {currentCard.topic}
+              </Badge>
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-center mb-3 text-purple-900 dark:text-purple-100">
+                {currentCard.question}
+              </p>
+              <p className="text-xs text-purple-600 dark:text-purple-400">
+                Click to reveal answer
+              </p>
+            </div>
+          </div>
+
+          {/* Back Side - Answer */}
+          <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-green-100 dark:bg-green-900 border-2 border-green-300 dark:border-green-700 rounded-lg p-4 flex flex-col justify-center">
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-3">
+                <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
+                <span className="text-xs font-medium text-green-700 dark:text-green-300">
+                  Answer
+                </span>
+              </div>
+              <p className="text-sm text-center text-green-900 dark:text-green-100">
+                {currentCard.answer}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="flex items-center justify-between gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={prevCard}
+          disabled={currentIndex === 0}
+          className="flex items-center gap-1"
+        >
+          <ArrowLeft className="w-3 h-3" />
+          Previous
+        </Button>
+
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsFlipped(!isFlipped)}
+            className="flex items-center gap-1"
+          >
+            {isFlipped ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+            {isFlipped ? "Hide" : "Reveal"}
+          </Button>
+
+          {isFlipped && !completedCards.has(currentCard.id) && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={markCompleted}
+              className="flex items-center gap-1 bg-green-500 hover:bg-green-600"
+            >
+              <Check className="w-3 h-3" />
+              Got it!
+            </Button>
+          )}
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={nextCard}
+          disabled={currentIndex === totalCards - 1}
+          className="flex items-center gap-1"
+        >
+          Next
+          <ArrowRight className="w-3 h-3" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+// Quiz Component
+const QuizRenderer = ({ questions }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [showResults, setShowResults] = useState(false);
+  const [submitted, setSubmitted] = useState(new Set());
+
+  const currentQuestion = questions[currentIndex];
+  const totalQuestions = questions.length;
+  const isCurrentSubmitted = submitted.has(currentQuestion.id);
+
+  const handleAnswerSelect = (questionId, answer) => {
+    if (!isCurrentSubmitted) {
+      setAnswers(prev => ({ ...prev, [questionId]: answer }));
+    }
+  };
+
+  const submitAnswer = () => {
+    if (answers[currentQuestion.id]) {
+      setSubmitted(prev => new Set([...prev, currentQuestion.id]));
+    }
+  };
+
+  const nextQuestion = () => {
+    if (currentIndex < totalQuestions - 1) {
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      setShowResults(true);
+    }
+  };
+
+  const prevQuestion = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  const getScore = () => {
+    return questions.filter(q => answers[q.id] === q.correct_answer).length;
+  };
+
+  const getDifficultyColor = (difficulty) => {
+    if (difficulty <= 1) return "text-green-500 bg-green-500/10";
+    if (difficulty <= 2) return "text-yellow-500 bg-yellow-500/10";
+    return "text-red-500 bg-red-500/10";
+  };
+
+  if (showResults) {
+    const score = getScore();
+    const percentage = Math.round((score / totalQuestions) * 100);
+
+    return (
+      <div className="space-y-4">
+        <div className="text-center py-6">
+          <Trophy className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
+          <h3 className="text-lg font-bold mb-2">Quiz Complete!</h3>
+          <div className="text-2xl font-bold text-primary mb-2">
+            {score}/{totalQuestions}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {percentage}% correct
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {questions.map((question, index) => {
+            const userAnswer = answers[question.id];
+            const isCorrect = userAnswer === question.correct_answer;
+            
+            return (
+              <Card key={question.id} className="p-3">
+                <div className="flex items-start gap-3">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                    isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                  }`}>
+                    {isCorrect ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium mb-1">{question.question}</p>
+                    <div className="text-xs space-y-1">
+                      <div className={isCorrect ? "text-green-600" : "text-red-600"}>
+                        Your answer: {userAnswer || "Not answered"}
+                      </div>
+                      {!isCorrect && (
+                        <div className="text-green-600">
+                          Correct answer: {question.correct_answer}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        <Button
+          variant="outline"
+          onClick={() => {
+            setCurrentIndex(0);
+            setAnswers({});
+            setShowResults(false);
+            setSubmitted(new Set());
+          }}
+          className="w-full"
+        >
+          <RotateCcw className="w-4 h-4 mr-2" />
+          Retake Quiz
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <HelpCircle className="w-5 h-5 text-green-500" />
+          <h3 className="font-semibold text-sm">Quiz</h3>
+          <Badge variant="outline" className="text-xs">
+            {currentIndex + 1} of {totalQuestions}
+          </Badge>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {submitted.size}/{totalQuestions} answered
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="w-full bg-muted rounded-full h-1.5">
+        <div
+          className="bg-gradient-to-r from-green-500 to-blue-500 h-1.5 rounded-full transition-all duration-300"
+          style={{ width: `${((currentIndex + 1) / totalQuestions) * 100}%` }}
+        />
+      </div>
+
+      {/* Question */}
+      <Card className="p-4">
+        <div className="space-y-4">
+          {/* Question Header */}
+          <div className="flex items-center justify-between">
+            <Badge className={`text-xs px-2 py-1 ${getDifficultyColor(currentQuestion.difficulty)}`}>
+              Level {currentQuestion.difficulty}
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              {currentQuestion.topic}
+            </Badge>
+          </div>
+
+          {/* Question Text */}
+          <h4 className="font-medium text-sm leading-relaxed">
+            {currentQuestion.question}
+          </h4>
+
+          {/* Options */}
+          <div className="space-y-2">
+            {currentQuestion.options.map((option, index) => {
+              const isSelected = answers[currentQuestion.id] === option;
+              const isCorrect = option === currentQuestion.correct_answer;
+              const showCorrect = isCurrentSubmitted && isCorrect;
+              const showIncorrect = isCurrentSubmitted && isSelected && !isCorrect;
+
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleAnswerSelect(currentQuestion.id, option)}
+                  disabled={isCurrentSubmitted}
+                  className={`w-full text-left p-3 rounded-lg border transition-all text-sm ${
+                    showCorrect
+                      ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-950/50 dark:border-green-800"
+                      : showIncorrect
+                      ? "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/50 dark:border-red-800"
+                      : isSelected
+                      ? "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/50 dark:border-blue-800"
+                      : "bg-muted border-border hover:bg-accent"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-medium ${
+                      showCorrect
+                        ? "bg-green-500 border-green-500 text-white"
+                        : showIncorrect
+                        ? "bg-red-500 border-red-500 text-white"
+                        : isSelected
+                        ? "bg-blue-500 border-blue-500 text-white"
+                        : "border-muted-foreground"
+                    }`}>
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                    <span className="flex-1">{option}</span>
+                    {showCorrect && <CheckCircle className="w-4 h-4 text-green-500" />}
+                    {showIncorrect && <XCircle className="w-4 h-4 text-red-500" />}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Explanation */}
+          {isCurrentSubmitted && currentQuestion.explanation && (
+            <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <Brain className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-blue-800 dark:text-blue-200 mb-1">Explanation</p>
+                  <p className="text-blue-700 dark:text-blue-300">{currentQuestion.explanation}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Controls */}
+      <div className="flex items-center justify-between gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={prevQuestion}
+          disabled={currentIndex === 0}
+          className="flex items-center gap-1"
+        >
+          <ArrowLeft className="w-3 h-3" />
+          Previous
+        </Button>
+
+        <div className="flex gap-2">
+          {!isCurrentSubmitted && answers[currentQuestion.id] && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={submitAnswer}
+              className="flex items-center gap-1"
+            >
+              <Check className="w-3 h-3" />
+              Submit
+            </Button>
+          )}
+
+          {isCurrentSubmitted && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={nextQuestion}
+              className="flex items-center gap-1"
+            >
+              {currentIndex === totalQuestions - 1 ? (
+                <>
+                  <Trophy className="w-3 h-3" />
+                  Results
+                </>
+              ) : (
+                <>
+                  Next
+                  <ArrowRight className="w-3 h-3" />
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+
+        <div className="text-xs text-muted-foreground">
+          {currentIndex === totalQuestions - 1 && submitted.size === totalQuestions
+            ? "Ready for results"
+            : `${totalQuestions - currentIndex - 1} remaining`
+          }
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Diagram Component
+const DiagramRenderer = ({ diagrams }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  if (!Array.isArray(diagrams) || diagrams.length === 0) {
+    return (
+      <div className="text-center py-6">
+        <Network className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">No diagrams available</p>
+      </div>
+    );
+  }
+
+  const currentDiagram = diagrams[currentIndex];
+  
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Network className="w-5 h-5 text-cyan-500" />
+          <h3 className="font-semibold text-sm">Diagrams</h3>
+          {diagrams.length > 1 && (
+            <Badge variant="outline" className="text-xs">
+              {currentIndex + 1} of {diagrams.length}
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      {/* Diagram Display */}
+      <Card className="p-4">
+        <div className="bg-white dark:bg-muted rounded-lg p-4 overflow-x-auto">
+          <pre className="text-xs font-mono whitespace-pre-wrap text-gray-800 dark:text-gray-200">
+            {currentDiagram}
+          </pre>
+        </div>
+      </Card>
+
+      {/* Navigation for multiple diagrams */}
+      {diagrams.length > 1 && (
+        <div className="flex items-center justify-between gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
+            disabled={currentIndex === 0}
+            className="flex items-center gap-1"
+          >
+            <ArrowLeft className="w-3 h-3" />
+            Previous
+          </Button>
+
+          <div className="flex gap-1">
+            {diagrams.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index)}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  index === currentIndex ? "bg-cyan-500" : "bg-muted-foreground/30"
+                }`}
+              />
+            ))}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentIndex(Math.min(diagrams.length - 1, currentIndex + 1))}
+            disabled={currentIndex === diagrams.length - 1}
+            className="flex items-center gap-1"
+          >
+            Next
+            <ArrowRight className="w-3 h-3" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
+// Add CSS for 3D flip animation
+const FlipCardStyles = () => (
+  <style>{`
+    .transform-style-preserve-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+  `}</style>
+);
+
 // const availableModels = [
 //   { id: 'd50a33ce-2462-4a5a-9aa7-efc2d1749745', name: 'GPT-4', provider: 'OpenAI' },
 //   { id: 'claude-3-opus', name: 'Claude', provider: 'Anthropic' },
@@ -153,6 +770,13 @@ const MessageComponent = ({
       } finally {
         setIsLoadingTool(false);
       }
+    } else {
+      // Fallback: Open with empty content to show loading state or placeholder
+      onOpenToolMessage({
+        type: message.toolResponse.type,
+        content: [],
+        toolResponseId: null
+      });
     }
   };
 
@@ -215,21 +839,86 @@ const MessageComponent = ({
         </div>
 
         {message.toolResponse && (
-          <div className="mt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleOpenTool}
-              disabled={isLoadingTool}
-              className="text-xs gap-1 h-5 px-2"
-            >
-              {isLoadingTool ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <ExternalLink className="w-3 h-3" />
+          <div className="mt-3 space-y-2">
+            {/* Tool response buttons */}
+            <div className="flex gap-2 flex-wrap">
+              {message.toolResponse.type === 'flashcard' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenTool}
+                  disabled={isLoadingTool}
+                  className="text-xs gap-1 h-7 px-3"
+                >
+                  {isLoadingTool ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Brain className="w-3 h-3" />
+                  )}
+                  Open Flashcards
+                </Button>
               )}
-              {getToolButtonText(message.toolResponse.type)}
-            </Button>
+              {message.toolResponse.type === 'quiz' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenTool}
+                  disabled={isLoadingTool}
+                  className="text-xs gap-1 h-7 px-3"
+                >
+                  {isLoadingTool ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <HelpCircle className="w-3 h-3" />
+                  )}
+                  Open Quiz
+                </Button>
+              )}
+              {message.toolResponse.type === 'diagram' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenTool}
+                  disabled={isLoadingTool}
+                  className="text-xs gap-1 h-7 px-3"
+                >
+                  {isLoadingTool ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Network className="w-3 h-3" />
+                  )}
+                  Open Diagram
+                </Button>
+              )}
+              {message.toolResponse.type === 'game' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenTool}
+                  disabled={isLoadingTool}
+                  className="text-xs gap-1 h-7 px-3"
+                >
+                  {isLoadingTool ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Gamepad2 className="w-3 h-3" />
+                  )}
+                  Open Game
+                </Button>
+              )}
+            </div>
+            
+            {/* Tool info badge */}
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs">
+                {getToolDisplayName(message.toolResponse.type)} Generated
+              </Badge>
+              {message.toolResponse.content && Array.isArray(message.toolResponse.content) && (
+                <span className="text-xs text-muted-foreground">
+                  {message.toolResponse.content.length} items
+                </span>
+              )}
+            </div>
           </div>
         )}
 
@@ -390,7 +1079,7 @@ export const ToolPanel = forwardRef(
               if (msg.tool_response_id && msg.tool_type) {
                 toolResponse = {
                   type: msg.tool_type,
-                  content: [], // Will be loaded on demand
+                  content: msg.tool_response || [], // Use tool_response if available, otherwise load on demand
                   toolResponseId: msg.tool_response_id,
                 };
               }
@@ -931,7 +1620,11 @@ if (!type) {
     };
 
     const handleOpenToolMessage = (toolResponse) => {
-      setActiveOverlay(toolResponse);
+      setActiveOverlay({
+        type: toolResponse.type,
+        content: toolResponse.content,
+        toolResponseId: toolResponse.toolResponseId
+      });
     };
 
     const selectedModelInfo = availableModels.find(
@@ -951,15 +1644,14 @@ if (!type) {
     };
 
     return (
-      <div className="w-full h-full bg-card flex flex-col relative overflow-hidden">
+      <>
+        <div className="w-full h-full bg-card flex flex-col relative overflow-hidden">
         {/* Tool Overlay */}
         {activeOverlay && (
-          <ToolOverlay
+          <ToolPanelOverlay
             toolType={activeOverlay.type}
             content={activeOverlay.content}
             onClose={() => setActiveOverlay(null)}
-            onMinimize={() => setActiveOverlay(null)}
-            onTextHighlight={handleToolTextHighlight}
           />
         )}
 
@@ -1145,6 +1837,8 @@ if (!type) {
           </p>
         </div>
       </div>
+      <FlipCardStyles />
+      </>
     );
   }
 );
