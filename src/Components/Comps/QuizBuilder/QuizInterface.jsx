@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   CheckCircle,
   XCircle,
@@ -27,16 +27,18 @@ export const QuizInterface = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [timeSpent, setTimeSpent] = useState(0);
+  const timerRef = useRef(null);
 
 
 
   // Timer - must be called before any early returns
   useEffect(() => {
-    const timer = setInterval(() => {
+    timerRef.current = setInterval(() => {
       setTimeSpent(prev => prev + 1);
     }, 1000);
-
-    return () => clearInterval(timer);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, []);
 
   // Validate quiz data
@@ -102,25 +104,69 @@ export const QuizInterface = ({
     }
   };
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
+    // Stop the timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     let correctAnswers = 0;
     quizData.questions.forEach(question => {
       if (answers[question.id] === question.correct_answer) {
         correctAnswers++;
       }
     });
-    
+
     setScore(correctAnswers);
-    
-    // If explanations are enabled and we're in "Submit at End" mode, show all explanations
-    if (quizConfig?.explanation && !isPerQuestionSubmission) {
-      const allExplanations = {};
-      quizData.questions.forEach(question => {
-        allExplanations[question.id] = true;
+
+    // Note: Explanations are shown in the detailed review section below, not inline
+
+    // Prepare payload for quiz history API
+    try {
+      const quiz_id = String(quizData.quiz_id || quizConfig?.quiz_id || "");
+      // doc_ids could be an array or string, ensure it's a string (UUID)
+      let doc_id = quizConfig?.doc_id || "";
+      if (!doc_id && quizConfig?.doc_ids) {
+        if (Array.isArray(quizConfig.doc_ids)) {
+          doc_id = quizConfig.doc_ids[0] || "";
+        } else {
+          doc_id = quizConfig.doc_ids;
+        }
+      }
+      doc_id = String(doc_id);
+      const doc_name = String(quizConfig?.doc_name || quizConfig?.user_query || "");
+      const scoreStr = `${correctAnswers}/${quizData.questions.length}`;
+      const accuracy = quizData.questions.length > 0 ? (correctAnswers / quizData.questions.length) * 100 : 0;
+      // Only include required fields in quiz_data
+      const quiz_data = quizData.questions.map(q => ({
+        question: q.question,
+        options: q.options,
+        correct_answer: q.correct_answer,
+        user_answer: answers[q.id] || null,
+        explanation: q.explanation
+      }));
+      const payload = {
+        quiz_id,
+        doc_id,
+        doc_name,
+        score: scoreStr,
+        accuracy,
+        quiz_data: JSON.stringify(quiz_data)
+      };
+      await fetch("https://api.adaptivelearnai.xyz/quiz-gen/quiz-history", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(document.cookie.includes('access_token') && {
+            'Authorization': `Bearer ${document.cookie.split('access_token=')[1]?.split(';')[0]}`
+          })
+        },
+        body: JSON.stringify(payload)
       });
-      setShowExplanation(allExplanations);
+    } catch (err) {
+      console.error("Failed to save quiz history:", err);
     }
-    
+
     setIsSubmitted(true);
   };
 

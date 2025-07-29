@@ -83,6 +83,7 @@ const getHeaders = () => {
 };
 
 export const PDFViewer = ({
+  setFinalizedPage,
   currentPage,
   totalPages,
   onPageChange,
@@ -106,8 +107,10 @@ const [pageInput, setPageInput] = useState(safeCurrentPage.toString());
   const [pdfUrl, setPdfUrl] = useState(null);
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
-
-  console.log("pdf Viewer function is calling", id, type);
+useEffect(()=>{
+setFinalizedPage(pageNumber)
+},[pageNumber])
+  console.log("pdf Viewer function is calling", id, type,pageNumber);
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
     setPageNumber(1);

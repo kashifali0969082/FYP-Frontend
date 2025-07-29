@@ -41,6 +41,11 @@ export default function StudyMode() {
   const [pdfData, setPdfData] = useState(null);
   const [numPages, setNumPages] = useState(null);
   const [response, setresponse] = useState();
+  const [ChatSessionId, setChatSessionId] = useState("")
+const [FinalizedPage, setFinalizedPage] = useState()
+
+  console.log("stdymode current page",currentPage,FinalizedPage);
+  
   // Apply dark theme by default
   useEffect(() => {
     Studyinit();
@@ -52,6 +57,8 @@ export default function StudyMode() {
         document_id: id,
         document_type: type.toLowerCase(),
       });
+      console.log("final",resp.data.chat_session_id);
+      setChatSessionId(resp.data.chat_session_id)
       setminemockdata(resp);
       let resp2 = await StreamDocument({
         document_id: id,
@@ -584,6 +591,7 @@ export default function StudyMode() {
               <div className="flex-1 min-h-0 overflow-hidden bg-slate-900/50 rounded-t-2xl mt-1">
                 <div className="h-full overflow-y-auto study-scrollbar">
                   <PDFViewer
+                  setFinalizedPage={setFinalizedPage}
                     currentPage={currentPage}
                     totalPages={totalPages}
                     onPageChange={handlePageChange}
@@ -606,9 +614,9 @@ export default function StudyMode() {
               <div className="h-full overflow-y-auto study-scrollbar">
                 <ToolPanel
                   ref={toolPanelRef}
-                  chatSessionId={studyData.data.chat_session_id}
+                  chatSessionId={ChatSessionId}
                   documentId={studyData.data.document.id}
-                  currentPage={currentPage}
+                  currentPage={FinalizedPage}
                   tocData={studyData.data.toc}
                   initialChatHistory={chatHistory}
                   onTextHighlight={handleTextHighlight}
@@ -628,6 +636,7 @@ export default function StudyMode() {
               >
                 <div className="h-full overflow-y-auto study-scrollbar">
                   <TableOfContents
+
                     isCollapsed={isTOCCollapsed}
                     onToggleCollapse={handleTOCToggle}
                     currentPage={currentPage}
@@ -650,6 +659,7 @@ export default function StudyMode() {
               >
                 <div className="h-full overflow-y-auto study-scrollbar">
                   <PDFViewer
+                  setFinalizedPage={setFinalizedPage}
                     currentPage={currentPage}
                     totalPages={totalPages}
                     onPageChange={handlePageChange}
@@ -700,10 +710,12 @@ export default function StudyMode() {
                   ref={toolPanelRef}
                   chatSessionId={studyData.data.chat_session_id}
                   documentId={studyData.data.document.id}
-                  currentPage={currentPage}
+                  currentPage={FinalizedPage}
                   tocData={studyData.data.toc}
                   initialChatHistory={chatHistory}
                   onTextHighlight={handleTextHighlight}
+                   type={type}
+                    id={id}
                 />
               </div>
             </div>

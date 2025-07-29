@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Settings,
   Hash,
   Target,
   Brain,
   MessageSquare,
   ChevronDown,
-  ChevronUp,
   Play,
   ArrowLeft,
   Loader2,
@@ -35,7 +33,6 @@ export const QuizCustomization = ({
     doc_ids: null // Will be set from selectedDocument
   });
 
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [models, setModels] = useState([]);
   const [isLoadingModels, setIsLoadingModels] = useState(true);
 
@@ -342,42 +339,7 @@ export const QuizCustomization = ({
           </button>
         </div>
 
-        {/* Advanced Options - Only show for attempt quiz */}
-        {quizConfig.quizAction === 'attempt' && (
-          <div className="space-y-4">
-            <button
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="flex items-center space-x-2 text-slate-400 hover:text-white transition-colors"
-            >
-              <Settings size={18} />
-              <span>Advanced Options</span>
-              {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
 
-            {showAdvanced && (
-              <div className="space-y-4 p-4 bg-slate-800/20 backdrop-blur-sm border border-slate-700/30 rounded-lg">
-                <div className="space-y-3">
-                  <label className="text-white font-medium">Submission Style</label>
-                  <div className="space-y-2">
-                    {['Submit After Each Question', 'Submit At the End'].map((style) => (
-                      <label key={style} className="flex items-center space-x-3 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="submissionStyle"
-                          value={style}
-                          checked={quizConfig.submissionStyle === style}
-                          onChange={(e) => updateConfig('submissionStyle', e.target.value)}
-                          className="w-4 h-4 text-blue-500"
-                        />
-                        <span className="text-slate-300">{style}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Generate Button */}
