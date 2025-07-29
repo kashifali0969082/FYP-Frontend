@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   CheckCircle,
   XCircle,
@@ -25,14 +25,16 @@ export const QuizInterface = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [timeSpent, setTimeSpent] = useState(0);
+  const timerRef = useRef(null);
 
   // Timer - must be called before any early returns
   useEffect(() => {
-    const timer = setInterval(() => {
+    timerRef.current = setInterval(() => {
       setTimeSpent(prev => prev + 1);
     }, 1000);
-
-    return () => clearInterval(timer);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, []);
 
   // Validate quiz data
@@ -99,6 +101,11 @@ export const QuizInterface = ({
   };
 
   const handleFinalSubmit = async () => {
+    // Stop the timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     let correctAnswers = 0;
     quizData.questions.forEach(question => {
       if (answers[question.id] === question.correct_answer) {
@@ -108,14 +115,7 @@ export const QuizInterface = ({
 
     setScore(correctAnswers);
 
-    // If explanations are enabled and we're in "Submit at End" mode, show all explanations
-    if (quizConfig?.explanation && !isPerQuestionSubmission) {
-      const allExplanations = {};
-      quizData.questions.forEach(question => {
-        allExplanations[question.id] = true;
-      });
-      setShowExplanation(allExplanations);
-    }
+    // Note: Explanations are shown in the detailed review section below, not inline
 
     // Prepare payload for quiz history API
     try {
