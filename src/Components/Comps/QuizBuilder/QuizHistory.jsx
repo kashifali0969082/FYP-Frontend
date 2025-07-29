@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Clock,
   Trophy,
@@ -11,53 +11,69 @@ import {
   Filter,
   ChevronDown,
   CheckCircle,
-  XCircle
+  XCircle,
+  Loader2
 } from 'lucide-react';
 
 export const QuizHistory = ({ isMobile, onReviewQuiz }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('recent');
   const [showFilters, setShowFilters] = useState(false);
+  const [quizHistory, setQuizHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock quiz history data - replace with actual API data
-  const quizHistory = [
-    {
-      id: '1',
-      documentName: 'Introduction to Algorithms',
-      documentType: 'book',
-      score: 8,
-      totalQuestions: 10,
-      accuracy: 80,
-      timeSpent: 325, // seconds
-      difficulty: 'Medium',
-      completedAt: '2025-01-20T10:30:00Z',
-      status: 'completed'
-    },
-    {
-      id: '2', 
-      documentName: 'React Fundamentals',
-      documentType: 'presentation',
-      score: 15,
-      totalQuestions: 15,
-      accuracy: 100,
-      timeSpent: 420,
-      difficulty: 'Easy',
-      completedAt: '2025-01-19T14:20:00Z',
-      status: 'completed'
-    },
-    {
-      id: '3',
-      documentName: 'Machine Learning Notes',
-      documentType: 'notes',
-      score: 6,
-      totalQuestions: 12,
-      accuracy: 50,
-      timeSpent: 890,
-      difficulty: 'Hard',
-      completedAt: '2025-01-18T16:45:00Z',
-      status: 'completed'
-    }
-  ];
+  // Fetch quiz history from API
+  useEffect(() => {
+    const fetchQuizHistory = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch("https://api.adaptivelearnai.xyz/quiz-gen/user-quiz-history", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(document.cookie.includes('access_token') && {
+              'Authorization': `Bearer ${document.cookie.split('access_token=')[1]?.split(';')[0]}`
+            })
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch quiz history');
+        }
+
+        const data = await response.json();
+        
+        // Transform the API response to match our component structure
+        const transformedHistory = data.data.map(quiz => {
+          const [score, totalQuestions] = quiz.score.split('/').map(Number);
+          return {
+            id: quiz.history_id,
+            documentName: quiz.doc_name,
+            documentType: 'document', // API doesn't provide this, using default
+            score: score,
+            totalQuestions: totalQuestions,
+            accuracy: quiz.accuracy,
+            timeSpent: quiz.time_taken || 0, // Use 0 if time_taken is null
+            difficulty: 'Medium', // API doesn't provide this, using default
+            completedAt: new Date().toISOString(), // API doesn't provide this, using current date
+            status: 'completed',
+            quiz_id: quiz.quiz_id,
+            doc_id: quiz.doc_id
+          };
+        });
+
+        setQuizHistory(transformedHistory);
+      } catch (err) {
+        console.error('Error fetching quiz history:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchQuizHistory();
+  }, []);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -84,6 +100,48 @@ export const QuizHistory = ({ isMobile, onReviewQuiz }) => {
     if (accuracy >= 60) return 'bg-yellow-400/20';
     return 'bg-red-400/20';
   };
+
+  // Calculate total stats from quiz history
+  const totalQuizzes = quizHistory.length;
+  const totalQuestions = quizHistory.reduce((acc, quiz) => acc + quiz.totalQuestions, 0);
+  const totalTimeSpent = quizHistory.reduce((acc, quiz) => acc + quiz.timeSpent, 0);
+  const averageAccuracy = totalQuizzes > 0 
+    ? Math.round(quizHistory.reduce((acc, quiz) => acc + quiz.accuracy, 0) / totalQuizzes) 
+    : 0;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 md:space-y-6 overflow-hidden">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Loader2 size={32} className="animate-spin text-blue-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">Loading Quiz History</h3>
+            <p className="text-slate-400">Please wait while we fetch your quiz data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4 md:space-y-6 overflow-hidden">
+        <div className="text-center py-12">
+          <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-xl flex items-center justify-center">
+            <XCircle size={32} className="text-red-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-2">Error Loading Quiz History</h3>
+          <p className="text-slate-400 mb-6">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 md:space-y-6 overflow-hidden">
@@ -167,7 +225,7 @@ export const QuizHistory = ({ isMobile, onReviewQuiz }) => {
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-slate-400 text-xs md:text-sm truncate">Total Quizzes</p>
-              <p className="text-lg md:text-2xl font-bold text-white">{quizHistory.length}</p>
+              <p className="text-lg md:text-2xl font-bold text-white">{totalQuizzes}</p>
             </div>
             <Trophy size={isMobile ? 16 : 24} className="text-blue-400 flex-shrink-0" />
           </div>
@@ -176,9 +234,7 @@ export const QuizHistory = ({ isMobile, onReviewQuiz }) => {
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-slate-400 text-xs md:text-sm truncate">Avg. Accuracy</p>
-              <p className="text-lg md:text-2xl font-bold text-white">
-                {Math.round(quizHistory.reduce((acc, quiz) => acc + quiz.accuracy, 0) / quizHistory.length)}%
-              </p>
+              <p className="text-lg md:text-2xl font-bold text-white">{averageAccuracy}%</p>
             </div>
             <Target size={isMobile ? 16 : 24} className="text-green-400 flex-shrink-0" />
           </div>
@@ -187,9 +243,7 @@ export const QuizHistory = ({ isMobile, onReviewQuiz }) => {
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-slate-400 text-xs md:text-sm truncate">Total Questions</p>
-              <p className="text-lg md:text-2xl font-bold text-white">
-                {quizHistory.reduce((acc, quiz) => acc + quiz.totalQuestions, 0)}
-              </p>
+              <p className="text-lg md:text-2xl font-bold text-white">{totalQuestions}</p>
             </div>
             <CheckCircle size={isMobile ? 16 : 24} className="text-purple-400 flex-shrink-0" />
           </div>
@@ -199,7 +253,7 @@ export const QuizHistory = ({ isMobile, onReviewQuiz }) => {
             <div className="min-w-0 flex-1">
               <p className="text-slate-400 text-xs md:text-sm truncate">Time Spent</p>
               <p className="text-lg md:text-2xl font-bold text-white">
-                {formatTime(quizHistory.reduce((acc, quiz) => acc + quiz.timeSpent, 0))}
+                {formatTime(totalTimeSpent)}
               </p>
             </div>
             <Clock size={isMobile ? 16 : 24} className="text-orange-400 flex-shrink-0" />
@@ -281,7 +335,7 @@ export const QuizHistory = ({ isMobile, onReviewQuiz }) => {
       </div>
 
       {/* Empty State */}
-      {quizHistory.length === 0 && (
+      {quizHistory.length === 0 && !isLoading && (
         <div className="text-center py-12">
           <div className="w-16 h-16 mx-auto mb-4 bg-slate-700/50 rounded-xl flex items-center justify-center">
             <Trophy size={32} className="text-slate-400" />
