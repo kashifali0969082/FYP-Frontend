@@ -12,11 +12,13 @@ import {
   AlertCircle,
   Trophy
 } from 'lucide-react';
+import { apiclient } from '../../apiclient/Apis';
 
 export const QuizInterface = ({ 
+ 
   quizData, 
-  quizConfig, 
   onBack, 
+  quizConfig,
   onSaveQuiz 
 }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -25,6 +27,8 @@ export const QuizInterface = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [timeSpent, setTimeSpent] = useState(0);
+
+
 
   // Timer - must be called before any early returns
   useEffect(() => {
@@ -143,6 +147,8 @@ export const QuizInterface = ({
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
+ 
+ 
 
   if (isSubmitted) {
     return (
@@ -182,26 +188,31 @@ export const QuizInterface = ({
 
         {/* Actions */}
         <div className="flex flex-wrap gap-4 justify-center">
-          <button
+          {/* <button
             onClick={() => window.location.reload()}
             className="flex items-center space-x-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
           >
             <RotateCcw size={18} />
             <span>Try Again</span>
-          </button>
-          <button
+          </button> */}
+          {/* <button
             onClick={() => onSaveQuiz({ quizData, answers, score, timeSpent })}
             className="flex items-center space-x-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
           >
             <Save size={18} />
             <span>Save Results</span>
-          </button>
-          <button
-            className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all"
+          </button> */}
+          {/* <button
+           onClick={()=> updateConfig}
+            className={`flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all
+               ${quizConfig.quizAction === 'download'
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 border-green-500 text-white shadow-lg'
+                  : 'bg-slate-800/50 border-slate-700/50 text-slate-300 hover:border-slate-600/50 hover:bg-slate-800/70'
+                }`}
           >
             <Download size={18} />
             <span>Export Quiz</span>
-          </button>
+          </button> */}
         </div>
 
         {/* Detailed Review - Show if explanations are enabled */}
