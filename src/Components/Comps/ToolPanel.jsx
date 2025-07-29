@@ -1189,31 +1189,35 @@ const MessageComponent = ({
     <div
       className={`flex ${
         message.sender === "user" ? "justify-end" : "justify-start"
-      } mb-3`}
+      } mb-4`}
     >
       <div
-        className={`max-w-[85%] rounded-lg p-2 ${
+        className={`max-w-[85%] rounded-xl p-3 shadow-sm border ${
           message.sender === "user"
-            ? "bg-primary text-primary-foreground"
-            : "bg-muted"
+            ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-500/20"
+            : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700"
         }`}
       >
         {/* Highlighted text context */}
         {message.highlightedText && (
           <div
-            className={`mb-2 p-2 rounded border-l-2 ${
+            className={`mb-3 p-3 rounded-lg border-l-4 ${
               message.sender === "user"
-                ? "bg-primary-foreground/10 border-l-primary-foreground/30"
-                : "bg-accent/50 border-l-accent-foreground/30"
+                ? "bg-white/10 border-l-white/30 backdrop-blur-sm"
+                : "bg-blue-50 dark:bg-blue-950/30 border-l-blue-400 dark:border-l-blue-500"
             }`}
           >
             <div className="flex items-start gap-2">
-              <Quote className="w-3 h-3 mt-0.5 opacity-70" />
-              <div className="flex-1">
-                <p className="text-xs opacity-90 mb-1">
+              <Quote className="w-4 h-4 mt-0.5 opacity-70 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className={`text-xs font-medium mb-1 ${
+                  message.sender === "user" ? "text-white/90" : "text-blue-700 dark:text-blue-300"
+                }`}>
                   Selected from document:
                 </p>
-                <p className="text-xs italic">
+                <p className={`text-xs italic leading-relaxed ${
+                  message.sender === "user" ? "text-white/80" : "text-gray-600 dark:text-gray-400"
+                }`}>
                   "{message.highlightedText.text}"
                 </p>
               </div>
@@ -1221,30 +1225,30 @@ const MessageComponent = ({
           </div>
         )}
 
-        <div className="flex items-start justify-between gap-2">
-          <div className="text-sm whitespace-pre-wrap flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="text-sm whitespace-pre-wrap flex-1 leading-relaxed">
             {message.content}
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => handleCopy(message.content, message.id)}
-            className={`h-5 w-5 p-0 flex-shrink-0 ${
+            className={`h-6 w-6 p-0 flex-shrink-0 rounded-md transition-all ${
               message.sender === "user"
-                ? "hover:bg-primary-foreground/20"
-                : "hover:bg-accent"
+                ? "hover:bg-white/20 text-white/70 hover:text-white"
+                : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >
             {copiedStates[message.id] ? (
-              <Check className="w-3 h-3" />
+              <Check className="w-3.5 h-3.5" />
             ) : (
-              <Copy className="w-3 h-3" />
+              <Copy className="w-3.5 h-3.5" />
             )}
           </Button>
         </div>
 
         {message.toolResponse && (
-          <div className="mt-3 space-y-2">
+          <div className="mt-4 space-y-3">
             {/* Tool response buttons */}
             <div className="flex gap-2 flex-wrap">
               {message.toolResponse.type === 'flashcard' && (
@@ -1253,12 +1257,16 @@ const MessageComponent = ({
                   size="sm"
                   onClick={handleOpenTool}
                   disabled={isLoadingTool}
-                  className="text-xs gap-1 h-7 px-3"
+                  className={`text-xs gap-2 h-8 px-3 rounded-lg border-2 transition-all ${
+                    message.sender === "user" 
+                      ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50" 
+                      : "border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-950/30"
+                  }`}
                 >
                   {isLoadingTool ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Brain className="w-3 h-3" />
+                    <Brain className="w-3.5 h-3.5" />
                   )}
                   Open Flashcards
                 </Button>
@@ -1269,12 +1277,16 @@ const MessageComponent = ({
                   size="sm"
                   onClick={handleOpenTool}
                   disabled={isLoadingTool}
-                  className="text-xs gap-1 h-7 px-3"
+                  className={`text-xs gap-2 h-8 px-3 rounded-lg border-2 transition-all ${
+                    message.sender === "user" 
+                      ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50" 
+                      : "border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-950/30"
+                  }`}
                 >
                   {isLoadingTool ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <HelpCircle className="w-3 h-3" />
+                    <HelpCircle className="w-3.5 h-3.5" />
                   )}
                   Open Quiz
                 </Button>
@@ -1285,12 +1297,16 @@ const MessageComponent = ({
                   size="sm"
                   onClick={handleOpenTool}
                   disabled={isLoadingTool}
-                  className="text-xs gap-1 h-7 px-3"
+                  className={`text-xs gap-2 h-8 px-3 rounded-lg border-2 transition-all ${
+                    message.sender === "user" 
+                      ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50" 
+                      : "border-cyan-200 text-cyan-700 hover:bg-cyan-50 hover:border-cyan-300 dark:border-cyan-700 dark:text-cyan-300 dark:hover:bg-cyan-950/30"
+                  }`}
                 >
                   {isLoadingTool ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Network className="w-3 h-3" />
+                    <Network className="w-3.5 h-3.5" />
                   )}
                   Open Diagram
                 </Button>
@@ -1301,12 +1317,16 @@ const MessageComponent = ({
                   size="sm"
                   onClick={handleOpenTool}
                   disabled={isLoadingTool}
-                  className="text-xs gap-1 h-7 px-3"
+                  className={`text-xs gap-2 h-8 px-3 rounded-lg border-2 transition-all ${
+                    message.sender === "user" 
+                      ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50" 
+                      : "border-orange-200 text-orange-700 hover:bg-orange-50 hover:border-orange-300 dark:border-orange-700 dark:text-orange-300 dark:hover:bg-orange-950/30"
+                  }`}
                 >
                   {isLoadingTool ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Gamepad2 className="w-3 h-3" />
+                    <Gamepad2 className="w-3.5 h-3.5" />
                   )}
                   Open Game
                 </Button>
@@ -1315,11 +1335,20 @@ const MessageComponent = ({
             
             {/* Tool info badge */}
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs">
+              <Badge 
+                variant="secondary" 
+                className={`text-xs font-medium ${
+                  message.sender === "user" 
+                    ? "bg-white/20 text-white border-white/30" 
+                    : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                }`}
+              >
                 {getToolDisplayName(message.toolResponse.type)} Generated
               </Badge>
               {message.toolResponse.content && Array.isArray(message.toolResponse.content) && (
-                <span className="text-xs text-muted-foreground">
+                <span className={`text-xs ${
+                  message.sender === "user" ? "text-white/70" : "text-gray-500 dark:text-gray-400"
+                }`}>
                   {message.toolResponse.content.length} items
                 </span>
               )}
@@ -1327,21 +1356,37 @@ const MessageComponent = ({
           </div>
         )}
 
-        <div className="flex items-center justify-between mt-1 text-xs opacity-70">
-          <span>
+        <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/10 dark:border-gray-700/50">
+          <span className={`text-xs ${
+            message.sender === "user" ? "text-white/60" : "text-gray-500 dark:text-gray-400"
+          }`}>
             {message.timestamp.toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             })}
           </span>
           {message.sender === "ai" && message.model && selectedModelInfo && (
-            <Badge variant="secondary" className="text-xs h-4">
+            <Badge 
+              variant="secondary" 
+              className={`text-xs h-5 px-2 ${
+                message.sender === "user" 
+                  ? "bg-white/20 text-white border-white/30" 
+                  : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+              }`}
+            >
               {selectedModelInfo.name}
             </Badge>
           )}
         </div>
         {message.toolUsed && (
-          <Badge variant="outline" className="text-xs mt-1 h-4">
+          <Badge 
+            variant="outline" 
+            className={`text-xs mt-2 h-5 ${
+              message.sender === "user" 
+                ? "border-white/30 text-white" 
+                : "border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-400"
+            }`}
+          >
             📊 {message.toolUsed}
           </Badge>
         )}
@@ -1502,17 +1547,8 @@ export const ToolPanel = forwardRef(
           );
           setMessages(convertedMessages);
         } else {
-          // Default welcome message if no history
-          setMessages([
-            {
-              id: "1",
-              content:
-                "Hello! I'm here to help you study. Ask me questions, use the tools to generate flashcards, quizzes, diagrams, or games, or highlight any text in the document to instantly access all learning tools.",
-              sender: "ai",
-              timestamp: new Date(),
-              model: availableModels[0].id,
-            },
-          ]);
+          // Start with empty chat
+          setMessages([]);
         }
       };
 
@@ -2061,18 +2097,18 @@ if (!type) {
         )}
 
         {/* Compact Toolbar */}
-        <div className="p-2 border-b space-y-2 flex-shrink-0 bg-card ">
-          {/* Model Selector - No label text */}
+        <div className="p-3 border-b border-gray-200 dark:border-gray-700 space-y-3 flex-shrink-0 bg-white dark:bg-gray-800">
+          {/* Model Selector */}
           <Select value={selectedModel} onValueChange={setSelectedModel}>
-            <SelectTrigger className="h-7 text-xs">
+            <SelectTrigger className="h-9 text-sm bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-slate-800/90 backdrop-blur-xl"> 
+            <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"> 
               {availableModels.map((model) => (
-                <SelectItem className="bg-slate-800/90 backdrop-blur-xl" key={model.id} value={model.id}>
+                <SelectItem className="hover:bg-gray-100 dark:hover:bg-gray-700" key={model.id} value={model.id}>
                   <div className="flex flex-col items-start">
-                    <span className="text-xs">{model.name}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-sm font-medium">{model.name}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       {model.provider}
                     </span>
                   </div>
@@ -2081,8 +2117,8 @@ if (!type) {
             </SelectContent>
           </Select>
 
-          {/* Tools in 2 columns with hover colors */}
-          <div className="grid grid-cols-2 gap-1">
+          {/* Tools in 2 columns with improved styling */}
+          <div className="grid grid-cols-2 gap-2">
             {availableTools.map((tool) => (
               <Button
                 key={tool.id}
@@ -2090,7 +2126,7 @@ if (!type) {
                 size="sm"
                 onClick={() => handleToolUse(tool)}
                 disabled={isLoading}
-                className={`justify-start gap-1 h-7 text-xs px-2 transition-colors ${tool.color}`}
+                className={`justify-start gap-2 h-9 text-sm px-3 rounded-lg border-2 transition-all ${tool.color}`}
                 title={tool.description}
               >
                 {tool.icon}
@@ -2140,24 +2176,53 @@ if (!type) {
         )}
 
         {/* Chat Messages */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden bg-gray-50 dark:bg-gray-900">
           <ScrollArea className="h-full">
-            <div ref={chatContainerRef} className="p-2 space-y-0">
-              {messages.map((message) => (
-                <MessageComponent
-                  key={message.id}
-                  message={message}
-                  selectedModelInfo={selectedModelInfo}
-                  onOpenToolMessage={handleOpenToolMessage}
-                  onLoadToolResponse={loadToolResponse}
-                />
-              ))}
+            <div ref={chatContainerRef} className="p-4 space-y-0">
+              {messages.length === 0 && !isLoading ? (
+                <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mb-4">
+                    <Brain className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    Start a conversation
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 max-w-sm leading-relaxed">
+                    Ask questions, generate learning tools, or highlight text in the document to get started with your AI study assistant.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    <span className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
+                      💭 Ask questions
+                    </span>
+                    <span className="px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs font-medium">
+                      🎯 Generate tools
+                    </span>
+                    <span className="px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-medium">
+                      ✨ Highlight text
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                messages.map((message) => (
+                  <MessageComponent
+                    key={message.id}
+                    message={message}
+                    selectedModelInfo={selectedModelInfo}
+                    onOpenToolMessage={handleOpenToolMessage}
+                    onLoadToolResponse={loadToolResponse}
+                  />
+                ))
+              )}
 
               {isLoading && (
-                <div className="flex justify-start mb-3">
-                  <div className="bg-muted rounded-lg p-2 flex items-center gap-2">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    <span className="text-xs">Thinking...</span>
+                <div className="flex justify-start mb-4">
+                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex items-center gap-3 shadow-sm">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                    </div>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">AI is thinking...</span>
                   </div>
                 </div>
               )}
@@ -2168,51 +2233,53 @@ if (!type) {
         </div>
 
         {/* Chat Input with Context and Mic Button */}
-        <div className="p-2 border-t flex-shrink-0 bg-card">
+        <div className="p-3 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 bg-white dark:bg-gray-800">
           {/* Context Display */}
           {contextText && (
-            <div className="mb-2 p-2 bg-accent/30 rounded border-l-2 border-l-accent-foreground/30">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Quote className="w-3 h-3 opacity-70" />
-                    <span className="text-xs text-muted-foreground">
+            <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Quote className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
                       Selected text:
                     </span>
                   </div>
-                  <p className="text-xs italic">"{contextText.text}"</p>
+                  <p className="text-sm italic text-blue-700 dark:text-blue-300 leading-relaxed">
+                    "{contextText.text}"
+                  </p>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleClearContext}
-                  className="h-5 w-5 p-0"
+                  className="h-7 w-7 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-200 dark:hover:bg-blue-900/50"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
             </div>
           )}
 
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             <Textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder={
                 contextText
                   ? "Ask about the selected text..."
-                  : "Ask a question..."
+                  : "Type your message here..."
               }
-              className="resize-none text-xs bg-slate-100 text-slate-800 placeholder:text-slate-500 border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"
+              className="resize-none text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl px-4 py-3 leading-relaxed"
               rows={2}
               onKeyDown={handleKeyDown}
             />
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-2">
               <Button
                 variant={isRecording ? "destructive" : "outline"}
                 size="sm"
                 onClick={toggleRecording}
-                className="h-8 w-8 p-0"
+                className="h-10 w-10 p-0 rounded-xl"
                 disabled={isLoading}
                 title={
                   isRecording
@@ -2221,24 +2288,29 @@ if (!type) {
                 }
               >
                 {isRecording ? (
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                  <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
                 ) : (
-                  <Mic className="w-3 h-3" />
+                  <Mic className="w-4 h-4" />
                 )}
               </Button>
               <Button
                 onClick={() => handleSendMessage()}
                 disabled={!inputValue.trim() || isLoading}
                 size="sm"
-                className="h-8 w-8 p-0"
+                className="h-10 w-10 p-0 rounded-xl bg-blue-500 hover:bg-blue-600 text-white"
               >
-                <Send className="w-3 h-3" />
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </Button>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Enter to send • Shift+Enter for new line • Highlight text to access
-            all learning tools instantly
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
+            Press <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Enter</kbd> to send • 
+            <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs mx-1">Shift+Enter</kbd> for new line • 
+            Highlight text to access all learning tools instantly
           </p>
         </div>
       </div>
