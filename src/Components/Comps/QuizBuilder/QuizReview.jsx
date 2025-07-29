@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   ArrowLeft,
   Clock,
@@ -10,158 +10,58 @@ import {
   Download,
   Share2,
   BookOpen,
+  Calendar,
   Award,
-  TrendingUp,
-  Loader2,
-  AlertCircle
+  TrendingUp
 } from 'lucide-react';
 
 export const QuizReview = ({ quizData, onBack, onRetake }) => {
   const [selectedQuestion, setSelectedQuestion] = useState(null);
-  const [detailedQuizData, setDetailedQuizData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // Fetch detailed quiz data from API
-  useEffect(() => {
-    const fetchQuizDetails = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch(`https://api.adaptivelearnai.xyz/quiz-gen/quiz-history/${quizData.id}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            ...(document.cookie.includes('access_token') && {
-              'Authorization': `Bearer ${document.cookie.split('access_token=')[1]?.split(';')[0]}`
-            })
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch quiz details');
-        }
-
-        const result = await response.json();
-        
-        // Transform the API response to match our component structure
-        const transformedData = {
-          id: result.data.history_id,
-          documentName: result.data.doc_name,
-          documentType: 'document',
-          score: parseInt(result.data.score.split('/')[0]),
-          totalQuestions: parseInt(result.data.score.split('/')[1]),
-          accuracy: result.data.accuracy,
-          timeSpent: result.data.time_taken || 0,
-          difficulty: 'Medium', // API doesn't provide this
-          completedAt: new Date().toISOString(), // API doesn't provide this
-          questions: result.data.quiz_data.map((question, index) => ({
-            id: (index + 1).toString(),
-            question: question.question,
-            options: question.options,
-            correctAnswer: question.correct_answer,
-            userAnswer: question.user_answer,
-            isCorrect: question.user_answer === question.correct_answer,
-            explanation: question.explanation,
-            timeSpent: Math.floor((result.data.time_taken || 0) / result.data.quiz_data.length) // Distribute time evenly
-          }))
-        };
-
-        setDetailedQuizData(transformedData);
-      } catch (err) {
-        console.error('Error fetching quiz details:', err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
+  // Mock quiz results data - replace with actual data
+  const mockQuizResults = {
+    id: '1',
+    documentName: 'Introduction to Algorithms',
+    documentType: 'book',
+    score: 8,
+    totalQuestions: 10,
+    accuracy: 80,
+    timeSpent: 325, // seconds
+    difficulty: 'Medium',
+    completedAt: '2025-01-20T10:30:00Z',
+    questions: [
+      {
+        id: '1',
+        question: 'What is the time complexity of Binary Search?',
+        options: ['O(n)', 'O(log n)', 'O(n²)', 'O(1)'],
+        correctAnswer: 'O(log n)',
+        userAnswer: 'O(log n)',
+        isCorrect: true,
+        explanation: 'Binary Search divides the search space in half with each comparison, resulting in O(log n) time complexity.',
+        timeSpent: 30
+      },
+      {
+        id: '2',
+        question: 'Which data structure uses LIFO principle?',
+        options: ['Queue', 'Stack', 'Array', 'Linked List'],
+        correctAnswer: 'Stack',
+        userAnswer: 'Queue',
+        isCorrect: false,
+        explanation: 'Stack follows Last In, First Out (LIFO) principle where the last element added is the first one to be removed.',
+        timeSpent: 45
+      },
+      {
+        id: '3',
+        question: 'What is the space complexity of Merge Sort?',
+        options: ['O(1)', 'O(log n)', 'O(n)', 'O(n²)'],
+        correctAnswer: 'O(n)',
+        userAnswer: 'O(n)',
+        isCorrect: true,
+        explanation: 'Merge Sort requires O(n) additional space for the temporary arrays used during the merging process.',
+        timeSpent: 40
       }
-    };
-
-    if (quizData?.id) {
-      fetchQuizDetails();
-    }
-  }, [quizData]);
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={onBack}
-            className="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <h1 className="text-2xl md:text-3xl font-bold text-white">Loading Quiz Review...</h1>
-        </div>
-        
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Loader2 size={32} className="animate-spin text-blue-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">Loading Quiz Details</h3>
-            <p className="text-slate-400">Please wait while we fetch your quiz data...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={onBack}
-            className="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <h1 className="text-2xl md:text-3xl font-bold text-white">Quiz Review</h1>
-        </div>
-        
-        <div className="text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-xl flex items-center justify-center">
-            <AlertCircle size={32} className="text-red-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-white mb-2">Error Loading Quiz Details</h3>
-          <p className="text-slate-400 mb-6">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!detailedQuizData) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={onBack}
-            className="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <h1 className="text-2xl md:text-3xl font-bold text-white">Quiz Review</h1>
-        </div>
-        
-        <div className="text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 bg-yellow-500/20 rounded-xl flex items-center justify-center">
-            <AlertCircle size={32} className="text-yellow-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-white mb-2">No Quiz Data Available</h3>
-          <p className="text-slate-400">Unable to load quiz details.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Use the fetched data instead of mock data
-  const mockQuizResults = detailedQuizData;
+    ]
+  };
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);

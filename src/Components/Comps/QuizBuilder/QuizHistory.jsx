@@ -3,7 +3,6 @@ import {
   Clock,
   Trophy,
   Target,
-  Calendar,
   Download,
   Eye,
   Trash2,
@@ -22,6 +21,7 @@ export const QuizHistory = ({ isMobile, onReviewQuiz }) => {
   const [quizHistory, setQuizHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deletingQuizId, setDeletingQuizId] = useState(null);
 
   // Fetch quiz history from API
   useEffect(() => {
@@ -74,6 +74,38 @@ export const QuizHistory = ({ isMobile, onReviewQuiz }) => {
 
     fetchQuizHistory();
   }, []);
+
+  // Delete quiz history function
+  const handleDeleteQuiz = async (quizId, quizName) => {
+    try {
+      setDeletingQuizId(quizId);
+      const response = await fetch(`https://api.adaptivelearnai.xyz/quiz-gen/quiz-history/${quizId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(document.cookie.includes('access_token') && {
+            'Authorization': `Bearer ${document.cookie.split('access_token=')[1]?.split(';')[0]}`
+          })
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete quiz history');
+      }
+
+      // Remove the deleted quiz from the local state
+      setQuizHistory(prev => prev.filter(quiz => quiz.id !== quizId));
+      
+      // Optional: Show success message
+      console.log('Quiz deleted successfully');
+    } catch (err) {
+      console.error('Error deleting quiz:', err);
+      // Remove alert and just log the error
+      console.log('Failed to delete quiz. Please try again.');
+    } finally {
+      setDeletingQuizId(null);
+    }
+  };
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -325,8 +357,17 @@ export const QuizHistory = ({ isMobile, onReviewQuiz }) => {
                   <Download size={isMobile ? 14 : 16} />
                   <span className="hidden sm:inline">Export</span>
                 </button>
-                <button className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors">
-                  <Trash2 size={isMobile ? 14 : 16} />
+                <button 
+                  onClick={() => handleDeleteQuiz(quiz.id, quiz.documentName)}
+                  disabled={deletingQuizId === quiz.id}
+                  className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Delete Quiz"
+                >
+                  {deletingQuizId === quiz.id ? (
+                    <Loader2 size={isMobile ? 14 : 16} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={isMobile ? 14 : 16} />
+                  )}
                 </button>
               </div>
             </div>
