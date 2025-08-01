@@ -96,34 +96,7 @@ const [FinalizedPage, setFinalizedPage] = useState()
   const loadChatHistory = async (chatSessionId) => {
     try {
       // Mock API response based on provided structure
-      const mockChatHistory = {
-        chat_session_id: chatSessionId,
-        messages: [
-          {
-            id: "790689bb-dc15-47df-a292-a123d57fded5",
-            chat_session_id: chatSessionId,
-            role: "user",
-            content: "what is a block in dds ? can you explain",
-            model_id: null,
-            tool_response_id: null,
-            tool_type: null,
-            created_at: "2025-07-18T00:18:56.144657+00:00",
-          },
-          {
-            id: "48743bba-6944-4c83-ac61-4f551f156fb5",
-            chat_session_id: chatSessionId,
-            role: "assistant",
-            content:
-              'In the context of Distributed Data Storage (DDS) and blockchain, a block is a fundamental unit of data that contains a set of transactions or records. Think of it as a digital container that holds a collection of information, similar to a page in a ledger book.\n\nEach block has a unique identifier, called a "block hash," which helps to',
-            model_id: "d50a33ce-2462-4a5a-9aa7-efc2d1749745",
-            tool_response_id: "f97c7715-91c0-452d-b3d9-49575a819751",
-            tool_type: "diagram",
-            created_at: "2025-07-18T00:18:57.169477+00:00",
-          },
-        ],
-      };
 
-      setChatHistory(mockChatHistory);
     } catch (error) {
       console.error("Failed to load chat history:", error);
     }
@@ -307,7 +280,6 @@ const [FinalizedPage, setFinalizedPage] = useState()
   const handlePageChange = (page, sectionId, chapterId) => {
     setCurrentPage(page);
     updatePosition(page, sectionId, chapterId);
-    toast.success(`Navigated to page ${page}`);
   };
 
   const handleTOCToggle = () => {
@@ -316,6 +288,7 @@ const [FinalizedPage, setFinalizedPage] = useState()
 
   const handleGoHome = () => {
     toast.info("Returning to AdaptiveLearnAI dashboard...");
+    // navigate("/dashboard");
     // Add navigation logic here
   };
 
@@ -328,7 +301,6 @@ const [FinalizedPage, setFinalizedPage] = useState()
 
   const handleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
-    toast.info(isFullscreen ? "Exited fullscreen" : "Entered fullscreen");
   };
 
   // Handle text highlighting from PDF or Tool Overlays
