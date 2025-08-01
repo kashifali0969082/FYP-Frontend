@@ -472,7 +472,7 @@ const QuizRenderer = ({ questions }) => {
           <div className="space-y-2">
             {currentQuestion.question_type === 'short_answer' ? (
               /* Short Answer Input */
-              <div className="space-y-2">
+              <div className="space-y-2 text-black">
                 <Input
                   value={answers[currentQuestion.id] || ''}
                   onChange={(e) => handleAnswerSelect(currentQuestion.id, e.target.value)}
