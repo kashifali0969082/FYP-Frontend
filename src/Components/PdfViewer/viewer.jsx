@@ -223,11 +223,19 @@ const [FinalizedPage, setFinalizedPage] = useState()
         setIsTOCCollapsed(true);
         setRightPanelWidth(280);
       } else {
-        // Adjust panel width based on PDF visibility
+        // Adjust panel width based on PDF visibility and TOC
         if (isPDFHidden) {
           setRightPanelWidth(Math.min(800, window.innerWidth - 100)); // Take most of the screen when PDF is hidden
         } else {
-          setRightPanelWidth(hasTOC ? (isTOCCollapsed ? 380 : 320) : 400);
+          // New responsive default widths
+          const screenWidth = window.innerWidth;
+          if (hasTOC && !isTOCCollapsed) {
+            // With TOC visible: 30-35% of screen for tool panel
+            setRightPanelWidth(Math.max(320, Math.min(450, screenWidth * 0.32)));
+          } else {
+            // Without TOC or TOC collapsed: 45% of screen for tool panel
+            setRightPanelWidth(Math.max(360, Math.min(600, screenWidth * 0.45)));
+          }
         }
       }
     };

@@ -5,6 +5,9 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 import { ChatbotApi, listModels } from "../../Api/Apifun";
 import { toast } from "sonner";
 import axios from "axios";
@@ -1189,12 +1192,12 @@ const MessageComponent = ({
     <div
       className={`flex ${
         message.sender === "user" ? "justify-end" : "justify-start"
-      } mb-4`}
+      } mb-4 px-1`}
     >
       <div
-        className={`max-w-[85%] rounded-xl p-3 shadow-sm border ${
+        className={`max-w-[calc(100%-1rem)] min-w-0 rounded-xl p-3 shadow-sm border break-words ${
           message.sender === "user"
-            ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-500/20"
+            ? "bg-gradient-to-br from-slate-600 to-slate-700 text-white border-slate-500/20"
             : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-700"
         }`}
       >
@@ -1226,8 +1229,66 @@ const MessageComponent = ({
         )}
 
         <div className="flex items-start justify-between gap-3">
-          <div className="text-sm whitespace-pre-wrap flex-1 leading-relaxed">
-            {message.content}
+          <div className="flex-1 leading-relaxed">
+            {message.sender === "user" ? (
+              <div className="text-sm whitespace-pre-wrap">
+                {message.content}
+              </div>
+            ) : (
+              <div className="text-sm prose prose-invert max-w-none">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeSanitize]}
+                  components={{
+                    // Custom styling for markdown elements
+                    h1: ({children}) => <h1 className="text-lg font-bold text-gray-900 dark:text-white mt-4 mb-2">{children}</h1>,
+                    h2: ({children}) => <h2 className="text-base font-semibold text-gray-900 dark:text-white mt-3 mb-2">{children}</h2>,
+                    h3: ({children}) => <h3 className="text-sm font-semibold text-gray-900 dark:text-white mt-2 mb-1">{children}</h3>,
+                    p: ({children}) => <p className="text-gray-900 dark:text-gray-100 mb-2 leading-relaxed break-words text-sm">{children}</p>,
+                    strong: ({children}) => <strong className="font-semibold text-blue-600 dark:text-blue-400">{children}</strong>,
+                    em: ({children}) => <em className="italic text-blue-700 dark:text-blue-300">{children}</em>,
+                    code: ({inline, children, className, ...props}) => 
+                      inline ? (
+                        <code className="bg-gray-100 dark:bg-gray-800 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded text-xs font-mono break-all">
+                          {children}
+                        </code>
+                      ) : (
+                        <code 
+                          className="bg-gray-100 dark:bg-gray-900 text-green-600 dark:text-green-400 text-xs font-mono block p-3 rounded-lg border border-gray-200 dark:border-gray-700 my-2 overflow-x-auto whitespace-pre max-w-full"
+                          {...props}
+                        >
+                          {children}
+                        </code>
+                      ),
+                    pre: ({children}) => children,
+                    ul: ({children}) => <ul className="list-disc list-inside space-y-1 my-2 text-gray-900 dark:text-gray-100 break-words text-sm">{children}</ul>,
+                    ol: ({children}) => <ol className="list-decimal list-inside space-y-1 my-2 text-gray-900 dark:text-gray-100 break-words text-sm">{children}</ol>,
+                    li: ({children}) => <li className="mb-1 break-words text-sm">{children}</li>,
+                    a: ({href, children}) => (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline break-all">
+                        {children}
+                      </a>
+                    ),
+                    blockquote: ({children}) => (
+                      <blockquote className="border-l-4 border-blue-500/50 pl-3 italic text-gray-700 dark:text-gray-300 my-2 break-words text-sm">{children}</blockquote>
+                    ),
+                    table: ({children}) => (
+                      <div className="overflow-x-auto my-2 max-w-full">
+                        <table className="min-w-full border border-gray-200 dark:border-gray-700 rounded-lg text-xs">{children}</table>
+                      </div>
+                    ),
+                    th: ({children}) => (
+                      <th className="border border-gray-200 dark:border-gray-700 px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white font-semibold text-left text-xs">{children}</th>
+                    ),
+                    td: ({children}) => (
+                      <td className="border border-gray-200 dark:border-gray-700 px-2 py-1 text-gray-900 dark:text-gray-100 text-xs break-words">{children}</td>
+                    ),
+                  }}
+                >
+                  {message.content}
+                </ReactMarkdown>
+              </div>
+            )}
           </div>
           <Button
             variant="ghost"
