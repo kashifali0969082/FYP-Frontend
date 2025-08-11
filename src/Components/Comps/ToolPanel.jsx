@@ -4,6 +4,7 @@ import React, {
   useEffect,
   forwardRef,
   useImperativeHandle,
+  useCallback,
 } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -621,19 +622,25 @@ const DiagramRenderer = ({ diagrams }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isClient, setIsClient] = useState(false);
   const [renderError, setRenderError] = useState(null);
-  const [zoomLevel, setZoomLevel] = useState(1);
+  // zoomMultiplier is user-controlled; baseScale is auto-fit based on container and SVG natural size
+  const [zoomMultiplier, setZoomMultiplier] = useState(1);
+  const [baseScale, setBaseScale] = useState(1);
+  const [fitMode, setFitMode] = useState("fit"); // 'fit' | 'width' | 'none'
   const [showScrollHint, setShowScrollHint] = useState(false);
   const diagramRef = useRef(null);
   const containerRef = useRef(null);
+  const resizeObserverRef = useRef(null);
+  const naturalSizeRef = useRef({ width: 0, height: 0 });
   
   // Ensure we're on the client side
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Reset zoom when diagram changes
+  // Reset user zoom and fit when diagram changes
   useEffect(() => {
-    setZoomLevel(1);
+    setZoomMultiplier(1);
+    // keep current fitMode but recompute base scale after render
   }, [currentIndex]);
 
   // Check if content is scrollable
@@ -648,7 +655,7 @@ const DiagramRenderer = ({ diagrams }) => {
 
     const timer = setTimeout(checkScrollable, 500);
     return () => clearTimeout(timer);
-  }, [currentIndex, zoomLevel]);
+  }, [currentIndex, zoomMultiplier, baseScale, fitMode]);
 
   // Initialize Mermaid only on client side
   useEffect(() => {
@@ -694,6 +701,87 @@ const DiagramRenderer = ({ diagrams }) => {
     }
   }, [isClient]);
 
+  // Helper to compute available inner size of the container (minus padding)
+  const getContainerInnerSize = () => {
+    const el = containerRef.current;
+    if (!el) return { width: 0, height: 0 };
+    const style = window.getComputedStyle(el);
+    const pl = parseFloat(style.paddingLeft || "0");
+    const pr = parseFloat(style.paddingRight || "0");
+    const pt = parseFloat(style.paddingTop || "0");
+    const pb = parseFloat(style.paddingBottom || "0");
+    return {
+      width: Math.max(0, el.clientWidth - pl - pr),
+      height: Math.max(0, el.clientHeight - pt - pb),
+    };
+  };
+
+  // Compute auto base scale so the diagram fits container
+  const recomputeBaseScale = useCallback(() => {
+    const svg = diagramRef.current?.querySelector('svg');
+    if (!svg) return;
+
+    // Determine natural size from current viewBox (already normalized) or fallback
+    let natW = 0;
+    let natH = 0;
+    const vb = svg.getAttribute('viewBox');
+    if (vb) {
+      const parts = vb.split(/\s+/).map(parseFloat);
+      natW = parts[2] || 0;
+      natH = parts[3] || 0;
+    }
+    if (!natW || !natH) {
+      try {
+        const bbox = svg.getBBox();
+        natW = bbox.width;
+        natH = bbox.height;
+      } catch {}
+    }
+    naturalSizeRef.current = { width: natW, height: natH };
+
+    const { width: availW, height: availH } = getContainerInnerSize();
+    if (natW <= 0 || natH <= 0 || availW <= 0 || availH <= 0) return;
+
+    const scaleW = availW / natW;
+    const scaleH = availH / natH;
+  let autoScale = 1;
+    if (fitMode === 'fit') autoScale = Math.min(scaleW, scaleH);
+    else if (fitMode === 'width') autoScale = scaleW;
+    else autoScale = 1;
+
+  // Clamp to reasonable bounds
+  autoScale = Math.max(0.1, Math.min(autoScale, 6));
+    setBaseScale(autoScale);
+
+    // Apply size now
+    const finalScale = autoScale * zoomMultiplier;
+    const targetW = Math.max(1, Math.round(natW * finalScale));
+    const targetH = Math.max(1, Math.round(natH * finalScale));
+    svg.style.width = `${targetW}px`;
+    svg.style.height = `${targetH}px`;
+    svg.style.maxWidth = 'none';
+    svg.style.maxHeight = 'none';
+    svg.style.display = 'block';
+  }, [fitMode, zoomMultiplier]);
+
+  // Update sizing whenever user zoom or fit mode changes
+  useEffect(() => {
+    const svg = diagramRef.current?.querySelector('svg');
+    if (!svg) return;
+    const { width: natW, height: natH } = naturalSizeRef.current;
+    if (!natW || !natH) return;
+    // Recompute base scale if fit is active, else keep previous
+    if (fitMode !== 'none') {
+      recomputeBaseScale();
+    } else {
+      const finalScale = Math.max(0.1, Math.min(zoomMultiplier, 4));
+      const targetW = Math.max(1, Math.round(natW * finalScale));
+      const targetH = Math.max(1, Math.round(natH * finalScale));
+      svg.style.width = `${targetW}px`;
+      svg.style.height = `${targetH}px`;
+    }
+  }, [zoomMultiplier, fitMode, recomputeBaseScale]);
+
   // Render diagram when content changes
   useEffect(() => {
     if (!isClient || !diagramRef.current || !diagrams || !diagrams[currentIndex] || typeof window === 'undefined') {
@@ -715,22 +803,69 @@ const DiagramRenderer = ({ diagrams }) => {
             if (diagramRef.current && result.svg) {
               diagramRef.current.innerHTML = result.svg;
               
-              // Ensure the SVG is properly sized and visible
+              // Ensure the SVG is properly sized and visible, and compute base scale
               const svg = diagramRef.current.querySelector('svg');
               if (svg) {
-                svg.style.maxWidth = 'none';
-                svg.style.width = 'auto';
-                svg.style.height = 'auto';
-                svg.style.display = 'block';
-                
-                // Force a reflow to ensure proper sizing
-                setTimeout(() => {
-                  if (containerRef.current) {
-                    const { scrollWidth, scrollHeight, clientWidth, clientHeight } = containerRef.current;
-                    const isScrollable = scrollWidth > clientWidth || scrollHeight > clientHeight;
-                    setShowScrollHint(isScrollable);
+                // Normalize SVG: remove fixed size, set padded viewBox, set PAR, then size via CSS
+                try {
+                  // Remove explicit intrinsic sizing so CSS can control final size
+                  svg.removeAttribute('width');
+                  svg.removeAttribute('height');
+                  svg.style.maxWidth = 'none';
+                  svg.style.maxHeight = 'none';
+                  svg.style.display = 'block';
+                  svg.style.width = 'auto';
+                  svg.style.height = 'auto';
+
+                  // Measure bbox from inner <g> if present, which excludes overflow markers; add padding to avoid clipping arrowheads
+                  const g = svg.querySelector('g') || svg;
+                  let bbox;
+                  try { bbox = g.getBBox(); } catch { bbox = null; }
+                  // Very generous dynamic padding to ensure markers/arrowheads aren’t clipped
+                  const basePad = 100; // px minimum padding
+                  const dynamicPad = bbox ? Math.ceil(Math.max(bbox.width, bbox.height) * 0.2) : 0; // ~20%
+                  const pad = Math.max(basePad, dynamicPad);
+                  let vbX = 0, vbY = 0, vbW = 1, vbH = 1;
+                  if (bbox && isFinite(bbox.x) && isFinite(bbox.y) && isFinite(bbox.width) && isFinite(bbox.height)) {
+                    vbX = Math.floor(bbox.x - pad);
+                    vbY = Math.floor(bbox.y - pad);
+                    vbW = Math.ceil(bbox.width + pad * 2);
+                    vbH = Math.ceil(bbox.height + pad * 2);
+                  } else {
+                    // Fallback to existing viewBox or client rect
+                    const existing = svg.getAttribute('viewBox');
+                    if (existing) {
+                      const parts = existing.split(/\s+/).map(parseFloat);
+                      vbX = parts[0] || 0; vbY = parts[1] || 0; vbW = parts[2] || 1; vbH = parts[3] || 1;
+                    } else {
+                      const rect = svg.getBoundingClientRect();
+                      vbW = Math.max(1, Math.round(rect.width));
+                      vbH = Math.max(1, Math.round(rect.height));
+                    }
                   }
-                }, 100);
+                  svg.setAttribute('viewBox', `${vbX} ${vbY} ${vbW} ${vbH}`);
+                  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                  svg.style.overflow = 'visible';
+
+                  // Save natural (padded) size for subsequent scaling
+                  naturalSizeRef.current = { width: vbW, height: vbH };
+
+                  // Compute base scale and apply size
+                  setTimeout(() => {
+                    recomputeBaseScale();
+                    // After applying sizes, update scroll hint
+                    if (containerRef.current) {
+                      const { scrollWidth, scrollHeight, clientWidth, clientHeight } = containerRef.current;
+                      const isScrollable = scrollWidth > clientWidth || scrollHeight > clientHeight;
+                      setShowScrollHint(isScrollable);
+                    }
+                  }, 30);
+                } catch (e) {
+                  // Still attempt to size
+                  setTimeout(() => {
+                    recomputeBaseScale();
+                  }, 30);
+                }
               }
             }
           })
@@ -753,7 +888,27 @@ const DiagramRenderer = ({ diagrams }) => {
     }, 200);
 
     return () => clearTimeout(renderTimeout);
-  }, [currentIndex, diagrams, isClient]);
+  }, [currentIndex, diagrams, isClient, recomputeBaseScale]);
+
+  // Observe container resize to keep diagram fitted
+  useEffect(() => {
+    if (!isClient || !containerRef.current) return;
+    const el = containerRef.current;
+    if (resizeObserverRef.current) resizeObserverRef.current.disconnect();
+    resizeObserverRef.current = new ResizeObserver(() => {
+      if (fitMode !== 'none') {
+    recomputeBaseScale();
+      }
+      // Update scroll hint
+      const { scrollWidth, scrollHeight, clientWidth, clientHeight } = el;
+      const isScrollable = scrollWidth > clientWidth || scrollHeight > clientHeight;
+      setShowScrollHint(isScrollable);
+    });
+    resizeObserverRef.current.observe(el);
+    return () => {
+      resizeObserverRef.current?.disconnect();
+    };
+  }, [isClient, fitMode, recomputeBaseScale]);
   
   if (!Array.isArray(diagrams) || diagrams.length === 0) {
     return (
@@ -804,24 +959,24 @@ const DiagramRenderer = ({ diagrams }) => {
           )}
         </div>
         
-        {/* Zoom Controls */}
+        {/* Zoom & Fit Controls */}
         <div className="flex items-center gap-1">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setZoomLevel(prev => Math.max(0.5, prev - 0.1))}
+            onClick={() => setZoomMultiplier(prev => Math.max(0.25, Math.round((prev - 0.1) * 100) / 100))}
             className="h-6 w-6 p-0 text-xs"
             title="Zoom Out"
           >
             -
           </Button>
           <span className="text-xs text-muted-foreground min-w-[3rem] text-center">
-            {Math.round(zoomLevel * 100)}%
+            {Math.round((baseScale * zoomMultiplier) * 100)}%
           </span>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))}
+            onClick={() => setZoomMultiplier(prev => Math.min(4, Math.round((prev + 0.1) * 100) / 100))}
             className="h-6 w-6 p-0 text-xs"
             title="Zoom In"
           >
@@ -830,11 +985,38 @@ const DiagramRenderer = ({ diagrams }) => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setZoomLevel(1)}
+            onClick={() => { setZoomMultiplier(1); setFitMode('fit'); recomputeBaseScale(); }}
             className="h-6 px-2 text-xs"
-            title="Reset Zoom"
+            title="Reset to Fit"
           >
             Reset
+          </Button>
+          <Button
+            variant={fitMode === 'fit' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => { setFitMode('fit'); setZoomMultiplier(1); recomputeBaseScale(); }}
+            className="h-6 px-2 text-xs ml-1"
+            title="Fit to container"
+          >
+            Fit
+          </Button>
+          <Button
+            variant={fitMode === 'width' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => { setFitMode('width'); setZoomMultiplier(1); recomputeBaseScale(); }}
+            className="h-6 px-2 text-xs"
+            title="Fit to width"
+          >
+            Fit width
+          </Button>
+          <Button
+            variant={fitMode === 'none' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => { setFitMode('none'); setZoomMultiplier(1); recomputeBaseScale(); }}
+            className="h-6 px-2 text-xs"
+            title="Actual size"
+          >
+            100%
           </Button>
         </div>
       </div>
@@ -858,11 +1040,6 @@ const DiagramRenderer = ({ diagrams }) => {
           <div 
             ref={diagramRef}
             className="mermaid-diagram"
-            style={{ 
-              transform: `scale(${zoomLevel})`,
-              transformOrigin: 'center top',
-              transition: 'transform 0.2s ease'
-            }}
           />
         </div>
         
