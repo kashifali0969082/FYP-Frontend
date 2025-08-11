@@ -8,11 +8,8 @@ import StudyMode from "./Components/PdfViewer/viewer";
 import LearningProfileForm from "./Components/TEsting/LearningProfileForm";
 import { AuthProvider } from "./Components/Security/Authcontext";
 import { pdfjs } from 'react-pdf';
-
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString();
+// Use an ESM-safe worker from jsDelivr to avoid dynamic import issues
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 function App() {
   return (
     <AuthProvider>

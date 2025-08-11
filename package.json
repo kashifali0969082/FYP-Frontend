@@ -2,7 +2,6 @@
   "name": "my-app",
   "version": "0.1.0",
   "private": true,
-  "proxy": "https://api.adaptivelearnai.xyz",
   "dependencies": {
     "@radix-ui/react-collapsible": "^1.1.11",
     "@radix-ui/react-progress": "^1.1.7",

@@ -93,7 +93,9 @@ export const PDFViewer = ({
   id,
   type,
 }) => {
-  const [zoom, setZoom] = useState(1.0);
+  // Default zoom at 80% for full-page fit; lock to stabilize text-layer alignment
+  const [zoom, setZoom] = useState(0.8);
+  const lockZoom = true;
   const [isDarkMode, setIsDarkMode] = useState(true);
   const safeCurrentPage =
     typeof currentPage === "number" && !isNaN(currentPage) ? currentPage : 1;
@@ -108,6 +110,31 @@ export const PDFViewer = ({
   const [pdfUrl, setPdfUrl] = useState(null);
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
+  const [pageWidth, setPageWidth] = useState(0);
+  // Align text layer fallback
+  const alignTextLayer = useCallback(() => {
+    try {
+      const root = contentRef.current;
+      if (!root) return;
+      const pageEl = root.querySelector(".pdf-page");
+      if (!pageEl) return;
+      const canvas = pageEl.querySelector(".react-pdf__Page__canvas");
+      const text = pageEl.querySelector(".react-pdf__Page__textContent");
+      if (!canvas || !text) return;
+      // Reset any previous manual translate
+      const current = text.style.transform || "";
+      const withoutTranslate = current.replace(/\s*translate\([^\)]*\)/, "");
+      text.style.transform = withoutTranslate.trim();
+      // Measure and correct if needed
+      const cr = canvas.getBoundingClientRect();
+      const tr = text.getBoundingClientRect();
+      const dx = cr.left - tr.left;
+      const dy = cr.top - tr.top;
+      if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+        text.style.transform = `${withoutTranslate} translate(${dx}px, ${dy}px)`;
+      }
+    } catch (_) {}
+  }, []);
   useEffect(() => {
     setFinalizedPage(pageNumber);
   }, [pageNumber]);
@@ -119,6 +146,27 @@ export const PDFViewer = ({
   useEffect(() => {
     fetchPdf(id);
   }, []);
+
+  // Measure container width and keep page width responsive
+  useEffect(() => {
+    const updateWidth = () => {
+      const el = contentRef.current;
+      if (!el) return;
+      // account for inner padding (~48px for p-6) and avoid negative
+      const padding = 48;
+      const w = Math.max(200, (el.clientWidth || 0) - padding);
+      setPageWidth(w);
+    };
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
+
+  // Try aligning after render when page/zoom/size changes
+  useEffect(() => {
+    const t = setTimeout(alignTextLayer, 60);
+    return () => clearTimeout(t);
+  }, [alignTextLayer, pageNumber, zoom, pageWidth]);
 
   const fetchPdf = async (id) => {
     try {
@@ -139,7 +187,7 @@ export const PDFViewer = ({
       console.error("Failed to load PDF:", error);
     }
   };
-  const lastPageNumber = async () => {
+  const lastPageNumber = async (page) => {
     let lower = type.toLowerCase();
     try {
       let resp = await axios.post(
@@ -147,7 +195,7 @@ export const PDFViewer = ({
         {
           document_id: id,
           document_type: lower,
-          page_number: pageNumber,
+          page_number: page,
         },
         {
           headers: getHeaders(),
@@ -158,15 +206,22 @@ export const PDFViewer = ({
     }
   };
   const goToPrevPage = () => {
-    setPageNumber((prev) => Math.max(prev - 1, 1));
-    lastPageNumber();
-    setPageInput((Number(pageInput) - 1).toString());
+    const next = Math.max(pageNumber - 1, 1);
+    setPageNumber(next);
+    setPageInput(String(next));
+    onPageChange?.(next);
+    setFinalizedPage?.(next);
+    lastPageNumber(next);
   };
 
   const goToNextPage = () => {
-    setPageNumber((prev) => Math.min(prev + 1, numPages));
-    lastPageNumber();
-    setPageInput((Number(pageInput) + 1).toString());
+    const limit = numPages || totalPages || Number.MAX_SAFE_INTEGER;
+    const next = Math.min(pageNumber + 1, limit);
+    setPageNumber(next);
+    setPageInput(String(next));
+    onPageChange?.(next);
+    setFinalizedPage?.(next);
+    lastPageNumber(next);
   };
 
   const goToPage = () => {
@@ -176,8 +231,13 @@ export const PDFViewer = ({
       return;
     }
     const target = parseInt(pageInput, 10);
-    if (!isNaN(target) && target >= 1 && target <= numPages) {
+  const limit = numPages || totalPages || Number.MAX_SAFE_INTEGER;
+  if (!isNaN(target) && target >= 1 && target <= limit) {
       setPageNumber(target);
+      setPageInput(String(target));
+      onPageChange?.(target);
+      setFinalizedPage?.(target);
+      lastPageNumber(target);
     } else {
       alert("Invalid page number");
     }
@@ -186,18 +246,20 @@ export const PDFViewer = ({
     goToPage();
   }, [pageInput, pdfUrl, numPages]);
   const handleZoomIn = () => {
+    if (lockZoom) return; // locked to 80%
     setZoom(Math.min(zoom + 0.1, 2.0));
     toast.success(`Zoom: ${Math.round((zoom + 0.1) * 100)}%`);
   };
 
   const handleZoomOut = () => {
+    if (lockZoom) return; // locked to 80%
     setZoom(Math.max(zoom - 0.1, 0.5));
     toast.success(`Zoom: ${Math.round((zoom - 0.1) * 100)}%`);
   };
 
   const handleResetZoom = () => {
-    setZoom(1.0);
-    toast.success("Zoom reset to 100%");
+    setZoom(0.8);
+    toast.success("Zoom locked at 80%");
   };
 
   const handlePageInputSubmit = (e) => {
@@ -500,6 +562,7 @@ export const PDFViewer = ({
               variant="ghost"
               size="sm"
               onClick={handleZoomOut}
+              disabled={lockZoom}
               className="h-8 px-2 hover:bg-slate-600/50"
             >
               <ZoomOut className="w-4 h-4" />
@@ -513,6 +576,7 @@ export const PDFViewer = ({
               variant="ghost"
               size="sm"
               onClick={handleZoomIn}
+              disabled={lockZoom}
               className="h-8 px-2 hover:bg-slate-600/50"
             >
               <ZoomIn className="w-4 h-4" />
@@ -536,7 +600,7 @@ export const PDFViewer = ({
             variant="ghost"
             size="sm"
             onClick={goToPrevPage}
-            disabled={currentPage <= 1}
+            disabled={pageNumber <= 1}
             className="h-8 px-3 hover:bg-slate-700/50 disabled:opacity-50 rounded-lg"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -563,7 +627,7 @@ export const PDFViewer = ({
                       /> */}
               <span className="text-slate-400 text-xs">of</span>
               <span className="text-slate-300 text-xs font-mono">
-                {totalPages}
+                {numPages || totalPages || 0}
               </span>
             </form>
           </div>
@@ -572,7 +636,7 @@ export const PDFViewer = ({
             variant="ghost"
             size="sm"
             onClick={goToNextPage}
-            disabled={currentPage >= totalPages}
+            disabled={(numPages ? pageNumber >= numPages : false) || (!numPages && totalPages ? pageNumber >= totalPages : false)}
             className="h-8 px-3 hover:bg-slate-700/50 disabled:opacity-50 rounded-lg"
           >
             <ChevronRight className="w-4 h-4" />
@@ -640,40 +704,29 @@ export const PDFViewer = ({
         </div>
       </div>
 
-      {/* PDF Content Area with Enhanced Styling */}
+      {/* PDF Content Area with Enhanced Styling (no scroll) */}
       <div
-        className={`flex-1 overflow-auto transition-all duration-300 ${
+        className={`flex-1 overflow-hidden transition-all duration-300 ${
           isDarkMode
             ? "bg-gradient-to-br from-slate-900/80 to-slate-800/80"
             : "bg-gradient-to-br from-gray-100 to-white"
         }`}
       >
-        <div className="h-full flex justify-center p-4">
+    <div className="h-full flex justify-center p-4">
           <div
             ref={contentRef}
-            className={`w-full max-w-4xl transition-all duration-300 shadow-2xl rounded-xl overflow-hidden border ${
+      className={`w-full max-w-4xl transition-all duration-300 shadow-2xl rounded-xl overflow-hidden border ${
               isDarkMode
                 ? "bg-slate-800/80 text-slate-100 border-slate-700/50"
                 : "bg-white text-gray-900 border-gray-200"
             } backdrop-blur-sm select-text`}
             style={{
-              fontSize: `${zoom}em`,
+              // Page scaling handled by react-pdf Page scale
               lineHeight: 1.6,
             }}
           >
-            <div className="p-6 lg:p-8 h-full overflow-auto study-scrollbar ">
-              <div
-                style={{
-                  backgroundColor: "#ffffff",
-                  color: "rgb(0, 0, 0)",
-                  padding: "1rem",
-                  minHeight: "100vh",
-                  overflowY: "scroll",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
+            <div className="p-6 lg:p-8 h-full">
+              <div className="w-full flex justify-center">
                 {pdfUrl ? (
                   <>
                     <Document
@@ -681,14 +734,51 @@ export const PDFViewer = ({
                       onLoadSuccess={onDocumentLoadSuccess}
                     >
                       <Page
+                        className="pdf-page"
                         pageNumber={pageNumber}
                         renderAnnotationLayer={false}
                         renderTextLayer={true}
-                          scale={1.5}
+                        width={Math.max(200, Math.round(pageWidth * zoom))}
                       />
                     </Document>
-
-                  
+                    <style>{`
+                      /* Hide text visually but keep selection */
+                      .pdf-page {
+                        position: relative;
+                      }
+                      .pdf-page .react-pdf__Page__canvas {
+                        position: relative;
+                        z-index: 1;
+                        pointer-events: none; /* don't block text selection */
+                      }
+                      .pdf-page .react-pdf__Page__textContent {
+                        /* Minimal TextLayer CSS compatible with pdf.js */
+                        position: absolute !important;
+                        top: 0; left: 0; /* anchor to canvas origin */
+                        pointer-events: auto;
+                        z-index: 2;
+                        color: transparent !important; /* visually hidden */
+                        user-select: text;
+                        -webkit-user-select: text;
+                        -ms-user-select: text;
+                      }
+                      .pdf-page .react-pdf__Page__textContent span {
+                        position: absolute;
+                        white-space: pre;
+                        transform-origin: 0% 0%;
+                      }
+                      .pdf-page .react-pdf__Page__textContent span {
+                        color: transparent !important;
+                        background: transparent !important;
+                        text-shadow: none !important;
+                      }
+                      .pdf-page .react-pdf__Page__textContent span::selection {
+                        background: rgba(59, 130, 246, 0.35) !important;
+                      }
+                      .pdf-page .react-pdf__Page__textContent span::-moz-selection {
+                        background: rgba(59, 130, 246, 0.35) !important;
+                      }
+                    `}</style>
                   </>
                 ) : (
                   <p>Loading PDF...</p>

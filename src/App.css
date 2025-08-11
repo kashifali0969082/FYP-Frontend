@@ -984,27 +984,6 @@ html, body {
   overflow-x: hidden;
 }
 
-
-/* Hide the PDF canvas */
-.react-pdf__Page__canvas {
-  display: none !important;
-}
-
-
-/* Style the text content layer */
-.react-pdf__Page__textContent {
-  background-color: #fff;       
-  color: #000 !important;       
-  user-select: text;
-  padding: 1rem;
-  font-family: sans-serif;
-}
-
-/* Optional: style individual text items */
-.react-pdf__Page__textContent span {
-  color: #000 !important;
-}
-
-.react-pdf__Page__textContent{
-  width: 100% !important;
-}
+/* NOTE: React-PDF viewer styles are managed locally in PDFViewer.jsx.
+  We intentionally do not override react-pdf canvas/text layers globally here
+  to avoid breaking the viewer (e.g., hiding the canvas or forcing a white text layer). */
