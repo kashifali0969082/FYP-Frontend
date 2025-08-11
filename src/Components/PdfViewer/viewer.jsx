@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { StreamDocument, StudyModeInit } from "../../Api/Apifun";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function StudyMode() {
   const [studyData, setStudyData] = useState(null);
@@ -36,6 +36,7 @@ export default function StudyMode() {
   const containerRef = useRef(null);
   const toolPanelRef = useRef(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const { type, id } = location.state || {};
   const [minemockData, setminemockdata] = useState();
   const [pdfData, setPdfData] = useState(null);
@@ -287,9 +288,7 @@ const [FinalizedPage, setFinalizedPage] = useState()
   };
 
   const handleGoHome = () => {
-    toast.info("Returning to AdaptiveLearnAI dashboard...");
-    // navigate("/dashboard");
-    // Add navigation logic here
+    navigate("/dashboard");
   };
 
   const handleTogglePDF = () => {
