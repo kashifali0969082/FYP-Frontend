@@ -1,70 +1,79 @@
-# Getting Started with Create React App
+# AdaptiveLearnAI-Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React-based frontend for AdaptiveLearnAI Study Mode. It provides a high-fidelity PDF study experience (canvas rendering with selectable text), a ToolPanel with AI-powered helpers (flashcards, quizzes, diagrams, games), and a responsive diagram renderer that fits content without clipping.
 
-## Available Scripts
+## Tech stack
 
-In the project directory, you can run:
+- React 19, Create React App 5 (react-scripts)
+- Tailwind CSS 3
+- react-pdf 10 (PDF.js under the hood)
+- mermaid 11 for diagrams
+- react-router-dom 7
+- Axios for API calls
 
-### `npm start`
+## Quick start
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Prerequisites:
+- Node.js 18+ and npm
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Install and run:
+- npm install
+- npm start
 
-### `npm test`
+Open http://localhost:3000
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Build:
+- npm run build
 
-### `npm run build`
+## Features
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- PDF viewer
+	- Canvas-based rendering preserves document styling/colors
+	- Hidden, selectable text layer for precise text selection without visual changes
+	- No internal scrolling; navigate with Prev/Next buttons and page input
+	- Default zoom 80% (locked for stable text/canvas alignment)
+	- Persists last page position via API
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- ToolPanel chat
+	- Send selected text to tools: Ask LLM, Flashcards, Quiz, Diagrams, Games
+	- Opens overlay renderers for generated content
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- Diagram renderer
+	- Auto-fit to container with Fit, Fit width, and 100% modes
+	- Scroll and zoom support (no clipping; arrowheads preserved via padded viewBox)
+	- Responsive via ResizeObserver
 
-### `npm run eject`
+## Routing
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Defined in `src/App.js`:
+- / — Landing
+- /dashboard — Testing/Dashboard screen
+- /StudyMode — PDF study mode page
+- /form — Learning profile form
+- Fallback 404 route
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Authentication
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- JWT is stored in a cookie named `access_token` (see `src/utils/auth.js`)
+- A token can also be bootstrapped from a `?token=` URL parameter; it will be copied into the cookie
+- API calls use a shared Axios client with `withCredentials: true` and base URL https://api.adaptivelearnai.xyz/ (see `src/Components/apiclient/Apis.js`)
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## PDF worker configuration
 
-## Learn More
+react-pdf requires a PDF.js worker. This app sets it at runtime in `src/App.js`:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+This CDN URL matches the installed pdfjs version at runtime, avoiding bundler import issues.
 
-### Code Splitting
+If you need an offline worker, download `pdf.worker.min.js` from the matching `pdfjs-dist` version into `public/` and set:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js'
 
-### Analyzing the Bundle Size
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Scripts
 
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- npm start — start dev server
+- npm test — run tests (CRA default)
+- npm run build — production build to `build/`
+- npm run eject — CRA eject (irreversible)
